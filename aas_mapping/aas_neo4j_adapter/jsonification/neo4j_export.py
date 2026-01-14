@@ -1,15 +1,11 @@
 import logging
-from typing import Dict, List, Optional
-from aas_mapping.aas_neo4j_adapter.base import BaseNeo4JClient, Neo4jModelConfig
+from typing import Dict, List
+from aas_mapping.aas_neo4j_adapter.base import BaseNeo4JClient
 
 logger = logging.getLogger(__name__)
 
 
 class JsonFromNeo4jExporter(BaseNeo4JClient):
-    def __init__(self, uri: str, user: str, password: Optional[str] = None, model_config: Neo4jModelConfig = None,
-                 **kwargs):
-        super().__init__(uri=uri, user=user, password=password, model_config=model_config, **kwargs)
-
     def _get_node_properties(self, node: Dict) -> Dict:
         return {key: value for key, value in node['properties'].items()}
 

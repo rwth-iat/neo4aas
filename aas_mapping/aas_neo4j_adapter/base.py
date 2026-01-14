@@ -41,8 +41,7 @@ class BaseNeo4JClient:
     driver: Driver
     model_config: Neo4jModelConfig
 
-    def __init__(self, uri: str, user: str , password: Optional[str] = None, model_config: Neo4jModelConfig = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, uri: str, user: str , password: Optional[str] = None, model_config: Neo4jModelConfig = None):
         self.driver = neo4j.GraphDatabase.driver(uri, auth=(user, password)) if uri else None
         self.model_config = model_config or EMPTY_NEO4J_MODEL_CONFIG
 

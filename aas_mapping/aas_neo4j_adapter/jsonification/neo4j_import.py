@@ -16,8 +16,8 @@ from aas_mapping.aas_neo4j_adapter.utils import UploadStats
 logger = logging.getLogger(__name__)
 
 class JsonToNeo4jImporter(BaseNeo4JClient):
-    def __init__(self, uri: str, user: str, password: Optional[str] = None, model_config: Neo4jModelConfig = None, **kwargs):
-        super().__init__(uri=uri, user=user, password=password, model_config=model_config, **kwargs)
+    def __init__(self, uri: str, user: str , password: Optional[str] = None, model_config: Neo4jModelConfig = None):
+        super().__init__(uri, user, password, model_config)
         self.uid_counter = 0
 
         # e.g. {HASH: uid}
