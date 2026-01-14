@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aas4graph"
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "neo4j"
+]
