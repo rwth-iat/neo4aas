@@ -11,3 +11,17 @@ dependencies = [
     "neo4j",
     "basyx-python-sdk"
 ]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["aas_mapping*"]
+
+[tool.pytest.ini_options]
+testpaths = ["aas_mapping/test"]
+markers = [
+    "integration: tests that require a live Neo4j instance",
+]
