@@ -47,35 +47,39 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
         "CREATE INDEX FOR (r:Referable) ON (r.idShort);",
         "CREATE INDEX rel_list_index FOR () - [r:value]-() ON (r.list_index);"
     ],
-    # In AAS, multiple references may point to the same target. By deduplicating
-    # these references, we ensure that only one canonical instance is created
-    # and reused whenever all reference attributes are identical.
+    # Node types whose instances are content-deduplicated by SHA256 hash of their properties.
+    # When two nodes of a deduplicated type have identical properties, only one is created in
+    # Neo4j and all relationships point to that single canonical node.
     deduplicated_object_types={
         "Reference",
-        # "Qualifier",
-        # "Extension",
         "ConceptDescription",
+        # "Qualifier",           # not deduplicated: qualifiers are structurally identical but semantically distinct per element
+        # "Extension",           # same reasoning as Qualifier
         # "EmbeddedDataSpecification"
     },
-    # Attributes of objects that are lists of dictionaries and should be converted to multiple lists with simple values
-    # BEFORE: keys = [{"type": "GlobalReference", "value": "0173-1#02-AAW001#001"}}, ...]
-    # AFTER:  keys_type = ["GlobalReference", ...]
-    #         keys_value = ["0173-1#02-AAW001#001", ...]
+    # Node properties that are lists of dicts with only scalar values are stored as parallel
+    # flat lists instead, since Neo4j does not support list-of-dict properties.
+    # BEFORE: description = [{"language": "en", "text": "Foo"}, {"language": "de", "text": "Bar"}]
+    # AFTER:  description_language = ["en", "de"]
+    #         description_text     = ["Foo", "Bar"]
     list_of_dicts_prop_as_multiple_list_props={
+        "Reference": ["keys"],
+        "Referable": ["description", "displayName"],
         "MultiLanguageProperty": ["value"],
         "DataSpecificationIec61360": ["preferredName", "shortName", "definition"],
-        "Reference": ["keys"],
-        # "Qualifiable": ["qualifiers"] # Problem: qualifier can have a SemanticId
-        "Referable": ["description", "displayName"],
+        # "Qualifiable": ["qualifiers"]  # excluded: Qualifier can itself contain a Reference (semanticId)
     },
-    # Attributes of objects that are dictionaries and should be converted to multiple properties with simple values
-    # BEFORE: keys = {"type": "GlobalReference", "value": "0173-1#02-AAW001#001"}
-    # AFTER:  keys_type = "GlobalReference"
-    #         keys_value = "0173-1#02-AAW001#001"
+    # Node properties that are flat dicts with only scalar values are inlined as prefixed
+    # scalar properties, since Neo4j does not support dict-typed properties.
+    # BEFORE: defaultThumbnail = {"path": "/img/thumb.png", "contentType": "image/png"}
+    # AFTER:  defaultThumbnail_path        = "/img/thumb.png"
+    #         defaultThumbnail_contentType = "image/png"
+    # Only use this for dicts whose sub-fields are all scalars. Dicts that contain nested
+    # objects or lists must be stored as child nodes via a relationship instead.
     dict_prop_as_multiple_props = {
-        "Reference": ["referredSemanticId"],
         "AssetInformation": ["defaultThumbnail"],
-        # "Identifiable": ["administration"], # Problem: AdministrativeInfo can have a Reference in "creator" attr
+        # "Reference": ["referredSemanticId"],  # excluded: referredSemanticId is itself a Reference with a keys list
+        # "Identifiable": ["administration"],   # excluded: AdministrativeInformation can contain a Reference (creator)
     },
     all_list_item_relationships_have_index = False,
     list_item_relationships_with_index = {

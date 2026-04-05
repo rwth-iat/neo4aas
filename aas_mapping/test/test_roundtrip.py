@@ -11,8 +11,6 @@ _IDENTIFIABLE_KEYS = ("assetAdministrationShells", "submodels", "conceptDescript
 
 # Files with known exporter bugs — tracked in TODOs.md
 _XFAIL_STEMS = {
-    # referredSemanticId.keys not reconstructed (flattened keys_type/keys_value not reversed)
-    "IDTA 02056-1-0_Template_Data Retention Policies",
     # Deduplicated Reference nodes shared across multiple parents within one Identifiable:
     # exporter only assigns the shared node to the first parent, leaving others as null.
     "IDTA 02011-1-1_Template_HSEBoM",
