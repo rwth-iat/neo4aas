@@ -17,6 +17,10 @@ _XFAIL_STEMS = {
     "IDTA 02017-1-0_Template_Asset Interfaces Description",
     "IDTA 02027-1-0_Template_AIMC ",
     "IDTA 02045-1-0_Template_DataModelForAssetLocation",
+    # Deduplication merges Reference nodes that differ only in referredSemanticId (a nested
+    # relationship), producing graph cycles. The exporter handles cycles without crashing but
+    # cannot fully reconstruct the original structure.
+    "IDTA 02056-1-0_Template_Data Retention Policies",
 }
 
 _INTERNAL_KEYS = frozenset({"uid", "hash"})

@@ -64,7 +64,7 @@ class JsonFromNeo4jExporter(BaseNeo4JClient):
             node_properties[original_prop] = original_prop_value
         return node_properties
 
-    def _merge_relationships_in_node_data_dict(self, node: Dict, node_data_dict: Dict, relationships: List[Dict], subgraph: Dict):
+    def _merge_relationships_in_node_data_dict(self, node: Dict, node_data_dict: Dict, relationships: List[Dict], subgraph: Dict, _visited: frozenset = frozenset()):
         # Check if all given rels are starting in the given node
         for rel in relationships:
             if rel['start']['id'] != node['id']:
@@ -90,10 +90,20 @@ class JsonFromNeo4jExporter(BaseNeo4JClient):
             else:
                 node_data_dict[rel_type] = related_node_properties
 
-            # Recursively process the related node if it has outgoing relationships
-            outgoing_relationships = [r for r in subgraph['relationships'] if r['start']['id'] == related_node['id']]
-            self._merge_relationships_in_node_data_dict(related_node, related_node_properties, outgoing_relationships,
-                                                        subgraph)
+            # Recursively process the related node if it has outgoing relationships.
+            # Skip if the related node is already on the current path to avoid infinite recursion
+            # caused by cycles in the graph.
+            if related_node['id'] in _visited:
+                logger.warning(
+                    f"Cycle detected in subgraph: node {related_node['id']} is already on the current path. "
+                    f"Skipping further traversal of this branch."
+                )
+            else:
+                outgoing_relationships = [r for r in subgraph['relationships'] if r['start']['id'] == related_node['id']]
+                self._merge_relationships_in_node_data_dict(
+                    related_node, related_node_properties, outgoing_relationships,
+                    subgraph, _visited | {node['id']}
+                )
 
             # FIXME: Take a look here, may be the lines below and above should be replaced
             # Handle specific keys for certain node types

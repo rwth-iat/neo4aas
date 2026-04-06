@@ -156,17 +156,19 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
             grouped_nodes[label_tuple] = filtered_nodes
         return grouped_nodes
 
-    def _deduplicate_rels(self, relationships: dict[tuple[str], list[dict]]):
+    def _deduplicate_rels(self, relationships: dict[str, list[dict]]):
         # --- 🔧 Rewrite relationships to use deduplicated UIDs ---
-        for rel_types, rel_list in relationships.items():
+        for rel_type, rel_list in relationships.items():
             updated_rels = []
             for rel in rel_list:
                 # Update UIDs if they exist in the deduplicated map
                 rel["from_uid"] = self.deduplicated_to_existing_uid_map.get(rel["from_uid"], rel["from_uid"])
                 rel["to_uid"] = self.deduplicated_to_existing_uid_map.get(rel["to_uid"], rel["to_uid"])
 
-                # Deterministic JSON hash from properties
-                hash_value = hashlib.sha256(json.dumps(rel, sort_keys=True).encode()).hexdigest()
+                # Deterministic JSON hash from relationship type and properties
+                hash_value = hashlib.sha256(
+                    json.dumps({"_type": rel_type, **rel}, sort_keys=True).encode()
+                ).hexdigest()
 
                 if hash_value not in self.deduplicated_rels:
                     self.deduplicated_rels.add(hash_value)
