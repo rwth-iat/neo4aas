@@ -13,10 +13,10 @@ _IDENTIFIABLE_KEYS = ("assetAdministrationShells", "submodels", "conceptDescript
 _XFAIL_STEMS = {
     # Deduplicated Reference nodes shared across multiple parents within one Identifiable:
     # exporter only assigns the shared node to the first parent, leaving others as null.
-    "IDTA 02011-1-1_Template_HSEBoM",
-    "IDTA 02017-1-0_Template_Asset Interfaces Description",
-    "IDTA 02027-1-0_Template_AIMC ",
-    "IDTA 02045-1-0_Template_DataModelForAssetLocation",
+    # "IDTA 02011-1-1_Template_HSEBoM",
+    # "IDTA 02017-1-0_Template_Asset Interfaces Description",
+    # "IDTA 02027-1-0_Template_AIMC ",
+    # "IDTA 02045-1-0_Template_DataModelForAssetLocation",
     # Deduplication merges Reference nodes that differ only in referredSemanticId (a nested
     # relationship), producing graph cycles. The exporter handles cycles without crashing but
     # cannot fully reconstruct the original structure.

@@ -247,7 +247,10 @@ class AASNeo4JClient(JsonToNeo4jImporter, JsonFromNeo4jExporter):
             f"CALL apoc.path.subgraphAll({found_parent_node}, {{relationshipFilter: '>'}}) YIELD nodes, relationships "
             # FIXME: refactor cypher here and use model_config.virtual_relationships
             "WHERE NOT EXISTS { MATCH (node)-[:references]-() } "
-            "RETURN apoc.convert.toJson({nodes: nodes, relationships: relationships}) AS json;"
+            "WITH nodes "
+            "OPTIONAL MATCH (a)-[r]->(b) WHERE a IN nodes AND b IN nodes "
+            "WITH nodes, collect(r) AS allRels "
+            "RETURN apoc.convert.toJson({nodes: nodes, relationships: allRels}) AS json;"
         )
         result = self.execute_clause(find_node_clause + get_subgraph_clause, single=True)
         if result is None:
