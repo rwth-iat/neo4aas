@@ -21,10 +21,10 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         self.uid_counter = 0
 
         # e.g. {HASH: uid}
-        self.deduplicated_nodes: dict[str: int] = {}
-        self.deduplicated_to_existing_uid_map: dict[int: int] = {}
+        self.deduplicated_nodes: dict[str, int] = {}
+        self.deduplicated_to_existing_uid_map: dict[int, int] = {}
         self.deduplicated_rels: set[str] = set()
-        self.uid_to_internal_id: dict[str: int] = {}
+        self.uid_to_internal_id: dict[str, int] = {}
 
     def _gen_unique_node_name(self) -> int:
         self.uid_counter += 1
