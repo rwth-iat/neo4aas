@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import time
-from copy import deepcopy
 from os.path import join, isfile
 from typing import Optional, List, Dict, Tuple, Any
 
@@ -66,8 +65,7 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         
         UNWIND nodesProperties AS nodeProperties
         CALL apoc.create.node(labels, nodeProperties) YIELD node AS n
-        SET n = nodeProperties
-        
+
         RETURN elementId(n) AS internal_id, nodeProperties.uid AS uid
         """
 
@@ -92,40 +90,36 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
     def _create_relationships(self, session: Session, relationships: Dict[str, List],
                               uid_to_internal_id: Dict[int, int], db_batch_size: int = 10000):
         """Create relationships in Neo4j."""
-        created_rels = 0
+        create_rels_query = """
+        UNWIND $relationships AS rel
+        MATCH (from_node) WHERE elementId(from_node) = rel.from_id
+        MATCH (to_node) WHERE elementId(to_node) = rel.to_id
+        CALL apoc.create.relationship(from_node, rel.rel_type, rel.rel_props, to_node) YIELD rel AS r
+        RETURN count(*) AS created
+        """
+
+        all_rels = []
         for rel_type, rel_list in relationships.items():
-            for i in range(0, len(rel_list), db_batch_size):
-                batch_rels = rel_list[i:i + db_batch_size]
-                prepared_rels = []
-                for rel in batch_rels:
-                    try:
-                        prepared_rels.append({
-                            'from_id': uid_to_internal_id[rel['from_uid']],
-                            'to_id': uid_to_internal_id[rel['to_uid']],
-                            'rel_props': rel['rel_props']
-                        })
-                    except KeyError:
-                        logger.warning(
-                            f"Skipping relationship {rel_type} from {rel['from_uid']} to {rel['to_uid']} due to missing UID mapping.")
-                        continue
+            for rel in rel_list:
+                try:
+                    all_rels.append({
+                        'from_id': uid_to_internal_id[rel['from_uid']],
+                        'to_id': uid_to_internal_id[rel['to_uid']],
+                        'rel_type': rel_type,
+                        'rel_props': rel['rel_props']
+                    })
+                except KeyError:
+                    logger.warning(
+                        f"Skipping relationship {rel_type} from {rel['from_uid']} to {rel['to_uid']} due to missing UID mapping.")
 
-                if prepared_rels:
-                    # Create relationships in batch
-                    create_rels_query = f"""
-                    UNWIND $relationships AS rel
-                    MATCH (from_node) WHERE elementId(from_node) = rel.from_id
-                    MATCH (to_node) WHERE elementId(to_node) = rel.to_id
-                    CREATE (from_node)-[r:{rel_type}]->(to_node)
-                    SET r = rel.rel_props
-                    RETURN count(*) as created
-                    """
-
-                    try:
-                        result = session.run(create_rels_query, relationships=prepared_rels)
-                        created = result.single()['created']
-                        created_rels += created
-                    except TransientError as e:
-                        logger.error(f"Transient error during relationship creation batch: {e}")
+        created_rels = 0
+        for i in range(0, len(all_rels), db_batch_size):
+            batch = all_rels[i:i + db_batch_size]
+            try:
+                result = session.run(create_rels_query, relationships=batch)
+                created_rels += result.single()['created']
+            except TransientError as e:
+                logger.error(f"Transient error during relationship creation batch: {e}")
 
         return created_rels
 
@@ -138,8 +132,7 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
             filtered_nodes = []
             for node in nodes:
                 # Deterministic JSON hash from properties
-                node_copy = deepcopy(node)
-                node_copy.pop("uid")
+                node_copy = {k: v for k, v in node.items() if k != "uid"}
                 hash_value = hashlib.sha256(json.dumps(node_copy, sort_keys=True).encode()).hexdigest()
 
                 if hash_value in self.deduplicated_nodes:

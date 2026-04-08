@@ -12,6 +12,7 @@ aas_mapping/
 │   ├── aas_neo4j_client.py      # Main API: AASNeo4JClient
 │   ├── base.py                  # BaseNeo4JClient, Neo4jModelConfig
 │   ├── utils.py                 # UploadStats, hash helpers
+│   ├── validation.py            # AASConstraintChecker — spec constraint validation
 │   ├── neo_aas_object_store.py  # basyx-sdk AbstractObjectStore for Neo4j
 │   ├── jsonification/
 │   │   ├── neo4j_import.py      # JSON → Neo4j (JsonToNeo4jImporter)
@@ -27,7 +28,9 @@ aas_mapping/
 │   ├── cypher/                  # Generated Cypher scripts
 │   └── submodels/               # IDTA template submodel JSON files
 └── test/
-    └── test_aasql2ast.py        # Unit tests for AASQL → AST parsing
+    ├── test_aasql2ast.py        # Unit tests for AASQL → AST parsing
+    ├── test_roundtrip.py        # Integration: JSON ↔ Neo4j round-trip tests
+    └── test_constraint_checker.py  # Unit + integration tests for AASConstraintChecker
 ```
 
 ---
@@ -226,8 +229,50 @@ print(cypher)
 ## Testing
 
 ```bash
-python -m pytest aas_mapping/test/
+uv run pytest aas_mapping/test/
 ```
+
+Integration tests require a live Neo4j instance (`bolt://localhost:7687`, user `neo4j`, password `12345678`). They are skipped automatically if Neo4j is unreachable.
+
+---
+
+## Constraint Validation
+
+`AASConstraintChecker` validates AAS data already loaded in Neo4j against the AAS specification constraints. It runs Cypher queries and returns structured `ConstraintViolation` records grouped in a `ConstraintReport`.
+
+```python
+from aas_mapping.aas_neo4j_adapter.validation import AASConstraintChecker
+
+checker = AASConstraintChecker(
+    uri="bolt://localhost:7687",
+    user="neo4j",
+    password="12345678",
+)
+report = checker.check_all()
+print(report.summary())
+```
+
+### Implemented constraints
+
+| Constraint | Description |
+|---|---|
+| AASd-002 | `idShort` must match `[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+` |
+| AASd-005 | `revision` requires `version` in `AdministrativeInformation` |
+| AASd-014 | `SelfManagedEntity` must have `globalAssetId` or `specificAssetId` |
+| AASd-021 | Qualifier `type` must be unique within a `Qualifiable` |
+| AASd-022 | `idShort` must be unique within the parent namespace |
+| AASd-077 | Extension `name` must be unique within a parent |
+| AASd-107 | `SubmodelElementList` child `semanticId` must match `semanticIdListElement` |
+| AASd-108 | `SubmodelElementList` children must match `typeValueListElement` |
+| AASd-109 | `valueTypeListElement` required when `typeValueListElement` is `Property`/`Range` |
+| AASd-114 | All `SubmodelElementList` children with `semanticId` must share the same one |
+| AASd-117 | Non-`Identifiable` `Referable`s not under `SubmodelElementList` must have `idShort` |
+| AASd-118 | `supplementalSemanticIds` requires a `semanticId` |
+| AASd-119 | `TemplateQualifier` requires element `kind = "Template"` |
+| AASd-121 – 129 | Reference key type and ordering constraints |
+| AASd-131 | `AssetInformation` must have `globalAssetId` or at least one `specificAssetId` |
+| AASd-133 | `SpecificAssetId.externalSubjectId` must be an `ExternalReference` |
+| AASd-134 | Operation variable `idShort`s must be unique across in/out/inout |
 
 ---
 
@@ -237,3 +282,4 @@ python -m pytest aas_mapping/test/
 - **Reference resolution**: `ModelReference` and `ExternalReference` targets are stored but not resolved/traversed automatically.
 - **ECLASS**: ECLASS classifications are stored as properties; they are not modeled as a separate node graph.
 - **No authentication management**: Connection credentials are passed directly; no secrets management is included.
+- **Deduplication ignores `referredSemanticId`**: The SHA256 hash used to deduplicate `Reference` nodes covers only flat properties. Two References that differ solely in their `referredSemanticId` relationship are collapsed into one node, which may create graph cycles. The exporter detects and breaks these cycles with a warning, but round-trip fidelity for such elements is lost.
