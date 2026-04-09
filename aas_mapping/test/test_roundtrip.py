@@ -23,6 +23,7 @@ _XFAIL_STEMS = {
     "IDTA 02056-1-0_Template_Data Retention Policies",
 }
 
+# TODO: Define internal keys in one place and import here, to avoid duplication between test modules
 _INTERNAL_KEYS = frozenset({"uid", "hash"})
 
 

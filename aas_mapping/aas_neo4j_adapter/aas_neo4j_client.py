@@ -6,6 +6,7 @@ import json
 from aas_mapping.aas_neo4j_adapter.base import Neo4jModelConfig
 from aas_mapping.aas_neo4j_adapter.jsonification.neo4j_export import JsonFromNeo4jExporter
 from aas_mapping.aas_neo4j_adapter.jsonification.neo4j_import import JsonToNeo4jImporter
+from aas_mapping.aas_neo4j_adapter.xmlification.neo4j_import import XmlToNeo4jImporter
 
 # Configure logging
 logging.basicConfig(level=logging.WARNING)
@@ -90,7 +91,7 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
 )
 
 
-class AASNeo4JClient(JsonToNeo4jImporter, JsonFromNeo4jExporter):
+class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     node_names: Set[str] = set()
 
     def _process_json_data(self, json_data: Dict[str, Any]) -> Tuple[List[Dict], Dict[str, List]]:
