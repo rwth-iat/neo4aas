@@ -17,27 +17,20 @@ _XFAIL_STEMS = {
     "IDTA 02056-1-0_Template_Data Retention Policies",
 }
 
-# TODO: Define internal keys in one place and import here, to avoid duplication between test modules
-_INTERNAL_KEYS = frozenset({"uid", "hash"})
-
-
 def _normalize(value):
     """
-    Recursively strip internal Neo4j artifact keys and remove keys whose
-    values are None or empty collections/strings.
+    Recursively remove keys whose values are None or empty collections/strings,
+    and sort lists of dicts for order-insensitive comparison.
 
-    Lists of dicts are sorted by their serialized form so that the comparison
-    is order-insensitive. Many AAS list relationships (qualifiers, submodels,
-    description, etc.) do not carry a list_index in Neo4j and therefore may
-    be returned in arbitrary order; this is tracked as a bug in TODOs.md.
+    Many AAS list relationships (qualifiers, submodels, description, etc.) do not
+    carry a list_index in Neo4j and may be returned in arbitrary order; this is
+    tracked as a bug in TODOs.md.
 
     Applied symmetrically to both the exported and original dicts.
     """
     if isinstance(value, dict):
         result = {}
         for k, v in value.items():
-            if k in _INTERNAL_KEYS:
-                continue
             normalized = _normalize(v)
             if normalized is None or normalized == [] or normalized == {} or normalized == "":
                 continue

@@ -49,6 +49,9 @@ class UploadStats:
         logger.info(f"Total relationship creation time: {self.total_relationship_creation_time:.2f} seconds")
 
 
+NEO4J_INTERNAL_NODE_KEYS = frozenset({"uid", "hash"})
+
+
 def hash_dict_obj(obj: dict) -> str:
     # Sort keys to ensure deterministic hash
     json_string = json.dumps(obj, sort_keys=True)

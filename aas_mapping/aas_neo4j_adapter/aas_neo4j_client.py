@@ -6,6 +6,7 @@ import json
 from aas_mapping.aas_neo4j_adapter.base import Neo4jModelConfig
 from aas_mapping.aas_neo4j_adapter.jsonification.neo4j_export import JsonFromNeo4jExporter
 from aas_mapping.aas_neo4j_adapter.jsonification.neo4j_import import JsonToNeo4jImporter
+from aas_mapping.aas_neo4j_adapter.utils import NEO4J_INTERNAL_NODE_KEYS
 from aas_mapping.aas_neo4j_adapter.xmlification.neo4j_import import XmlToNeo4jImporter
 
 # Configure logging
@@ -189,9 +190,18 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     def remove_identifiable(self, identifier: str):
         return self.remove_referable(identifier)
 
+    @staticmethod
+    def _strip_internal_keys(value):
+        """Recursively remove Neo4j-internal node properties (uid, hash) from exported dicts."""
+        if isinstance(value, dict):
+            return {k: AASNeo4JClient._strip_internal_keys(v) for k, v in value.items() if k not in NEO4J_INTERNAL_NODE_KEYS}
+        if isinstance(value, list):
+            return [AASNeo4JClient._strip_internal_keys(item) for item in value]
+        return value
+
     def get_referable(self, parent_id: str, id_short_path: str = None) -> Dict:
         subgraph_json = self._get_subgraph_of_referable(parent_id, id_short_path)
-        return self.convert_subgraph_to_data_dict(subgraph_json)
+        return self._strip_internal_keys(self.convert_subgraph_to_data_dict(subgraph_json))
 
     def get_identifiable(self, identifier: str) -> Dict:
         return self.get_referable(identifier)
