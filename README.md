@@ -29,7 +29,7 @@ aas_mapping/
 │   └── submodels/               # IDTA template submodel JSON files
 └── test/
     ├── test_aasql2ast.py        # Unit tests for AASQL → AST parsing
-    ├── test_roundtrip.py        # Integration: JSON ↔ Neo4j round-trip tests
+    ├── test_roundtrip.py        # Integration: JSON and XML ↔ Neo4j round-trip tests
     └── test_constraint_checker.py  # Unit + integration tests for AASConstraintChecker
 ```
 
