@@ -45,13 +45,13 @@ class BaseNeo4JClient:
         self.driver = neo4j.GraphDatabase.driver(uri, auth=(user, password)) if uri else None
         self.model_config = model_config or EMPTY_NEO4J_MODEL_CONFIG
 
-    def execute_clause(self, clause: CypherClause, single: bool = False):
+    def execute_clause(self, clause: CypherClause, single: bool = False, params: dict | None = None):
         """Execute the generated Cypher clauses in the Neo4j database. After execution, the clauses are cleared."""
         with self.driver.session() as session:
             if single:
-                result = session.run(clause).single()
+                result = session.run(clause, **(params or {})).single()
             else:
-                result = session.run(clause)
+                result = session.run(clause, **(params or {}))
                 if result:
                     result = [record for record in result]
             return result

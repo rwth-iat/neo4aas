@@ -6,6 +6,8 @@ import json
 from aas_mapping.aas_neo4j_adapter.base import Neo4jModelConfig
 from aas_mapping.aas_neo4j_adapter.jsonification.neo4j_export import JsonFromNeo4jExporter
 from aas_mapping.aas_neo4j_adapter.jsonification.neo4j_import import JsonToNeo4jImporter
+from aas_mapping.aas_neo4j_adapter.utils import NEO4J_INTERNAL_NODE_KEYS
+from aas_mapping.aas_neo4j_adapter.xmlification.neo4j_import import XmlToNeo4jImporter
 
 # Configure logging
 logging.basicConfig(level=logging.WARNING)
@@ -47,35 +49,39 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
         "CREATE INDEX FOR (r:Referable) ON (r.idShort);",
         "CREATE INDEX rel_list_index FOR () - [r:value]-() ON (r.list_index);"
     ],
-    # In AAS, multiple references may point to the same target. By deduplicating
-    # these references, we ensure that only one canonical instance is created
-    # and reused whenever all reference attributes are identical.
+    # Node types whose instances are content-deduplicated by SHA256 hash of their properties.
+    # When two nodes of a deduplicated type have identical properties, only one is created in
+    # Neo4j and all relationships point to that single canonical node.
     deduplicated_object_types={
         "Reference",
-        # "Qualifier",
-        # "Extension",
         "ConceptDescription",
+        # "Qualifier",           # not deduplicated: qualifiers are structurally identical but semantically distinct per element
+        # "Extension",           # same reasoning as Qualifier
         # "EmbeddedDataSpecification"
     },
-    # Attributes of objects that are lists of dictionaries and should be converted to multiple lists with simple values
-    # BEFORE: keys = [{"type": "GlobalReference", "value": "0173-1#02-AAW001#001"}}, ...]
-    # AFTER:  keys_type = ["GlobalReference", ...]
-    #         keys_value = ["0173-1#02-AAW001#001", ...]
+    # Node properties that are lists of dicts with only scalar values are stored as parallel
+    # flat lists instead, since Neo4j does not support list-of-dict properties.
+    # BEFORE: description = [{"language": "en", "text": "Foo"}, {"language": "de", "text": "Bar"}]
+    # AFTER:  description_language = ["en", "de"]
+    #         description_text     = ["Foo", "Bar"]
     list_of_dicts_prop_as_multiple_list_props={
+        "Reference": ["keys"],
+        "Referable": ["description", "displayName"],
         "MultiLanguageProperty": ["value"],
         "DataSpecificationIec61360": ["preferredName", "shortName", "definition"],
-        "Reference": ["keys"],
-        # "Qualifiable": ["qualifiers"] # Problem: qualifier can have a SemanticId
-        "Referable": ["description", "displayName"],
+        # "Qualifiable": ["qualifiers"]  # excluded: Qualifier can itself contain a Reference (semanticId)
     },
-    # Attributes of objects that are dictionaries and should be converted to multiple properties with simple values
-    # BEFORE: keys = {"type": "GlobalReference", "value": "0173-1#02-AAW001#001"}
-    # AFTER:  keys_type = "GlobalReference"
-    #         keys_value = "0173-1#02-AAW001#001"
+    # Node properties that are flat dicts with only scalar values are inlined as prefixed
+    # scalar properties, since Neo4j does not support dict-typed properties.
+    # BEFORE: defaultThumbnail = {"path": "/img/thumb.png", "contentType": "image/png"}
+    # AFTER:  defaultThumbnail_path        = "/img/thumb.png"
+    #         defaultThumbnail_contentType = "image/png"
+    # Only use this for dicts whose sub-fields are all scalars. Dicts that contain nested
+    # objects or lists must be stored as child nodes via a relationship instead.
     dict_prop_as_multiple_props = {
-        "Reference": ["referredSemanticId"],
         "AssetInformation": ["defaultThumbnail"],
-        # "Identifiable": ["administration"], # Problem: AdministrativeInfo can have a Reference in "creator" attr
+        # "Reference": ["referredSemanticId"],  # excluded: referredSemanticId is itself a Reference with a keys list
+        # "Identifiable": ["administration"],   # excluded: AdministrativeInformation can contain a Reference (creator)
     },
     all_list_item_relationships_have_index = False,
     list_item_relationships_with_index = {
@@ -86,7 +92,7 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
 )
 
 
-class AASNeo4JClient(JsonToNeo4jImporter, JsonFromNeo4jExporter):
+class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     node_names: Set[str] = set()
 
     def _process_json_data(self, json_data: Dict[str, Any]) -> Tuple[List[Dict], Dict[str, List]]:
@@ -184,9 +190,18 @@ class AASNeo4JClient(JsonToNeo4jImporter, JsonFromNeo4jExporter):
     def remove_identifiable(self, identifier: str):
         return self.remove_referable(identifier)
 
+    @staticmethod
+    def _strip_internal_keys(value):
+        """Recursively remove Neo4j-internal node properties (uid, hash) from exported dicts."""
+        if isinstance(value, dict):
+            return {k: AASNeo4JClient._strip_internal_keys(v) for k, v in value.items() if k not in NEO4J_INTERNAL_NODE_KEYS}
+        if isinstance(value, list):
+            return [AASNeo4JClient._strip_internal_keys(item) for item in value]
+        return value
+
     def get_referable(self, parent_id: str, id_short_path: str = None) -> Dict:
         subgraph_json = self._get_subgraph_of_referable(parent_id, id_short_path)
-        return self.convert_subgraph_to_data_dict(subgraph_json)
+        return self._strip_internal_keys(self.convert_subgraph_to_data_dict(subgraph_json))
 
     def get_identifiable(self, identifier: str) -> Dict:
         return self.get_referable(identifier)
@@ -243,7 +258,10 @@ class AASNeo4JClient(JsonToNeo4jImporter, JsonFromNeo4jExporter):
             f"CALL apoc.path.subgraphAll({found_parent_node}, {{relationshipFilter: '>'}}) YIELD nodes, relationships "
             # FIXME: refactor cypher here and use model_config.virtual_relationships
             "WHERE NOT EXISTS { MATCH (node)-[:references]-() } "
-            "RETURN apoc.convert.toJson({nodes: nodes, relationships: relationships}) AS json;"
+            "WITH nodes "
+            "OPTIONAL MATCH (a)-[r]->(b) WHERE a IN nodes AND b IN nodes "
+            "WITH nodes, collect(r) AS allRels "
+            "RETURN apoc.convert.toJson({nodes: nodes, relationships: allRels}) AS json;"
         )
         result = self.execute_clause(find_node_clause + get_subgraph_clause, single=True)
         if result is None:
