@@ -45,6 +45,14 @@ class BaseNeo4JClient:
         self.driver = neo4j.GraphDatabase.driver(uri, auth=(user, password)) if uri else None
         self.model_config = model_config or EMPTY_NEO4J_MODEL_CONFIG
 
+    @classmethod
+    def from_driver(cls, driver: Driver, model_config: Neo4jModelConfig):
+        """Construct an instance sharing an already-open driver (no new connection opened)."""
+        obj = cls.__new__(cls)
+        obj.driver = driver
+        obj.model_config = model_config
+        return obj
+
     def execute_clause(self, clause: CypherClause, single: bool = False, params: dict | None = None):
         """Execute the generated Cypher clauses in the Neo4j database. After execution, the clauses are cleared."""
         with self.driver.session() as session:
