@@ -1,0 +1,8 @@
+{
+  "$condition": {
+    "$ends-with": [
+      { "$field": "$sme.SerialNumber#value" },
+      { "$strVal": "-REV2" }
+    ]
+  }
+}

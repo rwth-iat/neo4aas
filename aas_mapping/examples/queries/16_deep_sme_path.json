@@ -1,0 +1,18 @@
+{
+  "$condition": {
+    "$and": [
+      {
+        "$eq": [
+          { "$field": "$sme.Catalog.Manufacturer#value" },
+          { "$strVal": "ACME Corp" }
+        ]
+      },
+      {
+        "$contains": [
+          { "$field": "$sme.Catalog.ProductName#value" },
+          { "$strVal": "sensor" }
+        ]
+      }
+    ]
+  }
+}

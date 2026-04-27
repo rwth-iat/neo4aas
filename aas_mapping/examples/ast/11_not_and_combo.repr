@@ -1,0 +1,1 @@
+Condition(Not(And([Eq(Field("$sme.Status#value"), StringValue("Inactive")), Lt(Field("$sme.Priority#value"), NumberValue(3))])))

@@ -1,0 +1,18 @@
+{
+  "$condition": {
+    "$and": [
+      {
+        "$eq": [
+          { "$field": "$aas#assetInformation.specificAssetIds[].name" },
+          { "$strVal": "supplierId" }
+        ]
+      },
+      {
+        "$eq": [
+          { "$field": "$aas#assetInformation.specificAssetIds[].value" },
+          { "$strVal": "supplier-007" }
+        ]
+      }
+    ]
+  }
+}

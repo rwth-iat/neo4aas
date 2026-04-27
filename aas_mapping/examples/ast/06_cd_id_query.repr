@@ -1,0 +1,1 @@
+Condition(Eq(Field("$cd#id"), StringValue("https://example.org/cd/TemperatureSensor")))

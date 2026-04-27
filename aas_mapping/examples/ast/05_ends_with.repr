@@ -1,0 +1,1 @@
+Condition(EndsWith(Field("$sme.SerialNumber#value"), StringValue("-REV2")))

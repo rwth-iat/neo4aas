@@ -1,0 +1,1 @@
+Condition(And([Eq(Field("$sme.Catalog.Manufacturer#value"), StringValue("ACME Corp")), Contains(Field("$sme.Catalog.ProductName#value"), StringValue("sensor"))]))

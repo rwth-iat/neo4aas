@@ -1,0 +1,1 @@
+Condition(And([Eq(Field("$sme.MaxTemperature#valueType"), StringValue("xs:double")), Gt(Field("$sme.MaxTemperature#value"), NumberValue(85.0))]))

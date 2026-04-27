@@ -1,0 +1,18 @@
+{
+  "$condition": {
+    "$and": [
+      {
+        "$eq": [
+          { "$field": "$sm#semanticId" },
+          { "$strVal": "https://admin-shell.io/idta/TechnicalData/1/2" }
+        ]
+      },
+      {
+        "$eq": [
+          { "$field": "$sm#idShort" },
+          { "$strVal": "TechnicalData" }
+        ]
+      }
+    ]
+  }
+}

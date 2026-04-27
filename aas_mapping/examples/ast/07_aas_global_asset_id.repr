@@ -1,0 +1,1 @@
+Condition(StartsWith(Field("$aas#assetInformation.globalAssetId"), StringValue("urn:example:")))

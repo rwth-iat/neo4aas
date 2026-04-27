@@ -1,0 +1,20 @@
+{
+  "$condition": {
+    "$not": {
+      "$and": [
+        {
+          "$eq": [
+            { "$field": "$sme.Status#value" },
+            { "$strVal": "Inactive" }
+          ]
+        },
+        {
+          "$lt": [
+            { "$field": "$sme.Priority#value" },
+            { "$numVal": 3 }
+          ]
+        }
+      ]
+    }
+  }
+}

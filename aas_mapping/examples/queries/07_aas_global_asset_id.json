@@ -1,0 +1,8 @@
+{
+  "$condition": {
+    "$starts-with": [
+      { "$field": "$aas#assetInformation.globalAssetId" },
+      { "$strVal": "urn:example:" }
+    ]
+  }
+}

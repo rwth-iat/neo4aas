@@ -1,0 +1,24 @@
+{
+  "$condition": {
+    "$match": [
+      {
+        "$eq": [
+          { "$field": "$sme.OrderItems[].ProductId#value" },
+          { "$strVal": "P-1234" }
+        ]
+      },
+      {
+        "$gt": [
+          { "$field": "$sme.OrderItems[].Quantity#value" },
+          { "$numVal": 0 }
+        ]
+      },
+      {
+        "$eq": [
+          { "$field": "$sme.OrderItems[].Status#value" },
+          { "$strVal": "Shipped" }
+        ]
+      }
+    ]
+  }
+}

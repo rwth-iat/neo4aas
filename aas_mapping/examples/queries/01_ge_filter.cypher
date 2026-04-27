@@ -1,3 +1,4 @@
-MATCH (sm0:Submodel)-[:submodelElements]->(sme:SubmodelElement {idShort: 'Weight'})
-WHERE sme.value >= 100
+MATCH (sm0:Submodel),
+      (sm0)-[:submodelElements]->(sme0:SubmodelElement {idShort: 'Weight'})
+WHERE sme0.value >= 100
 RETURN sm0

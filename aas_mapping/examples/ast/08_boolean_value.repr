@@ -1,0 +1,1 @@
+Condition(Eq(Field("$sme.IsActive#value"), BooleanValue(True)))

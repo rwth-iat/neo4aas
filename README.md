@@ -9,7 +9,8 @@ A proof-of-concept library for mapping [Asset Administration Shell (AAS)](https:
 ```
 aas_mapping/
 ├── aas_neo4j_adapter/
-│   ├── aas_neo4j_client.py      # Main API: AASNeo4JClient
+│   ├── aas_neo4j_client.py      # Thin facade: AASNeo4JClient (inherits importer, composes exporter)
+│   ├── aas_neo4j_importer.py    # AAS-specific import logic, label resolution, AAS_NEO4J_MODEL_CONFIG
 │   ├── base.py                  # BaseNeo4JClient, Neo4jModelConfig
 │   ├── utils.py                 # UploadStats, hash helpers
 │   ├── validation.py            # AASConstraintChecker — spec constraint validation
@@ -23,13 +24,14 @@ aas_mapping/
 │       ├── ast_to_cypher.py     # AST → Cypher (compiler)
 │       └── aasql_to_cypher.py   # Entry point: convert_aasql_to_cypher()
 ├── examples/
-│   ├── queries/                 # Example AASQL queries (JSON)
-│   ├── ast/                     # Expected AST representations
-│   ├── cypher/                  # Generated Cypher scripts
+│   ├── queries/                 # Example AASQL queries (JSON + expected .cypher output)
+│   ├── ast/                     # Expected AST representations (.repr files)
 │   └── submodels/               # IDTA template submodel JSON files
 └── test/
-    ├── test_aasql2ast.py        # Unit tests for AASQL → AST parsing
-    ├── test_roundtrip.py        # Integration: JSON and XML ↔ Neo4j round-trip tests
+    ├── test_aasql2ast.py           # Unit tests for AASQL → AST parsing
+    ├── test_aasql_to_cypher.py     # Unit tests for AST → Cypher compilation
+    ├── test_aasql_integration.py   # Integration tests: AASQL queries against Neo4j
+    ├── test_roundtrip.py           # Integration: JSON and XML ↔ Neo4j round-trip tests
     └── test_constraint_checker.py  # Unit + integration tests for AASConstraintChecker
 ```
 
@@ -113,20 +115,29 @@ AASQL queries are JSON documents compiled to Cypher via `convert_aasql_to_cypher
 
 ### Roots
 
-| AASQL root | Cypher pattern |
+| AASQL root | What it targets |
 |---|---|
-| `$aas` | `(aas:AssetAdministrationShell)` |
-| `$sm` | `(sm:Submodel)` |
-| `$cd` | `(cd:ConceptDescription)` |
-| `$sme.<idShort>` | SubmodelElement traversal by idShort |
+| `$aas` | `AssetAdministrationShell` nodes |
+| `$sm` | `Submodel` nodes |
+| `$cd` | `ConceptDescription` nodes |
+| `$sme` | SubmodelElement traversal (path relative to a Submodel) |
 
 ### Field path syntax
 
 ```
-$<root>#<attribute>[.<nested>]
+$<root>[.<step>[<index>]...]#<attribute>
 ```
 
-Examples: `$aas#idShort`, `$aas#assetInformation.assetType`, `$sme.Color#value`
+| Token | Meaning |
+|---|---|
+| `$sm#id` | `id` property of the matched Submodel |
+| `$sme.Color#value` | Property named `Color` → `.value` |
+| `$sme.Components[]#value` | Any element of `Components` → `.value` |
+| `$sme.Components[0]#value` | Element at index 0 of `Components` |
+| `$sme.A.B#value` | Named step `A`, then named step `B` |
+| `$sme.A[].B#value` | Any element of `A`, then named child `B` |
+| `$sm#semanticId` | First key value of the Submodel's `semanticId` |
+| `$sme.Name[]#language` | Language list of a `MultiLanguageProperty` named `Name` |
 
 ### Supported operators
 
@@ -137,6 +148,30 @@ Examples: `$aas#idShort`, `$aas#assetInformation.assetType`, `$sme.Color#value`
 | Logical | `$and`, `$or`, `$not` |
 | List match | `$match` (all conditions on same list element) |
 | Type casts | `$strCast`, `$numCast`, `$hexCast`, `$boolCast`, `$dateTimeCast`, `$timeCast` |
+
+### `$and` vs `$match` semantics
+
+`$and` evaluates each condition against any matching element independently. Two wildcard conditions in `$and` can match different children:
+
+```json
+{ "$and": [
+    { "$eq": [{"$field": "$sme.Parts[]#value"}, {"$strVal": "Motor"}] },
+    { "$eq": [{"$field": "$sme.Parts[]#value"}, {"$strVal": "Pump"}] }
+]}
+```
+
+This matches a Submodel where `Parts` contains one element with value `Motor` AND another with value `Pump`.
+
+`$match` requires all conditions to be satisfied by the **same** list element:
+
+```json
+{ "$match": [
+    { "$eq": [{"$field": "$sme.Parts[].Name#value"}, {"$strVal": "Motor"}] },
+    { "$eq": [{"$field": "$sme.Parts[].Status#value"}, {"$strVal": "Active"}] }
+]}
+```
+
+This matches only if a single `Parts` child has both `Name = Motor` and `Status = Active`.
 
 ### Example
 
@@ -156,10 +191,11 @@ Examples: `$aas#idShort`, `$aas#assetInformation.assetType`, `$sme.Color#value`
 **Generated Cypher:**
 
 ```cypher
-MATCH (sme_Color:SubmodelElement {idShort: "Color"})
-MATCH (sme_Size:SubmodelElement {idShort: "Size"})
-WHERE sme_Color.value IN ["Blue"] AND sme_Size.value > 50
-RETURN sme_Color, sme_Size
+MATCH (sm0:Submodel),
+      (sm0)-[:submodelElements]->(sme0:SubmodelElement {idShort: 'Color'}),
+      (sm0)-[:submodelElements]->(sme1:SubmodelElement {idShort: 'Size'})
+WHERE sme0.value = 'Blue' AND sme1.value > 50
+RETURN sm0
 ```
 
 ---

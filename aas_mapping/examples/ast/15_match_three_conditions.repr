@@ -1,0 +1,1 @@
+Condition(Match([Eq(Field("$sme.OrderItems[].ProductId#value"), StringValue("P-1234")), Gt(Field("$sme.OrderItems[].Quantity#value"), NumberValue(0)), Eq(Field("$sme.OrderItems[].Status#value"), StringValue("Shipped"))]))

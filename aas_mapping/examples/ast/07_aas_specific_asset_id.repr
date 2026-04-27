@@ -1,0 +1,1 @@
+Condition(And([Eq(Field("$aas#assetInformation.specificAssetIds[].name"), StringValue("supplierId")), Eq(Field("$aas#assetInformation.specificAssetIds[].value"), StringValue("supplier-007"))]))

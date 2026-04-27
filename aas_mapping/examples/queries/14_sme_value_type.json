@@ -1,0 +1,18 @@
+{
+  "$condition": {
+    "$and": [
+      {
+        "$eq": [
+          { "$field": "$sme.MaxTemperature#valueType" },
+          { "$strVal": "xs:double" }
+        ]
+      },
+      {
+        "$gt": [
+          { "$field": "$sme.MaxTemperature#value" },
+          { "$numVal": 85.0 }
+        ]
+      }
+    ]
+  }
+}
