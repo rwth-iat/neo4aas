@@ -32,7 +32,7 @@ def parse_aasql_value(data: dict) -> Value:
             return ast_value_prop_node_type(data[value_prop])
     for value_cast_prop, ast_value_prop_node_type in AASQL_TO_AST_VALUE_NODES_WITH_CAST_MAP.items():
         if value_cast_prop in data:
-            return ast_value_prop_node_type(parse_aasql_value(data[value_prop]))
+            return ast_value_prop_node_type(parse_aasql_value(data[value_cast_prop]))
 
     raise ValueError(f"Unknown value type: {data}")
 
