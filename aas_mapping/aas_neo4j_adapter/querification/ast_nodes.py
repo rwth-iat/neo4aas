@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 from abc import ABC, abstractmethod
 
 
@@ -482,3 +482,19 @@ class Condition(Node):
     expr: Expression
 
     def __repr__(self): return f"Condition({self.expr})"
+
+
+@dataclass
+class Query(Node):
+    """
+    Represents a full AASQL query: optional $select clause + a Condition.
+
+    The spec defines $select="id" as the only allowed value; an absent
+    $select preserves the legacy "return whole anchor node" behavior.
+    """
+    select: Optional[str]
+    condition: Condition
+
+    def __repr__(self):
+        select = f'"{self.select}"' if self.select is not None else "None"
+        return f"Query({select}, {self.condition})"

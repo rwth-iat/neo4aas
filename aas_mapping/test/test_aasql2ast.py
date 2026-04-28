@@ -4,8 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from aas_mapping.aas_neo4j_adapter.querification.aasql_to_ast import parse_aasql_query
-from aas_mapping.aas_neo4j_adapter.querification.ast_to_cypher import converter
+from aas_mapping.aas_neo4j_adapter.querification.aasql_to_ast import (
+    parse_aasql_query,
+    parse_aasql_full,
+)
+from aas_mapping.aas_neo4j_adapter.querification.ast_to_cypher import (
+    converter,
+    converter_full,
+)
 
 
 _QUERY_DIR = Path(__file__).resolve().parents[1] / "examples" / "queries"
@@ -46,7 +52,10 @@ def test_parse_to_ast(stem):
     with open(json_path) as f:
         data = json.load(f)
     expected = repr_path.read_text()
-    actual = repr(parse_aasql_query(data))
+    if "$select" in data:
+        actual = repr(parse_aasql_full(data))
+    else:
+        actual = repr(parse_aasql_query(data))
     assert actual == expected
 
 
@@ -59,5 +68,8 @@ def test_compile_to_cypher(stem):
     with open(json_path) as f:
         data = json.load(f)
     expected = _normalize_cypher(cypher_path.read_text())
-    actual = _normalize_cypher(converter(parse_aasql_query(data)))
+    if "$select" in data:
+        actual = _normalize_cypher(converter_full(parse_aasql_full(data)))
+    else:
+        actual = _normalize_cypher(converter(parse_aasql_query(data)))
     assert actual == expected

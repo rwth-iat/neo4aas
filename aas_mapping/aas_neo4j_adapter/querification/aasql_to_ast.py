@@ -109,3 +109,13 @@ def parse_aasql_query(query: dict) -> Condition:
     """
     expr = parse_aasql_expression(query["$condition"])
     return Condition(expr)
+
+
+def parse_aasql_full(query: dict) -> Query:
+    """
+    Parse a full AASQL query, preserving the optional $select statement.
+
+    Returns a Query wrapper around the parsed Condition.
+    """
+    select = query.get("$select")
+    return Query(select, parse_aasql_query(query))

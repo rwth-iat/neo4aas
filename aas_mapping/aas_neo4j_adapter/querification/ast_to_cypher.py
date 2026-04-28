@@ -1,7 +1,8 @@
 from typing import Tuple
 import re
 
-from aas_mapping.aas_neo4j_adapter.querification.ast_nodes import *
+from aas_mapping.aas_neo4j_adapter.querification.ast_nodes import *  # noqa: F401,F403
+from aas_mapping.aas_neo4j_adapter.querification.ast_nodes import Query
 
 
 def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
@@ -348,4 +349,18 @@ def converter(ast: Condition) -> str:
     cypher = "MATCH " + "\nMATCH ".join(combined_matches)
     cypher += "\nWHERE " + " AND ".join(combined_where)
     cypher += f"\nRETURN {return_var}"
+    return cypher
+
+
+def converter_full(query: Query) -> str:
+    """
+    Convert a full AASQL Query (with optional $select) to Cypher.
+
+    When $select == "id" the RETURN clause emits ``<var>.id`` instead of the
+    bare anchor variable; an absent $select preserves the legacy behavior.
+    Other $select values are not yet defined by the spec.
+    """
+    cypher = converter(query.condition)
+    if query.select == "id":
+        cypher = re.sub(r"\nRETURN (\w+)$", r"\nRETURN \1.id", cypher)
     return cypher
