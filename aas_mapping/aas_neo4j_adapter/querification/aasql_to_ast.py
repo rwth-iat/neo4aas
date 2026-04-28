@@ -29,6 +29,12 @@ def parse_aasql_value(data: dict) -> Value:
         "$dateTimeCast": DateTimeCast,
         "$timeCast": TimeCast,
     }
+    AASQL_TO_AST_TEMPORAL_OPS_MAP = {
+        "$year": Year,
+        "$month": Month,
+        "$dayOfMonth": DayOfMonth,
+        "$dayOfWeek": DayOfWeek,
+    }
 
     for value_prop, ast_value_prop_node_type in AASQL_TO_AST_VALUE_NODES_MAP.items():
         if value_prop in data:
@@ -36,6 +42,17 @@ def parse_aasql_value(data: dict) -> Value:
     for value_cast_prop, ast_value_prop_node_type in AASQL_TO_AST_VALUE_NODES_WITH_CAST_MAP.items():
         if value_cast_prop in data:
             return ast_value_prop_node_type(parse_aasql_value(data[value_cast_prop]))
+    for temporal_prop, ast_temporal_node_type in AASQL_TO_AST_TEMPORAL_OPS_MAP.items():
+        if temporal_prop in data:
+            payload = data[temporal_prop]
+            # Schema currently restricts the operand to a dateTime string literal,
+            # but the BNF permits any dateTimeOperand (literal | cast | global).
+            # Wrap a bare string into DateTimeLiteral; recurse on a dict for forward compat.
+            if isinstance(payload, str):
+                inner = DateTimeLiteral(payload)
+            else:
+                inner = parse_aasql_value(payload)
+            return ast_temporal_node_type(inner)
 
     raise ValueError(f"Unknown value type: {data}")
 

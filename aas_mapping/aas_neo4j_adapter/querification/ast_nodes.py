@@ -208,6 +208,54 @@ class TimeCast(Value):
 
 
 @dataclass
+class Year(Value):
+    """Extract the year from a datetime value (Cypher's `.year` accessor)."""
+    inner: Value
+
+    @staticmethod
+    def get_operator() -> str:
+        return "year"
+
+    def __repr__(self): return f"Year({self.inner})"
+
+
+@dataclass
+class Month(Value):
+    """Extract the month (1-12) from a datetime value."""
+    inner: Value
+
+    @staticmethod
+    def get_operator() -> str:
+        return "month"
+
+    def __repr__(self): return f"Month({self.inner})"
+
+
+@dataclass
+class DayOfMonth(Value):
+    """Extract the day-of-month (1-31) from a datetime value (Cypher's `.day`)."""
+    inner: Value
+
+    @staticmethod
+    def get_operator() -> str:
+        return "day"
+
+    def __repr__(self): return f"DayOfMonth({self.inner})"
+
+
+@dataclass
+class DayOfWeek(Value):
+    """Extract the day-of-week from a datetime value (Cypher's `.dayOfWeek`)."""
+    inner: Value
+
+    @staticmethod
+    def get_operator() -> str:
+        return "dayOfWeek"
+
+    def __repr__(self): return f"DayOfWeek({self.inner})"
+
+
+@dataclass
 class BinaryExpression(Expression):
     """
     Represents a binary expression in the AST.

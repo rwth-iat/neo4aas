@@ -246,6 +246,9 @@ def _convert_value(value: Value, mapping: dict[str, int]) -> Tuple[str, str, boo
         case StrCast() | NumCast() | BoolCast() | DateTimeCast() | HexCast() | TimeCast():
             inner = _convert_value(value.inner, mapping)
             return f"{value.get_operator()}({inner[0]})", inner[1], False
+        case Year() | Month() | DayOfMonth() | DayOfWeek():
+            inner = _convert_value(value.inner, mapping)
+            return f"{inner[0]}.{value.get_operator()}", inner[1], False
         case StringValue() | NumberValue() | BooleanValue():
             return value.value if isinstance(value.value, (int, float, bool)) else f"'{value.value}'", "", False
         case HexLiteral():
