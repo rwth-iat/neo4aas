@@ -1,0 +1,8 @@
+{
+  "$condition": {
+    "$eq": [
+      { "$field": "$sme.OpeningHours#value" },
+      { "$timeVal": "14:30:00" }
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+Condition(Eq(Field("$sme.OpeningHours#value"), TimeLiteral("14:30:00")))
