@@ -1,0 +1,8 @@
+{
+  "$condition": {
+    "$gt": [
+      { "$numCast": { "$field": "$sm#id" } },
+      { "$numVal": 100 }
+    ]
+  }
+}
