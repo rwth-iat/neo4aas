@@ -1,0 +1,8 @@
+{
+  "$condition": {
+    "$eq": [
+      { "$field": "$sme.A#value" },
+      { "$strVal": "x" }
+    ]
+  }
+}
