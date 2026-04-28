@@ -1,26 +1,63 @@
-import os
 import json
-import unittest
+import re
 from pathlib import Path
+
+import pytest
+
 from aas_mapping.aas_neo4j_adapter.querification.aasql_to_ast import parse_aasql_query
-
-class TestQuerriesToAstExamples(unittest.TestCase):
-    def test_examples_parse_to_expected_ast(self):
-        query_dir = "aas_mapping/examples/queries"
-        solution_dir = "aas_mapping/examples/ast"
-        for file_name in os.listdir(query_dir):
-            if file_name.endswith(".json"):
-                query_path = os.path.join(query_dir, file_name)
-                solution_path = os.path.join(solution_dir, file_name.replace(".json", ".repr"))
-                if Path(solution_path).is_file():
-                    with open(query_path) as f:
-                        query = json.load(f)
-                    with open(solution_path) as f:
-                        solution_repr = f.read()
-                    result = parse_aasql_query(query)
-                    self.assertEqual(solution_repr, repr(result), f"Error at {file_name}")
+from aas_mapping.aas_neo4j_adapter.querification.ast_to_cypher import converter
 
 
+_QUERY_DIR = Path(__file__).resolve().parents[1] / "examples" / "queries"
+_AST_DIR = Path(__file__).resolve().parents[1] / "examples" / "ast"
 
-if __name__ == '__main__':
-    unittest.main()
+_FIXTURE_STEMS = sorted(p.stem for p in _QUERY_DIR.glob("*.json"))
+
+
+def _normalize_cypher(s: str) -> str:
+    """Collapse internal whitespace and drop blank lines for Cypher comparison.
+
+    The compiler is deterministic, so equality holds modulo formatting noise
+    between hand-authored and generated fixtures.
+    """
+    lines = []
+    for raw in s.splitlines():
+        stripped = re.sub(r"\s+", " ", raw).strip()
+        if stripped:
+            lines.append(stripped)
+    return "\n".join(lines)
+
+
+@pytest.mark.parametrize("stem", _FIXTURE_STEMS)
+def test_schema_valid(stem, aasql_v32_validator):
+    json_path = _QUERY_DIR / f"{stem}.json"
+    with open(json_path) as f:
+        data = json.load(f)
+    errors = sorted(aasql_v32_validator.iter_errors(data), key=lambda e: e.path)
+    assert not errors, "\n".join(f"{list(e.path)}: {e.message}" for e in errors)
+
+
+@pytest.mark.parametrize("stem", _FIXTURE_STEMS)
+def test_parse_to_ast(stem):
+    json_path = _QUERY_DIR / f"{stem}.json"
+    repr_path = _AST_DIR / f"{stem}.repr"
+    if not repr_path.is_file():
+        pytest.skip(f"no .repr fixture for {stem}")
+    with open(json_path) as f:
+        data = json.load(f)
+    expected = repr_path.read_text()
+    actual = repr(parse_aasql_query(data))
+    assert actual == expected
+
+
+@pytest.mark.parametrize("stem", _FIXTURE_STEMS)
+def test_compile_to_cypher(stem):
+    json_path = _QUERY_DIR / f"{stem}.json"
+    cypher_path = _QUERY_DIR / f"{stem}.cypher"
+    if not cypher_path.is_file():
+        pytest.skip(f"no .cypher fixture for {stem}")
+    with open(json_path) as f:
+        data = json.load(f)
+    expected = _normalize_cypher(cypher_path.read_text())
+    actual = _normalize_cypher(converter(parse_aasql_query(data)))
+    assert actual == expected

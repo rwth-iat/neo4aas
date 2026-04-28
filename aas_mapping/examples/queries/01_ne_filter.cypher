@@ -1,3 +1,3 @@
-MATCH (sm0:Submodel)-[:submodelElements]->(sme:SubmodelElement {idShort: "Material"})
-WHERE sme.value <> 'Plastic'
-RETURN sm0
+MATCH (sm:Submodel)-[:submodelElements]->(sme0:SubmodelElement {idShort: 'Material'})
+WHERE sme0.value <> 'Plastic'
+RETURN sm

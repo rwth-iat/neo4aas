@@ -1,4 +1,4 @@
-MATCH (sm0:Submodel {idShort:"TechnicalData"}),
-      (sm0)-[:value]->(sme0:SubmodelElement {idShort:"Pressure"})
-WHERE sme0.value < 200
-RETURN sm0
+MATCH (sm:Submodel)
+MATCH (sm:Submodel)-[:submodelElements]->(sme0:SubmodelElement {idShort: 'Pressure'})
+WHERE sm.idShort = 'TechnicalData' AND sme0.value < 200
+RETURN sm

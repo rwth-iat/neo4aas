@@ -1,9 +1,29 @@
+import json
 import os
+from pathlib import Path
+
 import pytest
 import neo4j
 from neo4j.exceptions import ServiceUnavailable, AuthError
 
 from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import AASNeo4JClient, AAS_NEO4J_MODEL_CONFIG
+
+
+@pytest.fixture(scope="session")
+def aasql_v32_validator():
+    """Compiled jsonschema validator for the vendored AASQL v3.2 query schema."""
+    import jsonschema
+
+    schema_path = (
+        Path(__file__).resolve().parents[1]
+        / "aas_neo4j_adapter"
+        / "querification"
+        / "spec"
+        / "query-json-schema-v3.2.json"
+    )
+    with open(schema_path) as f:
+        schema = json.load(f)
+    return jsonschema.Draft7Validator(schema)
 
 
 @pytest.fixture(scope="session")
