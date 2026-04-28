@@ -43,10 +43,10 @@ def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
                     else:
                         match_part += f"-[:value]->(sme{depth}:SubmodelElement {{idShort: '{p}'}})"
                 elif len(p) > 1:
-                    # FIXME: take a look here: why we have a list_index for SubmodelELements?
-                    match_part += f"-[:value {{list_index: {p[:-1]}}}]->(sme{depth}:SubmodelElement)"
+                    match_part += f"-[:value {{list_index: {p.rstrip(']')}}}]->(sme{depth}:SubmodelElement)"
                 else:
                     match_part += f"-[:value]->(sme{depth}:SubmodelElement)"
+                last_root = f"sme{depth}"
                 depth += 1
         else:
             if depth == 0:
