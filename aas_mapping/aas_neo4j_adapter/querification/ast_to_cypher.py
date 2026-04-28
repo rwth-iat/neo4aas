@@ -150,14 +150,10 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
                 if last_root == "multiLanguageProperty":
                     where_part += f"{last_root}.value_text"
                     isList = True
-                # If value is part of Reference, then value is part of keys.
-                elif last_root == "reference":
-                    if index is not None:
-                        where_part += f"{last_root}.keys_value[{index}]"
-                        index = None
-                    else:
-                        where_part += f"{last_root}.keys_value"
-                        isList = True
+                # If value follows a keys[..] segment, dereference the flattened keys_value list.
+                elif index is not None:
+                    where_part += f"{last_root}.keys_value[{index}]"
+                    index = None
                 else:
                     where_part += f"{last_root}.value"
             case "externalSubjectId":
@@ -167,20 +163,20 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
                 last_root = f"externalSubjectId{mapping['externalSubjectId']}"
                 mapping["externalSubjectId"] += 1
             case "type":
-                # If type is part of Reference, then type is part of keys.
-                if last_root == "reference":
-                    if index is not None:
-                        where_part += f"{last_root}.keys_type[{index}]"
-                        index = None
-                    else:
-                        where_part += f"{last_root}.keys_type"
-                        isList = True
+                # If type follows a keys[..] segment, dereference the flattened keys_type list.
+                if index is not None:
+                    where_part += f"{last_root}.keys_type[{index}]"
+                    index = None
                 else:
                     where_part += f"{last_root}.type"
-            case "submodels":
+            case _ if part.startswith("submodels"):
                 if "submodels" not in mapping:
                     mapping["submodels"] = 0
-                match_part += f"-[:submodels]->(submodels{mapping['submodels']}:Reference)"
+                if "[" in part:
+                    idx = part[part.index("[") + 1: part.index("]")]
+                    match_part += f"-[:submodels {{list_index: {idx}}}]->(submodels{mapping['submodels']}:Reference)"
+                else:
+                    match_part += f"-[:submodels]->(submodels{mapping['submodels']}:Reference)"
                 last_root = f"submodels{mapping['submodels']}"
                 mapping["submodels"] += 1
             case "semanticId":
@@ -199,7 +195,6 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
                 where_part += f"{last_root}.value_language"
                 isList = True
             case _ if part.startswith("keys"):
-                last_root = "reference"
                 if part.index("[") + 1 < len(part) - 1:
                     index = int(part[part.index("[") + 1: part.index("]")])
             case _ if part.startswith("specificAssetIds"):
