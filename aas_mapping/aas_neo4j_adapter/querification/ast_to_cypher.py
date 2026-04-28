@@ -250,6 +250,12 @@ def _convert_value(value: Value, mapping: dict[str, int]) -> Tuple[str, str, boo
             raise NotImplementedError(f"{type(value)} cannot be converted to Cypher.")
         case StringValue() | NumberValue() | BooleanValue():
             return value.value if isinstance(value.value, (int, float, bool)) else f"'{value.value}'", "", False
+        case HexLiteral():
+            return f"'{value.value}'", "", False
+        case DateTimeLiteral():
+            return f'datetime("{value.value}")', "", False
+        case TimeLiteral():
+            return f'time("{value.value}")', "", False
         case _:
             raise ValueError(f"Unsupported value type: {type(value)}")
 

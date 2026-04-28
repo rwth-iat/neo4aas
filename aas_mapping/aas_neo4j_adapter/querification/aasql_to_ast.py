@@ -17,6 +17,9 @@ def parse_aasql_value(data: dict) -> Value:
         "$strVal": StringValue,
         "$numVal": NumberValue,
         "$boolean": BooleanValue,
+        "$hexVal": HexLiteral,
+        "$dateTimeVal": DateTimeLiteral,
+        "$timeVal": TimeLiteral,
     }
     AASQL_TO_AST_VALUE_NODES_WITH_CAST_MAP = {
         "$strCast": StrCast,

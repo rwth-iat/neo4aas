@@ -78,6 +78,36 @@ class BooleanValue(Value):
 
 
 @dataclass
+class HexLiteral(Value):
+    """
+    Represents an xs:hexBinary literal in the AST. Format: "16#" + hex digits.
+    """
+    value: str
+
+    def __repr__(self): return f'HexLiteral("{self.value}")'
+
+
+@dataclass
+class DateTimeLiteral(Value):
+    """
+    Represents an xs:dateTime literal in the AST.
+    """
+    value: str
+
+    def __repr__(self): return f'DateTimeLiteral("{self.value}")'
+
+
+@dataclass
+class TimeLiteral(Value):
+    """
+    Represents an xs:time literal in the AST.
+    """
+    value: str
+
+    def __repr__(self): return f'TimeLiteral("{self.value}")'
+
+
+@dataclass
 class StrCast(Value):
     """
     Represents a string cast operation in the AST.
