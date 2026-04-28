@@ -1,0 +1,8 @@
+{
+  "$condition": {
+    "$eq": [
+      { "$field": "$smdesc#id" },
+      { "$strVal": "https://example.com/sm/1" }
+    ]
+  }
+}
