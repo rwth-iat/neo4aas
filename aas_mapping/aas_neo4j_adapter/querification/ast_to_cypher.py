@@ -243,11 +243,9 @@ def _convert_value(value: Value, mapping: dict[str, int]) -> Tuple[str, str, boo
     match value:
         case Field():
             return _convert_field(value, mapping)
-        case StrCast() | NumCast() | BoolCast() | DateTimeCast():
+        case StrCast() | NumCast() | BoolCast() | DateTimeCast() | HexCast() | TimeCast():
             inner = _convert_value(value.inner, mapping)
             return f"{value.get_operator()}({inner[0]})", inner[1], False
-        case HexCast() | TimeCast():
-            raise NotImplementedError(f"{type(value)} cannot be converted to Cypher.")
         case StringValue() | NumberValue() | BooleanValue():
             return value.value if isinstance(value.value, (int, float, bool)) else f"'{value.value}'", "", False
         case HexLiteral():

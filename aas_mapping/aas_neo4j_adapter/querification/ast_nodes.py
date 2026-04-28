@@ -146,14 +146,15 @@ class HexCast(Value):
     """
     Represents a hexadecimal cast operation in the AST.
 
-    Attributes:
-        inner (Value): The value to be cast to hexadecimal.
+    Neo4j has no native hex type, so this maps to toString — the comparison
+    is then a string equality between the cast field and a HexLiteral
+    (e.g. ``'16#FF00'``).
     """
     inner: Value
 
     @staticmethod
     def get_operator() -> str:
-        return "toHex"
+        return "toString"
 
     def __repr__(self): return f"Hex({self.inner})"
 
@@ -179,15 +180,12 @@ class BoolCast(Value):
 class DateTimeCast(Value):
     """
     Represents a datetime cast operation in the AST.
-
-    Attributes:
-        inner (Value): The value to be cast to datetime.
     """
     inner: Value
 
     @staticmethod
     def get_operator() -> str:
-        return "date"
+        return "datetime"
 
     def __repr__(self): return f"DateTime({self.inner})"
 
