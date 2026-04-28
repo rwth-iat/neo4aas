@@ -89,6 +89,12 @@ def _convert_root(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
         case "$cd":
             match_part += "(cd:ConceptDescription)"
             last_root = "cd"
+        case "$aasdesc":
+            match_part += "(aasdesc:AssetAdministrationShellDescriptor)"
+            last_root = "aasdesc"
+        case "$smdesc":
+            match_part += "(smdesc:SubmodelDescriptor)"
+            last_root = "smdesc"
         case _:
             match_part, last_root = _convert_sme(root, mapping)
     return match_part, last_root
