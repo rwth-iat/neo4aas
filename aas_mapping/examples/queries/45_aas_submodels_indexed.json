@@ -1,0 +1,8 @@
+{
+  "$condition": {
+    "$eq": [
+      { "$field": "$aas#submodels[0].keys[0].value" },
+      { "$strVal": "urn:sm/1" }
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+Condition(Eq(Field("$aas#submodels[0].keys[0].value"), StringValue("urn:sm/1")))
