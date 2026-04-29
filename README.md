@@ -283,3 +283,13 @@ print(report.summary())
 - **ECLASS**: ECLASS classifications are stored as properties; they are not modeled as a separate node graph.
 - **No authentication management**: Connection credentials are passed directly; no secrets management is included.
 - **Deduplication ignores `referredSemanticId`**: The SHA256 hash used to deduplicate `Reference` nodes covers only flat properties. Two References that differ solely in their `referredSemanticId` relationship are collapsed into one node, which may create graph cycles. The exporter detects and breaks these cycles with a warning, but round-trip fidelity for such elements is lost.
+
+---
+
+## Funding
+This open-source project was developed within the **Wind-X** project.
+This project has received public funding from the **European Union** NextGenerationEU within the Important Project of Common European Interest – Cloud Infrastructures and Services (IPCEI-CIS) under grant agreement 13IPC037G.
+
+<p align="center">
+  <img alt="Bundesministerium für Wirtschaft und Energie (BMWE)-EU funding logo" src="docs/images/logo_sponsored_funding.png" width="400"/>
+</p>
