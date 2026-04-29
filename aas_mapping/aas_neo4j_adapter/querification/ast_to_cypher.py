@@ -237,10 +237,16 @@ def _convert_value(value: Value, mapping: dict[str, int]) -> Tuple[str, str, boo
     Returns:
         For Field: delegate to `_convert_field` and return (where_part, match_part, isList)
         For String/Number/Boolean literal: return (literal_value_string, "", False)
-        For StrCast / NumCast: Not implemented (raises NotImplementedError)
+        For cast wrappers: wrap inner expression with the cast operator.
 
     Literal string values are wrapped in single quotes in the generated Cypher.
     Numeric and boolean values are returned as-is.
+
+    Temporal cast note: ``DateTimeCast`` / ``TimeCast`` emit ``datetime(x)`` /
+    ``time(x)``. This is correct because the ingestion layer stores xs:dateTime
+    and xs:time property values as plain strings — Neo4j converts them at query
+    time via the cast function. Do not change this to a literal comparison
+    without first confirming the ingestion stores native temporal types.
     """
     match value:
         case Field():
@@ -351,9 +357,15 @@ def converter_full(query: Query) -> str:
     """
     Convert a full AASQL Query (with optional $select) to Cypher.
 
-    When $select == "id" the RETURN clause emits ``<var>.id`` instead of the
-    bare anchor variable; an absent $select preserves the legacy behavior.
-    Other $select values are not yet defined by the spec.
+    $select behaviour:
+      - ``"id"``: RETURN clause emits ``<var>.id`` instead of the bare node.
+      - absent / ``None``: returns the full anchor node — same as calling
+        ``converter(query.condition)`` directly. This is the default because
+        the v3.2 spec only defines ``"id"`` as a valid $select value; any
+        other selection semantics are unspecified.
+
+    Descriptor roots ($aasdesc / $smdesc) compile correctly but will return
+    empty results until descriptor ingestion is implemented in neo4j_import.py.
     """
     cypher = converter(query.condition)
     if query.select == "id":

@@ -146,9 +146,12 @@ class HexCast(Value):
     """
     Represents a hexadecimal cast operation in the AST.
 
-    Neo4j has no native hex type, so this maps to toString — the comparison
-    is then a string equality between the cast field and a HexLiteral
-    (e.g. ``'16#FF00'``).
+    Limitation: Neo4j has no native hex type and APOC is not required here,
+    so this maps to ``toString``. That means ``$hexCast`` only works correctly
+    when the stored property is already a hex-formatted string (e.g. ``"16#FF"``)
+    — it does NOT convert an integer field to its hex representation at query time.
+    If integer-to-hex conversion is needed, replace ``toString`` with
+    ``apoc.number.format(x, 'hex')`` and accept the APOC dependency.
     """
     inner: Value
 
