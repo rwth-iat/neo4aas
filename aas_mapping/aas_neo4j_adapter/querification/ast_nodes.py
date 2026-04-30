@@ -146,18 +146,17 @@ class HexCast(Value):
     """
     Represents a hexadecimal cast operation in the AST.
 
-    Limitation: Neo4j has no native hex type and APOC is not required here,
-    so this maps to ``toString``. That means ``$hexCast`` only works correctly
-    when the stored property is already a hex-formatted string (e.g. ``"16#FF"``)
-    — it does NOT convert an integer field to its hex representation at query time.
-    If integer-to-hex conversion is needed, replace ``toString`` with
-    ``apoc.number.format(x, 'hex')`` and accept the APOC dependency.
+    Emits ``'16#' + apoc.text.format('%X', [toInteger(x)])`` — converts an
+    integer field to its uppercase AAS hex representation (e.g. ``16#FF00``)
+    for comparison against a ``$hexVal`` literal.
+
+    Requires APOC Core (``apoc.text.format``)
+
+    Note: if the stored property is an ``xs:hexBinary`` string rather than an
+    integer, use string equality without ``$hexCast`` — ``toInteger`` on a hex
+    string will fail at query time.
     """
     inner: Value
-
-    @staticmethod
-    def get_operator() -> str:
-        return "toString"
 
     def __repr__(self): return f"Hex({self.inner})"
 

@@ -242,6 +242,9 @@ def _convert_value(value: Value, mapping: dict[str, int]) -> Tuple[str, str, boo
     Literal string values are wrapped in single quotes in the generated Cypher.
     Numeric and boolean values are returned as-is.
 
+    ``HexCast`` is handled separately: emits
+    ``'16#' + apoc.text.format('%X', [toInteger(x)])`` using APOC Core
+
     Temporal cast note: ``DateTimeCast`` / ``TimeCast`` emit ``datetime(x)`` /
     ``time(x)``. This is correct because the ingestion layer stores xs:dateTime
     and xs:time property values as plain strings — Neo4j converts them at query
@@ -251,7 +254,10 @@ def _convert_value(value: Value, mapping: dict[str, int]) -> Tuple[str, str, boo
     match value:
         case Field():
             return _convert_field(value, mapping)
-        case StrCast() | NumCast() | BoolCast() | DateTimeCast() | HexCast() | TimeCast():
+        case HexCast():
+            inner = _convert_value(value.inner, mapping)
+            return f"'16#' + apoc.text.format('%X', [toInteger({inner[0]})])", inner[1], False
+        case StrCast() | NumCast() | BoolCast() | DateTimeCast() | TimeCast():
             inner = _convert_value(value.inner, mapping)
             return f"{value.get_operator()}({inner[0]})", inner[1], False
         case Year() | Month() | DayOfMonth() | DayOfWeek():
