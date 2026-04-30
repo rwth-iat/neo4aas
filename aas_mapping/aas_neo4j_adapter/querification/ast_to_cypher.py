@@ -35,7 +35,18 @@ def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
         mapping["sme"] = 0
         depth = 0
     local_depth = 0
-    for part in root.split(".")[1:]:
+    path_segments = root.split(".")[1:]
+
+    # Bare $sme within a $match scope: correlate all refs to the same anchor node
+    if not path_segments and "_match_scope_active" in mapping:
+        if "_match_sme_anchor" in mapping:
+            return "", f"sme{mapping['_match_sme_anchor']}"
+        mapping["_match_sme_anchor"] = depth
+        mapping["sme"] = depth + 1
+        match_part += f"(sme{depth}: SubmodelElement)"
+        return match_part, f"sme{depth}"
+
+    for part in path_segments:
         if "[" in part:
             for p in part.split("["):
                 if "]" not in p:
@@ -302,7 +313,14 @@ def _convert_expression(exp: Expression, mapping: dict[str, int]) -> Tuple[str, 
         case Not():
             inner, fields = _convert_expression(exp.operand, mapping)
             return f"{exp.get_operator()} ({inner})", fields
-        case And() | Or() | Match():
+        case Match():
+            mapping["_match_scope_active"] = True
+            inner = [_convert_expression(e, mapping) for e in exp.operands]
+            mapping.pop("_match_scope_active", None)
+            mapping.pop("_match_sme_anchor", None)
+            operator = exp.get_operator()
+            return f"{f' {operator} '.join(i[0] for i in inner)}", [f for i in inner for f in i[1]]
+        case And() | Or():
             inner = map(lambda e: _convert_expression(e, mapping), exp.operands)
             inner = list(inner)
             operator = exp.get_operator()
