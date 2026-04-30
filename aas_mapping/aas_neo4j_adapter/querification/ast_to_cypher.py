@@ -34,11 +34,12 @@ def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
     else:
         mapping["sme"] = 0
         depth = 0
+    local_depth = 0
     for part in root.split(".")[1:]:
         if "[" in part:
             for p in part.split("["):
                 if "]" not in p:
-                    if depth == 0:
+                    if local_depth == 0:
                         match_part += f"(sme{depth}:SubmodelElement {{idShort: '{p}'}})"
                     else:
                         match_part += f"-[:value]->(sme{depth}:SubmodelElement {{idShort: '{p}'}})"
@@ -48,13 +49,15 @@ def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
                     match_part += f"-[:value]->(sme{depth}:SubmodelElement)"
                 last_root = f"sme{depth}"
                 depth += 1
+                local_depth += 1
         else:
-            if depth == 0:
+            if local_depth == 0:
                 match_part += f"(sme{depth}:SubmodelElement {{idShort: '{part}'}})"
             else:
                 match_part += f"-[:value]->(sme{depth}:SubmodelElement {{idShort: '{part}'}})"
             last_root = f"sme{depth}"
             depth += 1
+            local_depth += 1
     if last_root != "":
         mapping["sme"] = depth
         return match_part, last_root
