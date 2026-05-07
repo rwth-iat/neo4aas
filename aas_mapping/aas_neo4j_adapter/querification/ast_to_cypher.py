@@ -2,7 +2,6 @@ from typing import Tuple
 import re
 
 from aas_mapping.aas_neo4j_adapter.querification.ast_nodes import *  # noqa: F401,F403
-from aas_mapping.aas_neo4j_adapter.querification.ast_nodes import Query
 
 
 def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
@@ -38,13 +37,20 @@ def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
     path_segments = root.split(".")[1:]
 
     # Bare $sme within a $match scope: correlate all refs to the same anchor node
-    if not path_segments and "_match_scope_active" in mapping:
-        if "_match_sme_anchor" in mapping:
-            return "", f"sme{mapping['_match_sme_anchor']}"
-        mapping["_match_sme_anchor"] = depth
+    if not path_segments and mapping.get("_match_scopes"):
+        scope = mapping["_match_scopes"][-1]
+        if scope["anchor"] is not None:
+            return "", f"sme{scope['anchor']}"
+        scope["anchor"] = depth
         mapping["sme"] = depth + 1
         match_part += f"(sme{depth}: SubmodelElement)"
         return match_part, f"sme{depth}"
+
+    # Named path: deduplicate across OR arms so the same SME path reuses one MATCH variable
+    if path_segments:
+        path_cache = mapping.setdefault("_path_cache", {})
+        if root in path_cache:
+            return "", path_cache[root]
 
     for part in path_segments:
         if "[" in part:
@@ -71,6 +77,8 @@ def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
             local_depth += 1
     if last_root != "":
         mapping["sme"] = depth
+        if path_segments:
+            mapping["_path_cache"][root] = last_root
         return match_part, last_root
     match_part += f"(sme{depth}: SubmodelElement)"
     last_root = f"sme{depth}"
@@ -205,11 +213,13 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
             case "valueType":
                 where_part += f"{last_root}.valueType"
             case "language":
-                # FIXME: this should be flexible. We should check here the config and build a Cypher based on config
+                # Hardcoded for AAS: MultiLanguageProperty.value is flattened to value_language[]
+                # per list_of_dicts_prop_as_multiple_list_props config. Decoupling requires
+                # passing Neo4jModelConfig into the converter.
                 where_part += f"{last_root}.value_language"
                 isList = True
             case _ if part.startswith("keys"):
-                if part.index("[") + 1 < len(part) - 1:
+                if part.index("[") + 1 != len(part) - 1:
                     index = int(part[part.index("[") + 1: part.index("]")])
             case _ if part.startswith("specificAssetIds"):
                 # specificAssetIds can be referenced by index
@@ -218,7 +228,7 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
                 if "[]" in part:
                     match_part += f"-[:specificAssetIds]->(specificAssetIds{mapping['specificAssetIds']})"
                 else:
-                    match_part += f"-[:specificAssetIds {{list_index: {part[-2:-1]}}}]->(specificAssetIds{mapping['specificAssetIds']})"
+                    match_part += f"-[:specificAssetIds {{list_index: {part[part.index("[") + 1: part.index("]")]}}}]->(specificAssetIds{mapping['specificAssetIds']})"
                 last_root = f"specificAssetIds{mapping['specificAssetIds']}"
                 mapping["specificAssetIds"] += 1
             case _:
@@ -314,17 +324,20 @@ def _convert_expression(exp: Expression, mapping: dict[str, int]) -> Tuple[str, 
             inner, fields = _convert_expression(exp.operand, mapping)
             return f"{exp.get_operator()} ({inner})", fields
         case Match():
-            mapping["_match_scope_active"] = True
+            scope: dict = {"anchor": None}
+            mapping.setdefault("_match_scopes", []).append(scope)
             inner = [_convert_expression(e, mapping) for e in exp.operands]
-            mapping.pop("_match_scope_active", None)
-            mapping.pop("_match_sme_anchor", None)
+            mapping["_match_scopes"].pop()
             operator = exp.get_operator()
             return f"{f' {operator} '.join(i[0] for i in inner)}", [f for i in inner for f in i[1]]
-        case And() | Or():
-            inner = map(lambda e: _convert_expression(e, mapping), exp.operands)
-            inner = list(inner)
+        case And():
+            inner = list(map(lambda e: _convert_expression(e, mapping), exp.operands))
             operator = exp.get_operator()
             return f"{f' {operator} '.join(i[0] for i in inner)}", [f for i in inner for f in i[1]]
+        case Or():
+            inner = list(map(lambda e: _convert_expression(e, mapping), exp.operands))
+            operator = exp.get_operator()
+            return f"({f' {operator} '.join(i[0] for i in inner)})", [f for i in inner for f in i[1]]
         case _:
             raise ValueError(f"Unsupported expression type: {type(exp)}")
 
@@ -396,5 +409,6 @@ def converter_full(query: Query) -> str:
     """
     cypher = converter(query.condition)
     if query.select == "id":
-        cypher = re.sub(r"\nRETURN (\w+)$", r"\nRETURN \1.id", cypher)
+        prefix, var = cypher.rsplit("\nRETURN ", 1)
+        cypher = prefix + "\nRETURN " + var.strip() + ".id"
     return cypher

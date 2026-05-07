@@ -118,4 +118,6 @@ def parse_aasql_full(query: dict) -> Query:
     Returns a Query wrapper around the parsed Condition.
     """
     select = query.get("$select")
+    if select is not None and select != "id":
+        raise ValueError(f"Unknown $select value: {select!r}")
     return Query(select, parse_aasql_query(query))

@@ -3,7 +3,6 @@ import json
 from typing import Union
 
 from aas_mapping.aas_neo4j_adapter.querification.aasql_to_ast import parse_aasql_full
-from pprint import pprint
 from aas_mapping.aas_neo4j_adapter.querification.ast_to_cypher import converter_full
 
 def convert_aasql_to_cypher(aasql_query: Union[dict, str]) -> str:
@@ -11,7 +10,6 @@ def convert_aasql_to_cypher(aasql_query: Union[dict, str]) -> str:
         aasql_query = json.loads(aasql_query)
 
     ast = parse_aasql_full(aasql_query)
-    pprint(ast)
     cypher = converter_full(ast)
     return cypher
 
