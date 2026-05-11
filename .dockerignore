@@ -1,0 +1,7 @@
+.venv/
+aas_mapping/examples/real_aas/
+aas_mapping/test/test_data/
+*.pyc
+__pycache__/
+*.egg-info/
+.git/
