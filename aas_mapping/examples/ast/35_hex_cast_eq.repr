@@ -1,0 +1,1 @@
+Condition(Eq(Hex(Field("$sme.Checksum#value")), HexLiteral("16#FF00")))

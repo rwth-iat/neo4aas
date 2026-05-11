@@ -1,0 +1,8 @@
+{
+  "$condition": {
+    "$and": [
+      { "$eq": [ { "$field": "$sm#idShort" }, { "$strVal": "EventLog" } ] },
+      { "$eq": [ { "$dayOfMonth": "2026-04-28T00:00:00Z" }, { "$numVal": 28 } ] }
+    ]
+  }
+}

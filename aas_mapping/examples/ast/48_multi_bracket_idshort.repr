@@ -1,0 +1,1 @@
+Condition(Eq(Field("$sme.arr[1][2]#value"), StringValue("foo")))

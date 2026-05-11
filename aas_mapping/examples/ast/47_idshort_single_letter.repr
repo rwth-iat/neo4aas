@@ -1,0 +1,1 @@
+Condition(Eq(Field("$sme.A#value"), StringValue("x")))

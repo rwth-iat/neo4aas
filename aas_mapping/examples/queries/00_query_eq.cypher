@@ -1,3 +1,4 @@
-MATCH (aas:AssetAdministrationShell)-[:assetInformation]->(assetInformation)  
-WHERE aas.idShort = assetInformation.assetType
+MATCH (aas:AssetAdministrationShell)
+MATCH (aas:AssetAdministrationShell)-[:assetInformation]->(assetInformation0:AssetInformation)
+WHERE aas.idShort = assetInformation0.assetType
 RETURN aas

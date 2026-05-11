@@ -1,0 +1,8 @@
+{
+  "$condition": {
+    "$eq": [
+      { "$hexCast": { "$field": "$sme.Checksum#value" } },
+      { "$hexVal": "16#FF00" }
+    ]
+  }
+}

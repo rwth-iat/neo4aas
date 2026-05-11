@@ -1,0 +1,1 @@
+Condition(Eq(DateTime(Field("$sme.Created#value")), DateTimeLiteral("2026-01-01T00:00:00Z")))

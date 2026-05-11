@@ -1,0 +1,1 @@
+Condition(Eq(Field("$smdesc#id"), StringValue("https://example.com/sm/1")))

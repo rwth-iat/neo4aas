@@ -1,0 +1,1 @@
+Condition(Eq(Field("$sme.my-element#value"), StringValue("test")))

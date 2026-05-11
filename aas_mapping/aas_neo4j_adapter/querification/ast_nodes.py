@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 from abc import ABC, abstractmethod
 
 
@@ -78,6 +78,36 @@ class BooleanValue(Value):
 
 
 @dataclass
+class HexLiteral(Value):
+    """
+    Represents an xs:hexBinary literal in the AST. Format: "16#" + hex digits.
+    """
+    value: str
+
+    def __repr__(self): return f'HexLiteral("{self.value}")'
+
+
+@dataclass
+class DateTimeLiteral(Value):
+    """
+    Represents an xs:dateTime literal in the AST.
+    """
+    value: str
+
+    def __repr__(self): return f'DateTimeLiteral("{self.value}")'
+
+
+@dataclass
+class TimeLiteral(Value):
+    """
+    Represents an xs:time literal in the AST.
+    """
+    value: str
+
+    def __repr__(self): return f'TimeLiteral("{self.value}")'
+
+
+@dataclass
 class StrCast(Value):
     """
     Represents a string cast operation in the AST.
@@ -116,14 +146,17 @@ class HexCast(Value):
     """
     Represents a hexadecimal cast operation in the AST.
 
-    Attributes:
-        inner (Value): The value to be cast to hexadecimal.
+    Emits ``'16#' + apoc.text.format('%X', [toInteger(x)])`` — converts an
+    integer field to its uppercase AAS hex representation (e.g. ``16#FF00``)
+    for comparison against a ``$hexVal`` literal.
+
+    Requires APOC Core (``apoc.text.format``)
+
+    Note: if the stored property is an ``xs:hexBinary`` string rather than an
+    integer, use string equality without ``$hexCast`` — ``toInteger`` on a hex
+    string will fail at query time.
     """
     inner: Value
-
-    @staticmethod
-    def get_operator() -> str:
-        return "toHex"
 
     def __repr__(self): return f"Hex({self.inner})"
 
@@ -149,15 +182,12 @@ class BoolCast(Value):
 class DateTimeCast(Value):
     """
     Represents a datetime cast operation in the AST.
-
-    Attributes:
-        inner (Value): The value to be cast to datetime.
     """
     inner: Value
 
     @staticmethod
     def get_operator() -> str:
-        return "date"
+        return "datetime"
 
     def __repr__(self): return f"DateTime({self.inner})"
 
@@ -177,6 +207,54 @@ class TimeCast(Value):
         return "time"
 
     def __repr__(self): return f"Time({self.inner})"
+
+
+@dataclass
+class Year(Value):
+    """Extract the year from a datetime value (Cypher's `.year` accessor)."""
+    inner: Value
+
+    @staticmethod
+    def get_operator() -> str:
+        return "year"
+
+    def __repr__(self): return f"Year({self.inner})"
+
+
+@dataclass
+class Month(Value):
+    """Extract the month (1-12) from a datetime value."""
+    inner: Value
+
+    @staticmethod
+    def get_operator() -> str:
+        return "month"
+
+    def __repr__(self): return f"Month({self.inner})"
+
+
+@dataclass
+class DayOfMonth(Value):
+    """Extract the day-of-month (1-31) from a datetime value (Cypher's `.day`)."""
+    inner: Value
+
+    @staticmethod
+    def get_operator() -> str:
+        return "day"
+
+    def __repr__(self): return f"DayOfMonth({self.inner})"
+
+
+@dataclass
+class DayOfWeek(Value):
+    """Extract the day-of-week from a datetime value (Cypher's `.dayOfWeek`)."""
+    inner: Value
+
+    @staticmethod
+    def get_operator() -> str:
+        return "dayOfWeek"
+
+    def __repr__(self): return f"DayOfWeek({self.inner})"
 
 
 @dataclass
@@ -406,3 +484,19 @@ class Condition(Node):
     expr: Expression
 
     def __repr__(self): return f"Condition({self.expr})"
+
+
+@dataclass
+class Query(Node):
+    """
+    Represents a full AASQL query: optional $select clause + a Condition.
+
+    The spec defines $select="id" as the only allowed value; an absent
+    $select preserves the legacy "return whole anchor node" behavior.
+    """
+    select: Optional[str]
+    condition: Condition
+
+    def __repr__(self):
+        select = f'"{self.select}"' if self.select is not None else "None"
+        return f"Query({select}, {self.condition})"

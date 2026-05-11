@@ -1,0 +1,8 @@
+{
+  "$condition": {
+    "$eq": [
+      { "$field": "$aasdesc#idShort" },
+      { "$strVal": "MyAASDescriptor" }
+    ]
+  }
+}

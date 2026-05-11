@@ -15,6 +15,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest>=7.0",
+    "jsonschema>=4.0",
 ]
 
 [tool.setuptools.packages.find]

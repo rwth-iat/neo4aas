@@ -1,7 +1,7 @@
 from typing import Tuple
 import re
 
-from aas_mapping.aas_neo4j_adapter.querification.ast_nodes import *
+from aas_mapping.aas_neo4j_adapter.querification.ast_nodes import *  # noqa: F401,F403
 
 
 def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
@@ -33,29 +33,52 @@ def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
     else:
         mapping["sme"] = 0
         depth = 0
-    for part in root.split(".")[1:]:
+    local_depth = 0
+    path_segments = root.split(".")[1:]
+
+    # Bare $sme within a $match scope: correlate all refs to the same anchor node
+    if not path_segments and mapping.get("_match_scopes"):
+        scope = mapping["_match_scopes"][-1]
+        if scope["anchor"] is not None:
+            return "", f"sme{scope['anchor']}"
+        scope["anchor"] = depth
+        mapping["sme"] = depth + 1
+        match_part += f"(sme{depth}: SubmodelElement)"
+        return match_part, f"sme{depth}"
+
+    # Named path: deduplicate across OR arms so the same SME path reuses one MATCH variable
+    if path_segments:
+        path_cache = mapping.setdefault("_path_cache", {})
+        if root in path_cache:
+            return "", path_cache[root]
+
+    for part in path_segments:
         if "[" in part:
             for p in part.split("["):
                 if "]" not in p:
-                    if depth == 0:
+                    if local_depth == 0:
                         match_part += f"(sme{depth}:SubmodelElement {{idShort: '{p}'}})"
                     else:
                         match_part += f"-[:value]->(sme{depth}:SubmodelElement {{idShort: '{p}'}})"
                 elif len(p) > 1:
-                    # FIXME: take a look here: why we have a list_index for SubmodelELements?
-                    match_part += f"-[:value {{list_index: {p[:-1]}}}]->(sme{depth}:SubmodelElement)"
+                    match_part += f"-[:value {{list_index: {p.rstrip(']')}}}]->(sme{depth}:SubmodelElement)"
                 else:
                     match_part += f"-[:value]->(sme{depth}:SubmodelElement)"
+                last_root = f"sme{depth}"
                 depth += 1
+                local_depth += 1
         else:
-            if depth == 0:
+            if local_depth == 0:
                 match_part += f"(sme{depth}:SubmodelElement {{idShort: '{part}'}})"
             else:
                 match_part += f"-[:value]->(sme{depth}:SubmodelElement {{idShort: '{part}'}})"
             last_root = f"sme{depth}"
             depth += 1
+            local_depth += 1
     if last_root != "":
         mapping["sme"] = depth
+        if path_segments:
+            mapping["_path_cache"][root] = last_root
         return match_part, last_root
     match_part += f"(sme{depth}: SubmodelElement)"
     last_root = f"sme{depth}"
@@ -89,6 +112,12 @@ def _convert_root(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
         case "$cd":
             match_part += "(cd:ConceptDescription)"
             last_root = "cd"
+        case "$aasdesc":
+            match_part += "(aasdesc:AssetAdministrationShellDescriptor)"
+            last_root = "aasdesc"
+        case "$smdesc":
+            match_part += "(smdesc:SubmodelDescriptor)"
+            last_root = "smdesc"
         case _:
             match_part, last_root = _convert_sme(root, mapping)
     return match_part, last_root
@@ -143,14 +172,10 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
                 if last_root == "multiLanguageProperty":
                     where_part += f"{last_root}.value_text"
                     isList = True
-                # If value is part of Reference, then value is part of keys.
-                elif last_root == "reference":
-                    if index is not None:
-                        where_part += f"{last_root}.keys_value[{index}]"
-                        index = None
-                    else:
-                        where_part += f"{last_root}.keys_value"
-                        isList = True
+                # If value follows a keys[..] segment, dereference the flattened keys_value list.
+                elif index is not None:
+                    where_part += f"{last_root}.keys_value[{index}]"
+                    index = None
                 else:
                     where_part += f"{last_root}.value"
             case "externalSubjectId":
@@ -160,20 +185,20 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
                 last_root = f"externalSubjectId{mapping['externalSubjectId']}"
                 mapping["externalSubjectId"] += 1
             case "type":
-                # If type is part of Reference, then type is part of keys.
-                if last_root == "reference":
-                    if index is not None:
-                        where_part += f"{last_root}.keys_type[{index}]"
-                        index = None
-                    else:
-                        where_part += f"{last_root}.keys_type"
-                        isList = True
+                # If type follows a keys[..] segment, dereference the flattened keys_type list.
+                if index is not None:
+                    where_part += f"{last_root}.keys_type[{index}]"
+                    index = None
                 else:
                     where_part += f"{last_root}.type"
-            case "submodels":
+            case _ if part.startswith("submodels"):
                 if "submodels" not in mapping:
                     mapping["submodels"] = 0
-                match_part += f"-[:submodels]->(submodels{mapping['submodels']}:Reference)"
+                if "[" in part:
+                    idx = part[part.index("[") + 1: part.index("]")]
+                    match_part += f"-[:submodels {{list_index: {idx}}}]->(submodels{mapping['submodels']}:Reference)"
+                else:
+                    match_part += f"-[:submodels]->(submodels{mapping['submodels']}:Reference)"
                 last_root = f"submodels{mapping['submodels']}"
                 mapping["submodels"] += 1
             case "semanticId":
@@ -188,12 +213,13 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
             case "valueType":
                 where_part += f"{last_root}.valueType"
             case "language":
-                # FIXME: this should be flexible. We should check here the config and build a Cypher based on config
+                # Hardcoded for AAS: MultiLanguageProperty.value is flattened to value_language[]
+                # per list_of_dicts_prop_as_multiple_list_props config. Decoupling requires
+                # passing Neo4jModelConfig into the converter.
                 where_part += f"{last_root}.value_language"
                 isList = True
             case _ if part.startswith("keys"):
-                last_root = "reference"
-                if part.index("[") + 1 < len(part) - 1:
+                if part.index("[") + 1 != len(part) - 1:
                     index = int(part[part.index("[") + 1: part.index("]")])
             case _ if part.startswith("specificAssetIds"):
                 # specificAssetIds can be referenced by index
@@ -202,7 +228,7 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
                 if "[]" in part:
                     match_part += f"-[:specificAssetIds]->(specificAssetIds{mapping['specificAssetIds']})"
                 else:
-                    match_part += f"-[:specificAssetIds {{list_index: {part[-2:-1]}}}]->(specificAssetIds{mapping['specificAssetIds']})"
+                    match_part += f"-[:specificAssetIds {{list_index: {part[part.index("[") + 1: part.index("]")]}}}]->(specificAssetIds{mapping['specificAssetIds']})"
                 last_root = f"specificAssetIds{mapping['specificAssetIds']}"
                 mapping["specificAssetIds"] += 1
             case _:
@@ -235,21 +261,40 @@ def _convert_value(value: Value, mapping: dict[str, int]) -> Tuple[str, str, boo
     Returns:
         For Field: delegate to `_convert_field` and return (where_part, match_part, isList)
         For String/Number/Boolean literal: return (literal_value_string, "", False)
-        For StrCast / NumCast: Not implemented (raises NotImplementedError)
+        For cast wrappers: wrap inner expression with the cast operator.
 
     Literal string values are wrapped in single quotes in the generated Cypher.
     Numeric and boolean values are returned as-is.
+
+    ``HexCast`` is handled separately: emits
+    ``'16#' + apoc.text.format('%X', [toInteger(x)])`` using APOC Core
+
+    Temporal cast note: ``DateTimeCast`` / ``TimeCast`` emit ``datetime(x)`` /
+    ``time(x)``. This is correct because the ingestion layer stores xs:dateTime
+    and xs:time property values as plain strings — Neo4j converts them at query
+    time via the cast function. Do not change this to a literal comparison
+    without first confirming the ingestion stores native temporal types.
     """
     match value:
         case Field():
             return _convert_field(value, mapping)
-        case StrCast() | NumCast() | BoolCast() | DateTimeCast():
+        case HexCast():
+            inner = _convert_value(value.inner, mapping)
+            return f"'16#' + apoc.text.format('%X', [toInteger({inner[0]})])", inner[1], False
+        case StrCast() | NumCast() | BoolCast() | DateTimeCast() | TimeCast():
             inner = _convert_value(value.inner, mapping)
             return f"{value.get_operator()}({inner[0]})", inner[1], False
-        case HexCast() | TimeCast():
-            raise NotImplementedError(f"{type(value)} cannot be converted to Cypher.")
+        case Year() | Month() | DayOfMonth() | DayOfWeek():
+            inner = _convert_value(value.inner, mapping)
+            return f"{inner[0]}.{value.get_operator()}", inner[1], False
         case StringValue() | NumberValue() | BooleanValue():
             return value.value if isinstance(value.value, (int, float, bool)) else f"'{value.value}'", "", False
+        case HexLiteral():
+            return f"'{value.value}'", "", False
+        case DateTimeLiteral():
+            return f'datetime("{value.value}")', "", False
+        case TimeLiteral():
+            return f'time("{value.value}")', "", False
         case _:
             raise ValueError(f"Unsupported value type: {type(value)}")
 
@@ -278,11 +323,21 @@ def _convert_expression(exp: Expression, mapping: dict[str, int]) -> Tuple[str, 
         case Not():
             inner, fields = _convert_expression(exp.operand, mapping)
             return f"{exp.get_operator()} ({inner})", fields
-        case And() | Or() | Match():
-            inner = map(lambda e: _convert_expression(e, mapping), exp.operands)
-            inner = list(inner)
+        case Match():
+            scope: dict = {"anchor": None}
+            mapping.setdefault("_match_scopes", []).append(scope)
+            inner = [_convert_expression(e, mapping) for e in exp.operands]
+            mapping["_match_scopes"].pop()
             operator = exp.get_operator()
             return f"{f' {operator} '.join(i[0] for i in inner)}", [f for i in inner for f in i[1]]
+        case And():
+            inner = list(map(lambda e: _convert_expression(e, mapping), exp.operands))
+            operator = exp.get_operator()
+            return f"{f' {operator} '.join(i[0] for i in inner)}", [f for i in inner for f in i[1]]
+        case Or():
+            inner = list(map(lambda e: _convert_expression(e, mapping), exp.operands))
+            operator = exp.get_operator()
+            return f"({f' {operator} '.join(i[0] for i in inner)})", [f for i in inner for f in i[1]]
         case _:
             raise ValueError(f"Unsupported expression type: {type(exp)}")
 
@@ -335,4 +390,25 @@ def converter(ast: Condition) -> str:
     cypher = "MATCH " + "\nMATCH ".join(combined_matches)
     cypher += "\nWHERE " + " AND ".join(combined_where)
     cypher += f"\nRETURN {return_var}"
+    return cypher
+
+
+def converter_full(query: Query) -> str:
+    """
+    Convert a full AASQL Query (with optional $select) to Cypher.
+
+    $select behaviour:
+      - ``"id"``: RETURN clause emits ``<var>.id`` instead of the bare node.
+      - absent / ``None``: returns the full anchor node — same as calling
+        ``converter(query.condition)`` directly. This is the default because
+        the v3.2 spec only defines ``"id"`` as a valid $select value; any
+        other selection semantics are unspecified.
+
+    Descriptor roots ($aasdesc / $smdesc) compile correctly but will return
+    empty results until descriptor ingestion is implemented in neo4j_import.py.
+    """
+    cypher = converter(query.condition)
+    if query.select == "id":
+        prefix, var = cypher.rsplit("\nRETURN ", 1)
+        cypher = prefix + "\nRETURN " + var.strip() + ".id"
     return cypher

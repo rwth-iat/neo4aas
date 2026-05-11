@@ -1,0 +1,8 @@
+{
+  "$condition": {
+    "$eq": [
+      { "$strCast": { "$field": "$aas#id" } },
+      { "$strVal": "myAAS" }
+    ]
+  }
+}

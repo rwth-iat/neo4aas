@@ -1,0 +1,1 @@
+Condition(Eq(Str(Field("$aas#id")), StringValue("myAAS")))

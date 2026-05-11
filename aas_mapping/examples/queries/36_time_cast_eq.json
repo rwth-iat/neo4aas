@@ -1,0 +1,8 @@
+{
+  "$condition": {
+    "$eq": [
+      { "$timeCast": { "$field": "$sme.OpenTime#value" } },
+      { "$timeVal": "09:00:00" }
+    ]
+  }
+}
