@@ -180,8 +180,8 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         clauses, referable_node = self._find_node_clause(parent_id, id_short_path)
         delete_clause = (
             f"CALL apoc.path.subgraphAll({referable_node}, {{relationshipFilter: '>'}}) YIELD nodes "
-            "WHERE NOT EXISTS { MATCH (node)-[:references]-() } "
             "UNWIND nodes AS node "
+            "WITH node, nodes WHERE NOT EXISTS { MATCH (other)-[]->(node) WHERE NOT other IN nodes } "
             "DETACH DELETE node "
             "RETURN count(node) AS deletedNodes; "
         )
@@ -217,6 +217,21 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
 
     def count_identifiables(self) -> int:
         return self.count_nodes_with_label("Identifiable")
+
+    def create_reference_relationships(self) -> int:
+        """Create :references edges from ModelReference nodes to the Identifiable they point to.
+
+        Matches keys_value[0] of each ModelReference against Identifiable.id.
+        Returns the number of relationships created.
+        """
+        clause = (
+            "MATCH (r:Reference {type: 'ModelReference'}) "
+            "MATCH (target:Identifiable {id: r.keys_value[0]}) "
+            "MERGE (r)-[:references]->(target) "
+            "RETURN count(*) AS created"
+        )
+        result = self.execute_clause(clause, single=True)
+        return result["created"] if result else 0
 
     def _find_node(self, parent_id: str, id_short_path: Optional[str] = None) -> int:
         """
@@ -256,8 +271,6 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         find_node_clause, found_parent_node = self._find_node_clause(parent_id, id_short_path)
         get_subgraph_clause = (
             f"CALL apoc.path.subgraphAll({found_parent_node}, {{relationshipFilter: '>'}}) YIELD nodes, relationships "
-            # FIXME: refactor cypher here and use model_config.virtual_relationships
-            "WHERE NOT EXISTS { MATCH (node)-[:references]-() } "
             "WITH nodes "
             "OPTIONAL MATCH (a)-[r]->(b) WHERE a IN nodes AND b IN nodes "
             "WITH nodes, collect(r) AS allRels "
