@@ -1,12 +1,11 @@
 """
 WSGI entry point for AAS Repository Server with Neo4j backend and AASQL query support.
-Uses Neo4jWSGIApp which extends basyx's WSGIApp with /query/shells and /query/submodels routes.
 """
 import logging
 import os
 
+from app.interfaces.repository import WSGIApp
 from aas_mapping.server.backend.neo4j import build_neo4j_storage
-from aas_mapping.server.neo4j_wsgi_app import Neo4jWSGIApp
 
 
 def setup_logger() -> logging.Logger:
@@ -36,7 +35,7 @@ logger.info(
 
 storage_files, supp_files = build_neo4j_storage(env_input, logger)
 
-application = Neo4jWSGIApp(storage_files, supp_files, **wsgi_optparams)
+application = WSGIApp(storage_files, supp_files, **wsgi_optparams)
 
 if __name__ == "__main__":
     logger.info("WSGI entrypoint created. Serve with uWSGI/Gunicorn/etc.")
