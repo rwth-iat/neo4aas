@@ -61,3 +61,26 @@ class Neo4jObjectStore(AbstractObjectStore[Identifier, Identifiable]):
         result = self._client.execute_clause(clause)
         for record in result:
             yield self.get_identifiable(record["id"])
+
+    def query(self, aasql_body: str, return_var: str) -> list[dict]:
+        """Execute an AASQL query and return matching serialized AAS objects.
+
+        Satisfies the ``QueryableObjectStore`` protocol defined in the server layer.
+
+        :param aasql_body: raw AASQL JSON string
+        :param return_var: Cypher return variable (``"sm"`` for submodels, ``"aas"`` for shells)
+        :return: list of serialized AAS/Submodel dicts
+        """
+        from aas_mapping.aas_neo4j_adapter.querification.aasql_to_cypher import convert_aasql_to_cypher
+        cypher = convert_aasql_to_cypher(aasql_body)
+        records = self._client.execute_clause(cypher) or []
+        results = []
+        for record in records:
+            if return_var in record.keys():
+                obj_id = record[return_var]["id"]
+            elif f"{return_var}.id" in record.keys():
+                obj_id = record[f"{return_var}.id"]
+            else:
+                continue
+            results.append(self._client.get_identifiable(obj_id))
+        return results
