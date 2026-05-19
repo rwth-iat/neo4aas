@@ -35,7 +35,25 @@ logger.info(
 
 storage_files, supp_files = build_neo4j_storage(env_input, logger)
 
-application = WSGIApp(storage_files, supp_files, **wsgi_optparams)
+_wsgi_app = WSGIApp(storage_files, supp_files, **wsgi_optparams)
+
+_CORS_HEADERS = [
+    ("Access-Control-Allow-Origin", "*"),
+    ("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD"),
+    ("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, Origin"),
+    ("Access-Control-Max-Age", "86400"),
+]
+
+
+def application(environ, start_response):
+    if environ.get("REQUEST_METHOD") == "OPTIONS":
+        start_response("204 No Content", _CORS_HEADERS + [("Content-Length", "0")])
+        return [b""]
+
+    def _start(status, headers, exc_info=None):
+        return start_response(status, headers + _CORS_HEADERS, exc_info)
+
+    return _wsgi_app(environ, _start)
 
 if __name__ == "__main__":
     logger.info("WSGI entrypoint created. Serve with uWSGI/Gunicorn/etc.")
