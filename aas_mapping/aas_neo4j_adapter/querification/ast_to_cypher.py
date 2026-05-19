@@ -316,8 +316,10 @@ def _convert_expression(exp: Expression, mapping: dict[str, int]) -> Tuple[str, 
             left = _convert_value(exp.left, mapping)
             right = _convert_value(exp.right, mapping)
             operator = exp.get_operator()
-            # If field returns a list, compare using IN operator
+            # If field returns a list, compare using IN (scalar IN list — scalar on left)
             if (left[2] or right[2]) and operator == "=":
+                if left[2]:
+                    return f"{right[0]} IN {left[0]}", [left[1], right[1]]
                 return f"{left[0]} IN {right[0]}", [left[1], right[1]]
             return f"{left[0]} {operator} {right[0]}", [left[1], right[1]]
         case Not():
