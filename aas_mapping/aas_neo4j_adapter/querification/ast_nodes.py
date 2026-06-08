@@ -136,7 +136,7 @@ class NumCast(Value):
 
     @staticmethod
     def get_operator() -> str:
-        return "toInteger"
+        return "toFloat"
 
     def __repr__(self): return f"Num({self.inner})"
 
