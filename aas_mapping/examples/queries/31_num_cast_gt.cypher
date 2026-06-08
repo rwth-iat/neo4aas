@@ -1,3 +1,3 @@
 MATCH (sm:Submodel)
-WHERE toInteger(sm.id) > 100
+WHERE toFloat(sm.id) > 100
 RETURN sm
