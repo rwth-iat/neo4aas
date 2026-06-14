@@ -1,0 +1,13 @@
+Submodel type distribution  (total: 29973, IDTA templates loaded: 49)
+  idShort                              semanticId                                                     Count   Share  Origin
+  ------------------------------------------------------------------------------------------------------------------------
+  Nameplate                            https://admin-shell.io/zvei/nameplate/2/0/Nameplate             9991   33.3%  IDTA (deprecated)
+  TechnicalData                        https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2          9991   33.3%  IDTA
+  HandoverDocumentation                https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2          9991   33.3%  IDTA
+
+Submodels per AAS  (n=9981 shells)
+  min                3
+  max                6
+  mean            3.00
+  median           3.0
+  std             0.09

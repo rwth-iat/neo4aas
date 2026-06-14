@@ -1,0 +1,15 @@
+Conformance check — AASX — data/Epsilon_AAS_AASX
+Files to check: 1722
+
+============================================================
+Files checked          : 1722
+Parse errors           : 0
+Files with errors      : 1722  (100.0%)
+Files with warnings    : 0  (0.0%)
+Total error violations : 1722
+Total warnings         : 0
+
+------------------------------------------------------------
+Errors by type (sorted by frequency):
+------------------------------------------------------------
+    1722  AASd-129

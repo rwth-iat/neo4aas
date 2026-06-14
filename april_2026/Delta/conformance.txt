@@ -1,0 +1,27 @@
+Conformance check — XML — data/Delta_AAS_XML
+Files to check: 9991
+
+============================================================
+Files checked          : 9991
+Parse errors           : 0
+Files with errors      : 9991  (100.0%)
+Files with warnings    : 3950  (39.5%)
+Total error violations : 32843
+Total warnings         : 3950
+
+------------------------------------------------------------
+Errors by type (sorted by frequency):
+------------------------------------------------------------
+    8685  Not a valid path
+    6038  Field UriOfTheProduct: found 12 elements with semanticId 0173-1#02-AAY811#001, but at most 1 allowed
+    6038  Field ManufacturerName: found 0 elements with semanticId 0173-1#02-AAO677#002, but at least 1 required
+    6038  Field ManufacturerProductDesignation: found 0 elements with semanticId 0173-1#02-AAW338#001, but at least 1 required
+    6038  Field YearOfConstruction: found 0 elements with semanticId 0173-1#02-AAP906#001, but at least 1 required
+       2  Constraint violated: Property 'text' is too long (1139 > 1023
+       2  Constraint violated: Property 'text' is too long (1063 > 1023
+       2  Constraint violated: Property 'text' is too long (1025 > 1023
+
+------------------------------------------------------------
+Warnings by type (sorted by frequency):
+------------------------------------------------------------
+    3950  Skipped checking of constraints

@@ -1,0 +1,40 @@
+SubmodelElement subtype distribution  (total: 8711543)
+  Type                                    Count    Share
+  ------------------------------------------------------
+  Property                              2935707    33.7%
+  MultiLanguageProperty                 2892434    33.2%
+  SubmodelElementCollection             1471947    16.9%
+  Entity                                1230863    14.1%
+  File                                   167296     1.9%
+  SubmodelElementList                     13270     0.2%
+  RelationshipElement                        21     0.0%
+  ReferenceElement                            5     0.0%
+
+valueType distribution  (elements with valueType: 2935707)
+  valueType                     Count    Share
+  --------------------------------------------
+  xs:string                   2818967    96.0%
+  xs:float                      71962     2.5%
+  xs:boolean                    26537     0.9%
+  xs:integer                    17582     0.6%
+  xs:double                       362     0.0%
+  xs:int                          165     0.0%
+  xs:date                         107     0.0%
+  xs:anyURI                        14     0.0%
+  xs:unsignedLong                   6     0.0%
+  xs:dateTime                       5     0.0%
+
+Optional metamodel feature usage
+  Feature                                 Count
+  ----------------------------------------------
+  Submodel — Qualifier                        0
+  Submodel — Extension                        0
+  SubmodelElement — Qualifier               461
+  SubmodelElement — Extension                 0
+  embeddedDataSpecification (any)       1125192
+
+--- STDERR ---
+WARNING:neo4j.notifications:Received notification from DBMS server: <GqlStatusObject gql_status='01N51', status_description='warn: relationship type does not exist. The relationship type `extensions` does not exist. Verify that the spelling is correct.', position=<SummaryInputPosition line=1, column=21, offset=20>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 20, 'line': 1, 'column': 21}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: 'MATCH (:Submodel)-[:extensions]->(:Extension) RETURN count(*) AS c'
+WARNING:neo4j.notifications:Received notification from DBMS server: <GqlStatusObject gql_status='01N50', status_description='warn: label does not exist. The label `Extension` does not exist. Verify that the spelling is correct.', position=<SummaryInputPosition line=1, column=36, offset=35>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 35, 'line': 1, 'column': 36}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: 'MATCH (:Submodel)-[:extensions]->(:Extension) RETURN count(*) AS c'
+WARNING:neo4j.notifications:Received notification from DBMS server: <GqlStatusObject gql_status='01N51', status_description='warn: relationship type does not exist. The relationship type `extensions` does not exist. Verify that the spelling is correct.', position=<SummaryInputPosition line=1, column=28, offset=27>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 27, 'line': 1, 'column': 28}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: 'MATCH (:SubmodelElement)-[:extensions]->(:Extension) RETURN count(*) AS c'
+WARNING:neo4j.notifications:Received notification from DBMS server: <GqlStatusObject gql_status='01N50', status_description='warn: label does not exist. The label `Extension` does not exist. Verify that the spelling is correct.', position=<SummaryInputPosition line=1, column=43, offset=42>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 42, 'line': 1, 'column': 43}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: 'MATCH (:SubmodelElement)-[:extensions]->(:Extension) RETURN count(*) AS c'

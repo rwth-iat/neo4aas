@@ -1,0 +1,42 @@
+semanticId coverage
+                                    With     Total    Share
+  --------------------------------------------------------
+  Submodel                          3444      3444   100.0%
+  SubmodelElement                 439307    439307   100.0%
+
+ID-type distribution  (total occurrences: 439307)
+  Type           Count    Share
+  ------------------------------
+  IRDI          435863    99.2%
+  IRI             3444     0.8%
+
+Source distribution  (total occurrences: 439307)
+  Source           Count    Share
+  --------------------------------
+  ECLASS          400726    91.2%
+  IEC CDD          35137     8.0%
+  IDTA              3444     0.8%
+
+Top semanticIds by occurrence (top 20):
+     Count  Type    Source    ID
+  ----------------------------------------------------------------------
+     21629  IRDI    ECLASS    0173-1#02-ABI502#003/0173-1#01-AHF581#003*01
+     21629  IRDI    ECLASS    0173-1#02-ABI501#003/0173-1#01-AHF580#001*03
+     21629  IRDI    ECLASS    0173-1#02-ABI503#003/0173-1#01-AHF582#003*01
+     21629  IRDI    ECLASS    0173-1#02-ABI500#003/0173-1#01-AHF579#003*01
+     21629  IRDI    ECLASS    0173-1#02-ABH996#003
+     21629  IRDI    ECLASS    0173-1#02-ABH997#003
+     21629  IRDI    ECLASS    0173-1#02-ABH994#003
+     21629  IRDI    ECLASS    0173-1#02-AAO099#004
+     21629  IRDI    ECLASS    0173-1#02-ABI004#003
+     21629  IRDI    ECLASS    0173-1#02-ABI002#003
+     21629  IRDI    ECLASS    0173-1#02-ABI000#003
+     21629  IRDI    ECLASS    0173-1#02-ABI001#003
+     21629  IRDI    ECLASS    0173-1#02-AAP003#005
+     21629  IRDI    ECLASS    0173-1#02-ABJ219#003
+     21629  IRDI    ECLASS    0173-1#02-ABG940#004
+     21629  IRDI    ECLASS    0173-1#02-ABK126#003
+     19792  IRDI    ECLASS    0173-1#02-AAN468#009
+     13991  IRDI    ECLASS    0173-1#02-AAN466#004
+     13991  IRDI    ECLASS    0173-1#02-ABH999#003
+      2912  IRDI    IEC CDD   0112/2///61360_7#AAS009#001

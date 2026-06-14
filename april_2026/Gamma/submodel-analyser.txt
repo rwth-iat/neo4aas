@@ -1,0 +1,26 @@
+Submodel type distribution  (total: 112924, IDTA templates loaded: 49)
+  idShort                              semanticId                                                     Count   Share  Origin
+  ------------------------------------------------------------------------------------------------------------------------
+  Nameplate                            https://admin-shell.io/zvei/nameplate/2/0/Nameplate            18962   16.8%  IDTA (deprecated)
+  MCAD                                 https://admin-shell.io/sandbox/idta/handover/MCAD/0/1/         18962   16.8%  Proprietary
+  Electrical_and_Fluid_CAD             https://admin-shell.io/sandbox/idta/handover/EFCAD/0/1/        18962   16.8%  Proprietary
+  HandoverDocumentation                0173-1#01-AHF578#001                                           18863   16.7%  IDTA (deprecated)
+  TechnicalData                        https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2         18863   16.7%  IDTA
+  ContactInformations                  https://admin-shell.io/zvei/nameplate/1/0/ContactInformations   18003   15.9%  IDTA
+  HandoverDocumentation                0173-1#01-AHF578#003                                              99    0.1%  IDTA
+  SimulationModels                     https://admin-shell.io/idta/SimulationModels/SimulationModels/1/0      99    0.1%  IDTA
+  TechnicalData                        0173-1#01-AHX837#002                                              98    0.1%  IDTA
+  SoftwareNameplate                    https://admin-shell.io/idta/SoftwareNameplate/1/0                  7    0.0%  IDTA
+  HierarchicalStructures               https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel       1    0.0%  IDTA
+  History                                                                                                 1    0.0%  —
+  OperationalData                                                                                         1    0.0%  —
+  RDecision                                                                                               1    0.0%  —
+  ProductChangeNotifications           0173-10029#01-XFB001#001                                           1    0.0%  Proprietary
+  Reliability                          https://admin-shell.io/idta/iec62683/1/0/Reliability               1    0.0%  IDTA
+
+Submodels per AAS  (n=18962 shells)
+  min                5
+  max               14
+  mean            5.96
+  median           6.0
+  std             0.24

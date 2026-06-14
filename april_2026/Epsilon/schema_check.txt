@@ -1,0 +1,17 @@
+Schema validation — AASX — data/Epsilon_AAS_AASX  [known version 3.0]
+Files to check: 1722
+
+Inner format detected: XML (0 JSON, 1722 XML)
+
+--- AAS Schema 3.0 ---
+Schema-valid files  : 1722 / 1722  (100.0%)
+XSD violations total:    0
+
+============================================================
+Known AAS version : 3.0  (0 violations)
+============================================================
+
+
+--- Constraint check (AAS 3.0) ---
+Checked 27 constraint(s). 45469 violation(s) found.
+  AASd-129: 45469 violation(s) — SubmodelElement has TemplateQualifier but is not under a Template Submodel

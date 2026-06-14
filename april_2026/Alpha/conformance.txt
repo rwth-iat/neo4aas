@@ -1,0 +1,20 @@
+Conformance check — JSON — data/Alpha_AAS_JSON
+Files to check: 117418
+
+============================================================
+Files checked          : 117418
+Parse errors           : 0
+Files with errors      : 117418  (100.0%)
+Files with warnings    : 117418  (100.0%)
+Total error violations : 355838
+Total warnings         : 117418
+
+------------------------------------------------------------
+Errors by type (sorted by frequency):
+------------------------------------------------------------
+  355838  String is shorter than 1 characters
+
+------------------------------------------------------------
+Warnings by type (sorted by frequency):
+------------------------------------------------------------
+  117418  Skipped checking of constraints

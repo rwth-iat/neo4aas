@@ -1,0 +1,12 @@
+Submodel type distribution  (total: 3444, IDTA templates loaded: 49)
+  idShort                              semanticId                                                     Count   Share  Origin
+  ------------------------------------------------------------------------------------------------------------------------
+  HandoverDocumentation                0173-1#01-AHF578#001                                            1722   50.0%  IDTA (deprecated)
+  Nameplate                            https://admin-shell.io/idta/nameplate/3/0/Nameplate             1722   50.0%  IDTA
+
+Submodels per AAS  (n=1722 shells)
+  min                2
+  max                2
+  mean            2.00
+  median           2.0
+  std             0.00

@@ -1,0 +1,23 @@
+Conformance check — JSON — data/IDTA_AAS_JSON_V3_1
+Files to check: 40
+
+============================================================
+Files checked          : 40
+Parse errors           : 0
+Files with errors      : 2  (5.0%)
+Files with warnings    : 40  (100.0%)
+Total error violations : 19
+Total warnings         : 2163
+
+------------------------------------------------------------
+Errors by type (sorted by frequency):
+------------------------------------------------------------
+       9  AASd-120
+       8  AASd-014
+       2  AASd-118
+
+------------------------------------------------------------
+Warnings by type (sorted by frequency):
+------------------------------------------------------------
+    2162  dataSpecification/keys[0] has unexpected <e> <v> expected <e>
+       1  dataSpecification/keys[0] has unexpected <e> <v> https://admin-shell.io/idta/euromap/Moulds/Identification/ManufacturerURI/1/0 , expected <e>

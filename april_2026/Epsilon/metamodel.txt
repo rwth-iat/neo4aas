@@ -1,0 +1,31 @@
+SubmodelElement subtype distribution  (total: 439307)
+  Type                                    Count    Share
+  ------------------------------------------------------
+  Property                               235216    53.5%
+  SubmodelElementCollection               91150    20.7%
+  MultiLanguageProperty                   84956    19.3%
+  File                                    26263     6.0%
+  SubmodelElementList                      1722     0.4%
+
+valueType distribution  (elements with valueType: 235216)
+  valueType                     Count    Share
+  --------------------------------------------
+  xs:string                    207230    88.1%
+  xs:date                       26264    11.2%
+  xs:anyURI                      1722     0.7%
+
+Optional metamodel feature usage
+  Feature                                 Count
+  ----------------------------------------------
+  Submodel — Qualifier                        0
+  Submodel — Extension                        0
+  SubmodelElement — Qualifier            788050
+  SubmodelElement — Extension                 0
+  embeddedDataSpecification (any)             0
+
+--- STDERR ---
+WARNING:neo4j.notifications:Received notification from DBMS server: <GqlStatusObject gql_status='01N51', status_description='warn: relationship type does not exist. The relationship type `extensions` does not exist. Verify that the spelling is correct.', position=<SummaryInputPosition line=1, column=21, offset=20>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 20, 'line': 1, 'column': 21}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: 'MATCH (:Submodel)-[:extensions]->(:Extension) RETURN count(*) AS c'
+WARNING:neo4j.notifications:Received notification from DBMS server: <GqlStatusObject gql_status='01N50', status_description='warn: label does not exist. The label `Extension` does not exist. Verify that the spelling is correct.', position=<SummaryInputPosition line=1, column=36, offset=35>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 35, 'line': 1, 'column': 36}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: 'MATCH (:Submodel)-[:extensions]->(:Extension) RETURN count(*) AS c'
+WARNING:neo4j.notifications:Received notification from DBMS server: <GqlStatusObject gql_status='01N51', status_description='warn: relationship type does not exist. The relationship type `extensions` does not exist. Verify that the spelling is correct.', position=<SummaryInputPosition line=1, column=28, offset=27>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 27, 'line': 1, 'column': 28}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: 'MATCH (:SubmodelElement)-[:extensions]->(:Extension) RETURN count(*) AS c'
+WARNING:neo4j.notifications:Received notification from DBMS server: <GqlStatusObject gql_status='01N50', status_description='warn: label does not exist. The label `Extension` does not exist. Verify that the spelling is correct.', position=<SummaryInputPosition line=1, column=43, offset=42>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 42, 'line': 1, 'column': 43}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: 'MATCH (:SubmodelElement)-[:extensions]->(:Extension) RETURN count(*) AS c'
+WARNING:neo4j.notifications:Received notification from DBMS server: <GqlStatusObject gql_status='01N51', status_description='warn: relationship type does not exist. The relationship type `embeddedDataSpecifications` does not exist. Verify that the spelling is correct.', position=<SummaryInputPosition line=1, column=12, offset=11>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 11, 'line': 1, 'column': 12}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: 'MATCH ()-[:embeddedDataSpecifications]->() RETURN count(*) AS c'

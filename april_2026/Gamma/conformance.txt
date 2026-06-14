@@ -1,0 +1,22 @@
+Conformance check — JSON — data/Gamma_AAS_JSON
+Files to check: 18962
+
+============================================================
+Files checked          : 18962
+Parse errors           : 0
+Files with errors      : 18962  (100.0%)
+Files with warnings    : 18962  (100.0%)
+Total error violations : 1732251
+Total warnings         : 18962
+
+------------------------------------------------------------
+Errors by type (sorted by frequency):
+------------------------------------------------------------
+  1729573  String is shorter than 1 characters
+    2675  Not a valid path
+       3  Empty array not allowed
+
+------------------------------------------------------------
+Warnings by type (sorted by frequency):
+------------------------------------------------------------
+   18962  Skipped checking of constraints

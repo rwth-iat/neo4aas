@@ -1,0 +1,19 @@
+Schema validation — XML — data/Delta_AAS_XML  [known version 3.0]
+Files to check: 9991
+
+--- AAS Schema 3.0 ---
+Schema-valid files  :    0 / 9991  (0.0%)
+XSD violations total: 9991
+
+============================================================
+Known AAS version : 3.0  (9991 violations)
+============================================================
+
+------------------------------------------------------------
+XSD violations by type (AAS 3.0, sorted by frequency):
+------------------------------------------------------------
+    9991  Element '{https://admin-shell.io/aas/3/0}idShort': This element is not expected. Expected is one of ( {https://admin-shell.io/aas/3/0}semanticId, {https://admin-shell.io/aas/3/0}supplementalSemanticIds, {https://admin-shell.io/aas/3/0}qualifiers, {https://admin-shell.io/aas/3/0}embeddedDataSpecifications, {https://admin-shell.io/aas/3/0}value ).
+
+
+--- Constraint check (AAS 3.0) ---
+Checked 27 constraint(s). 0 violation(s) found.

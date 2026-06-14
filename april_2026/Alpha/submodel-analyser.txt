@@ -1,0 +1,17 @@
+Submodel type distribution  (total: 482842, IDTA templates loaded: 49)
+  idShort                              semanticId                                                     Count   Share  Origin
+  ------------------------------------------------------------------------------------------------------------------------
+  Nameplate                            https://admin-shell.io/zvei/nameplate/2/0/Nameplate           117418   24.3%  IDTA (deprecated)
+  TechnicalData                        https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2        117418   24.3%  IDTA
+  ContactInformation                   https://admin-shell.io/zvei/nameplate/1/0/ContactInformation  117418   24.3%  Proprietary
+  MCAD                                 https://admin-shell.io/sandbox/idta/handover/MCAD/0/1/        117418   24.3%  Proprietary
+  CarbonFootprint                      https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/1/0    7614    1.6%  IDTA
+  Electrical_and_Fluid_CAD             https://admin-shell.io/sandbox/eplan/EFCAD/0/1/                 5546    1.1%  Proprietary
+  ProductChangeNotifications           0173-1#01-AHE582#003                                              10    0.0%  Proprietary
+
+Submodels per AAS  (n=117418 shells)
+  min                4
+  max                7
+  mean            4.11
+  median           4.0
+  std             0.39

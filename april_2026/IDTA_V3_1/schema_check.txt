@@ -1,0 +1,35 @@
+Schema validation — JSON — data/IDTA_AAS_JSON_V3_1  [known version 3.1]
+Files to check: 40
+
+--- AAS Schema 3.1 ---
+Schema-valid files  :   37 / 40  (92.5%)
+AJV violations total: 82339
+
+============================================================
+Known AAS version : 3.1  (82339 violations)
+============================================================
+
+------------------------------------------------------------
+AJV violations by type (AAS 3.1, sorted by frequency):
+------------------------------------------------------------
+   34164  const — must be equal to constant
+   28914  pattern — must match pattern "^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+$"
+    2630  oneOf — must match exactly one schema in oneOf
+    2628  required — observed
+    2628  required — direction
+    2628  required — state
+    2503  required — typeValueListElement
+    1692  type — must be string
+    1429  required — language
+    1429  required — text
+    1128  required — valueType
+     564  type — must be object
+       2  pattern — must match pattern "^([\x09\x0a\x0d\x20-\ud7ff\ue000-\ufffd]|\ud800[\udc00-\udfff]|[\ud801-\udbfe][\udc00-\udfff]|\udbff[\udc00-\udfff])*$"
+
+
+--- Constraint check (AAS 3.1) ---
+Checked 25 constraint(s). 51 violation(s) found.
+  AASd-002: 40 violation(s) — idShort 'X' does not match the required pattern
+  AASd-014: 8 violation(s) — SelfManagedEntity has neither globalAssetId nor specificAssetId
+  AASd-021: 1 violation(s) — Duplicate qualifier type 'FormInfo'
+  AASd-118: 2 violation(s) — supplementalSemanticIds present but semanticId is missing

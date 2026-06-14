@@ -1,0 +1,41 @@
+Conformance check — JSON — data/IDTA_AAS_JSON_V3_0
+Files to check: 86
+
+============================================================
+Files checked          : 86
+Parse errors           : 0
+Files with errors      : 28  (32.6%)
+Files with warnings    : 83  (96.5%)
+Total error violations : 534
+Total warnings         : 4547
+
+------------------------------------------------------------
+Errors by type (sorted by frequency):
+------------------------------------------------------------
+     350  AASc-3a-008
+      73  AASd-120
+      43  AASd-127
+      17  AASd-123
+      16  AASd-014
+       8  Cannot convert to lang string: no value
+       5  AASd-121
+       4  AASd-118
+       4  AASc-3a-009
+       3  String is shorter than 1 characters
+       2  Value '[0;100]' is not a 'xs:double'
+       1  ' 0173-1#07-AAS754#001' is not a valid TypeOfFaxNumber
+       1  Cannot convert to string: no value
+       1  Value 'C:\Windows\Program Files\Demo\Firmware' is not a 'xs:anyURI' @ SoftwareNameplateInstance.InstallationPath in Submodel SoftwareNameplate[https://admin-shell.io/idta/SubmodelTemplate/SoftwareNameplate/1/0]
+       1  Value 'C:\Users\mw30\Documents\ZVEI\AKITinAutomation\20210113' is not a 'xs:anyURI' @ SoftwareNameplateInstance.ConfigurationPaths.ConfigurationPath.ConfigurationURI in Submodel SoftwareNameplate[https://admin-shell.io/idta/SubmodelTemplate/SoftwareNameplate/1/0]
+       1  AASc-3a-002
+       1  Value '[0;100]' is not a 'xs:double' @ ApplicableMethod.GeneratedSignals.ValueRange in Submodel PAMSpecificationSheet[https://admin-shell.io/idta/SubmodelTemplate/PAMSpecificationSheet/1/0]
+       1  Value '[0;100]' is not a 'xs:double' @ ApplicableMethod.RequiredInputSignals.ValueRange in Submodel PAMSpecificationSheet[https://admin-shell.io/idta/SubmodelTemplate/PAMSpecificationSheet/1/0]
+       1  Empty array not allowed
+       1  AASd-022 violated: Duplicate idShort 'ReferenceNameOfMaintenance'
+
+------------------------------------------------------------
+Warnings by type (sorted by frequency):
+------------------------------------------------------------
+    4544  dataSpecification/keys[0] has unexpected <e> <v> expected <e>
+       2  Skipped checking of constraints
+       1  dataSpecification/keys[0] has unexpected <e> <v> https://admin-shell.io/idta/euromap/Moulds/Identification/ManufacturerURI/1/0 , expected <e>

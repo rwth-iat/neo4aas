@@ -1,0 +1,44 @@
+semanticId coverage
+                                    With     Total    Share
+  --------------------------------------------------------
+  Submodel                            82        86    95.3%
+  SubmodelElement                   6660      6733    98.9%
+
+ID-type distribution  (total occurrences: 6660)
+  Type           Count    Share
+  ------------------------------
+  IRI             5541    83.2%
+  IRDI            1079    16.2%
+  Custom            40     0.6%
+
+Source distribution  (total occurrences: 6660)
+  Source           Count    Share
+  --------------------------------
+  IDTA              4582    68.8%
+  Custom             988    14.8%
+  ECLASS             927    13.9%
+  IEC CDD            163     2.4%
+
+Top semanticIds by occurrence (top 20):
+     Count  Type    Source    ID
+  ----------------------------------------------------------------------
+        74  IRI     IDTA      https://admin-shell.io/SMT/General/Arbitrary
+        54  IRI     Custom    https://www.w3.org/2019/wot/security#SecurityScheme
+        48  IRI     Custom    https://www.w3.org/2019/wot/security#proxy
+        46  IRI     Custom    http://iirds.tekom.de/iirds#ResourceIRI
+        43  IRI     IDTA      http://admin-shell.io/dexpi/1/0/Class
+        43  IRI     IDTA      http://admin-shell.io/dexpi/1/0/LocalId
+        33  IRI     IDTA      https://admin-shell.io/idta/EnergyFlexibilityDataModel/1/0/UUID
+        31  IRI     IDTA      http://admin-shell.io/dexpi/1/0/SubTagMapping
+        31  IRI     IDTA      http://admin-shell.io/dexpi/1/0/SubTagName
+        31  IRI     IDTA      http://admin-shell.io/dexpi/1/0/ParentTagLocalId
+        30  IRI     Custom    https://www.w3.org/2019/wot/td#title
+        26  IRI     Custom    https://www.w3.org/2000/01/rdf-schema#label
+        24  IRI     IDTA      https://admin-shell.io/idta/AssetInterfacesDescription/1/0/valueSemantics
+        24  IRI     IDTA      https://admin-shell.io/idta/AssetInterfacesDescription/1/0/minMaxRange
+        24  IRI     IDTA      https://admin-shell.io/idta/AssetInterfacesDescription/1/0/lengthRange
+        24  IRI     Custom    https://www.w3.org/2019/wot/security#name
+        24  IRI     Custom    https://www.w3.org/2019/wot/security#in
+        24  IRI     Custom    https://www.w3.org/1999/02/22-rdf-syntax-ns#type
+        24  IRI     Custom    https://www.w3.org/2019/wot/td#isObservable
+        24  IRI     Custom    https://www.w3.org/2019/wot/json-schema#const

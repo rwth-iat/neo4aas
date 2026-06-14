@@ -1,0 +1,39 @@
+Submodel type distribution  (total: 154985, IDTA templates loaded: 49)
+  idShort                              semanticId                                                     Count   Share  Origin
+  ------------------------------------------------------------------------------------------------------------------------
+  ContactInformations                  https://admin-shell.io/zvei/nameplate/1/0/ContactInformations   22650   14.6%  IDTA
+  TechnicalData                        https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2         22647   14.6%  IDTA
+  Nameplate                            https://admin-shell.io/zvei/nameplate/2/0/Nameplate            22647   14.6%  IDTA (deprecated)
+  HandoverDocumentation                0173-1#01-AHF578#001                                           22478   14.5%  IDTA (deprecated)
+  Mcad                                 https://admin-shell.io/sandbox/idta/handover/MCAD/0/1/         17201   11.1%  Proprietary
+  RelationshipCombinables              https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel    9663    6.2%  Proprietary
+  RelationshipAlternatives             https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel    9123    5.9%  Proprietary
+  RelationshipAccessories              https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel    9045    5.8%  Proprietary
+  CarbonFootprint                      https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/1/0    4331    2.8%  IDTA
+  RelationshipDeviceside_Panelfeedthrough  https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel    3552    2.3%  Proprietary
+  RelationshipTools                    https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel    3471    2.2%  Proprietary
+  RelationshipInserts                  https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel    2767    1.8%  Proprietary
+  RelationshipSpareparts               https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel    2545    1.6%  Proprietary
+  RelationshipHoods_Housings           https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel    1317    0.8%  Proprietary
+  RelationshipContacts                 https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel    1017    0.7%  Proprietary
+  RelationshipSystemcables             https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel     395    0.3%  Proprietary
+  RelationshipSuccessors               https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel      40    0.0%  Proprietary
+  CarbonFootprint                      https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/0/9      23    0.0%  IDTA
+  RelationshipTerminationblocks        https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel      22    0.0%  Proprietary
+  ProductChangeNotifications           0173-1#01-AHE582#003                                              19    0.0%  Proprietary
+  RelationshipConnectors               https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel       4    0.0%  Proprietary
+  RawMaterials                         https://dpp40.Beta.com/concept-descriptions/RawMaterials/0/1       4    0.0%  Proprietary
+  CircularEconomyData                  https://dpp40.Beta.com/concept-descriptions/CircularEconomyData/0/1       4    0.0%  Proprietary
+  Nameplate                            https://admin-shell.io/idta/nameplate/3/0/Nameplate                4    0.0%  IDTA
+  TechnicalData                        0173-1#01-AHX837#002                                               4    0.0%  IDTA
+  HandoverDocumentation                0173-1#01-AHF578#003                                               4    0.0%  IDTA
+  Models3D                             https://admin-shell.io/idta/Models3D/1/0                           4    0.0%  IDTA
+  HierarchicalStructures               https://admin-shell.io/idta/HierarchicalStructures/1/0/Submodel       3    0.0%  Proprietary
+  HierarchicalStructures               https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel       1    0.0%  IDTA
+
+Submodels per AAS  (n=22648 shells)
+  min                3
+  max               15
+  mean            6.84
+  median           7.0
+  std             1.69

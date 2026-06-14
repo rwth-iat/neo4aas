@@ -1,0 +1,44 @@
+semanticId coverage
+                                    With     Total    Share
+  --------------------------------------------------------
+  Submodel                            39        40    97.5%
+  SubmodelElement                   3270      3281    99.7%
+
+ID-type distribution  (total occurrences: 3270)
+  Type           Count    Share
+  ------------------------------
+  IRI             2800    85.6%
+  IRDI             450    13.8%
+  Custom            20     0.6%
+
+Source distribution  (total occurrences: 3270)
+  Source           Count    Share
+  --------------------------------
+  IDTA              2334    71.4%
+  Custom             481    14.7%
+  ECLASS             409    12.5%
+  IEC CDD             46     1.4%
+
+Top semanticIds by occurrence (top 20):
+     Count  Type    Source    ID
+  ----------------------------------------------------------------------
+        37  IRI     IDTA      https://admin-shell.io/SMT/General/Arbitrary
+        27  IRI     Custom    https://www.w3.org/2019/wot/security#SecurityScheme
+        24  IRI     Custom    https://www.w3.org/2019/wot/security#proxy
+        23  IRI     Custom    http://iirds.tekom.de/iirds#ResourceIRI
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/BuyerReferenceID/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/SellerReferenceID/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/AgentReferenceID/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/GaiaXID/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/OrganisationIRI/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/OrganizationName1/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/OrganizationName2/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/OrganizationName3/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/CareOfName/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/DeliveryTelephoneNumber/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/AdditionalAddressline/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/Gate/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/HallBuilding/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/Floor/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/Room/1/0
+        19  IRI     IDTA      https://admin-shell.io/idta/PurchaseOrder/UnloadingPoint/1/0

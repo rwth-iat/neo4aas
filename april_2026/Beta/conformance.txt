@@ -1,0 +1,28 @@
+Conformance check — JSON — data/Beta_AAS_JSON
+Files to check: 22648
+
+============================================================
+Files checked          : 22648
+Parse errors           : 0
+Files with errors      : 22648  (100.0%)
+Files with warnings    : 22648  (100.0%)
+Total error violations : 466606
+Total warnings         : 870129
+
+------------------------------------------------------------
+Errors by type (sorted by frequency):
+------------------------------------------------------------
+  274560  AASd-002
+  149143  AASc-3a-008
+   18304  AASd-122
+   18304  AASd-124
+    4420  Not a valid path
+    1441  String is shorter than 1 characters
+     217  Missing attribute dataSpecification
+     217  Missing attribute dataSpecificationContent
+
+------------------------------------------------------------
+Warnings by type (sorted by frequency):
+------------------------------------------------------------
+  865785  dataSpecification/keys[0] has unexpected <e> <v> expected <e>
+    4344  Skipped checking of constraints

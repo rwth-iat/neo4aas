@@ -1,0 +1,49 @@
+Submodel type distribution  (total: 40, IDTA templates loaded: 49)
+  idShort                              semanticId                                                     Count   Share  Origin
+  ------------------------------------------------------------------------------------------------------------------------
+  TimeSeries                           https://admin-shell.io/idta/TimeSeries/1/1                         2    5.0%  IDTA
+  ContactInformations                  https://admin-shell.io/zvei/nameplate/1/0/ContactInformations       1    2.5%  IDTA
+  TechnicalData                        0173-1#01-AHX837#002                                               1    2.5%  IDTA
+  HandoverDocumentation                0173-1#01-AHF578#003                                               1    2.5%  IDTA
+  SimulationModels                     https://admin-shell.io/idta/SimulationModels/SimulationModels/1/0       1    2.5%  IDTA
+  SoftwareNameplate                    https://admin-shell.io/idta/SoftwareNameplate/1/0                  1    2.5%  IDTA
+  ServiceRequestNotification           0173-1#01-AHX443#001                                               1    2.5%  IDTA
+  IEC81346Structure                                                                                       1    2.5%  —
+  HierarchicalStructures               https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel       1    2.5%  IDTA
+  Reliability                          https://admin-shell.io/idta/iec62683/1/0/Reliability               1    2.5%  IDTA
+  FunctionalSafety                     https://admin-shell.io/idta/iec62683/1/0/FunctionalSafety          1    2.5%  IDTA
+  ControlComponentType                 https://admin-shell.io/idta/ControlComponent/Type/2/0              1    2.5%  IDTA
+  ControlComponentInstance             https://admin-shell.io/idta/ControlComponent/Instance/2/0          1    2.5%  IDTA
+  AssetInterfacesDescription           https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Submodel       1    2.5%  IDTA
+  PAMSpecificationSheet                0173-1#01-AGC973#003                                               1    2.5%  IDTA
+  PowerDriveTrainSizing                https://admin-shell.io/idta/PowerDriveTrainSizing/1/0              1    2.5%  IDTA
+  WirelessCommunication                https://admin-shell.io/idta/SubmodelTemplate/WirelessCommunication/1/0       1    2.5%  IDTA
+  CarbonFootprint                      https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/1/0       1    2.5%  IDTA
+  Models3D                             https://admin-shell.io/idta/Models3D/1/0                           1    2.5%  IDTA
+  AssetInterfacesMappingConfiguration  https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/1/0/Submodel       1    2.5%  IDTA
+  ProcessParameters                    https://admin-shell-io/idta/SubmodelTemplate/ProcessParameters/1/0       1    2.5%  IDTA
+  ExecutedProcesses                    https://admin-shell.io/idta/ExecutedProcesses/1/0                  1    2.5%  IDTA
+  InspectionDocumentsOfSteelProducts   https://admin-shell.io/idta/SubmodelTemplate/InspectionDocumentsOfSteelProducts/1/0       1    2.5%  IDTA
+  BackendSpecificMaterialInformation   https://admin-shell.io/idta/BackendSpecificMaterialInformation/1/0       1    2.5%  IDTA
+  PlasticsAndRubberMouldsIdentification  https://admin-shell.io/idta/euromap/Moulds/Identification/1/0       1    2.5%  IDTA
+  AssetLocation                        https://admin-shell.io/idta/smt/assetlocation/1/0                  1    2.5%  IDTA
+  WorkstationWorkerMatchingData        https://admin-shell.io/idta/sm/workstationworkermatchingdata       1    2.5%  IDTA
+  TechnicalDataAGV                     https://admin-shell.io/idta/SubmodelTemplate/technicaldataagv/1/0       1    2.5%  IDTA
+  PredictiveMaintenance                https://admin-shell.io/idta/SubmodelTemplate/PredictiveMaintenance/1/0       1    2.5%  IDTA
+  ControlConfig__00__                  https://admin-shell.io/idta/ControlConfig/1/0                      1    2.5%  IDTA
+  DataRetentionPolicies                https://admin-shell.io/idta/DataRetentionPolicies/1/0              1    2.5%  IDTA
+  AIDataset                            https://admin-shell.io/idta/SubmodelTemplate/AIDataset/1/0         1    2.5%  IDTA
+  AIDeployment                         https://admin-shell.io/idta/SubmodelTemplate/AIDeployment/1/0       1    2.5%  IDTA
+  AIModelNameplate                     https://admin-shell.io/idta/SubmodelTemplate/AIModelNameplate/1/0       1    2.5%  IDTA
+  IntelligentInformationforUse         https://admin-shell.io/idta/IntelligentInformationForUse/1/0       1    2.5%  IDTA
+  ProductionCalendar                   https://admin-shell.io/idta/SubmodelTemplate/ProductionCalendar/1/0       1    2.5%  IDTA
+  CompanyData                          https://admin-shell.io/idta/CompanyData/1/0/CompanyData            1    2.5%  IDTA
+  PurchaseOrder                        https://admin-shell.io/idta/SubmodelTemplate/PurchaseOrder/1/0       1    2.5%  IDTA
+  TechnicalData                        https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2             1    2.5%  IDTA
+
+Submodels per AAS  (n=38 shells)
+  min                1
+  max                2
+  mean            1.05
+  median           1.0
+  std             0.23

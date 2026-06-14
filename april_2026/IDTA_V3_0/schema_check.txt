@@ -1,0 +1,52 @@
+Schema validation — JSON — data/IDTA_AAS_JSON_V3_0  [known version 3.0]
+Files to check: 86
+
+--- AAS Schema 3.0 ---
+Schema-valid files  :   82 / 86  (95.3%)
+AJV violations total: 1423
+
+============================================================
+Known AAS version : 3.0  (1423 violations)
+============================================================
+
+------------------------------------------------------------
+AJV violations by type (AAS 3.0, sorted by frequency):
+------------------------------------------------------------
+     336  required — modelType
+     273  const — must be equal to constant
+      94  minLength — must NOT have fewer than 1 characters
+      84  pattern — must match pattern "^[a-zA-Z][a-zA-Z0-9_]*$"
+      66  required — first
+      66  required — second
+      66  required — valueType
+      58  required — contentType
+      51  type — must be string
+      43  required — language
+      43  required — text
+      37  oneOf — must match exactly one schema in oneOf
+      33  required — observed
+      33  required — direction
+      33  required — state
+      33  required — entityType
+      30  required — typeValueListElement
+      21  type — must be object
+      12  type — must be array
+       6  pattern — must match pattern "^(([a-zA-Z]{2,3}(-[a-zA-Z]{3}(-[a-zA-Z]{3}){0,2})?|[a-zA-Z]{4}|[a-zA-Z]{5,8})(-[a-zA-Z]{4})?(-([a-zA-Z]{2}|[0-9]{3}))?(-(([a-zA-Z0-9]){5,8}|[0-9]([a-zA-Z0-9]){3}))*(-[0-9A-WY-Za-wy-z](-([a-zA-Z0-9]){2,8})+)*(-[xX](-([a-zA-Z0-9]){1,8})+)?|[xX](-([a-zA-Z0-9]){1,8})+|((en-GB-oed|i-ami|i-bnn|i-default|i-enochian|i-hak|i-klingon|i-lux|i-mingo|i-navajo|i-pwn|i-tao|i-tay|i-tsu|sgn-BE-FR|sgn-BE-NL|sgn-CH-DE)|(art-lojban|cel-gaulish|no-bok|no-nyn|zh-guoyu|zh-hakka|zh-min|zh-min-nan|zh-xiang)))$"
+       4  pattern — must match pattern "^([\x09\x0a\x0d\x20-\ud7ff\ue000-\ufffd]|\ud800[\udc00-\udfff]|[\ud801-\udbfe][\udc00-\udfff]|\udbff[\udc00-\udfff])*$"
+       1  minItems — must NOT have fewer than 1 items
+
+
+--- Constraint check (AAS 3.0) ---
+Checked 27 constraint(s). 222 violation(s) found.
+  AASd-002: 64 violation(s) — idShort '' does not match the required pattern
+  AASd-014: 16 violation(s) — SelfManagedEntity has neither globalAssetId nor specificAssetId
+  AASd-021: 3 violation(s) — Duplicate qualifier type 'FormInfo'
+  AASd-022: 1 violation(s) — Duplicate idShort 'ReferenceNameOfMaintenance' within parent namespace
+  AASd-118: 4 violation(s) — supplementalSemanticIds present but semanticId is missing
+  AASd-120: 75 violation(s) — SubmodelElementList child has idShort '' but idShort must not be specified
+  AASd-121: 6 violation(s) — Reference first key type 'Entity' is not in GloballyIdentifiables
+  AASd-122: 1 violation(s) — ExternalReference first key type is 'Submodel' (must be GlobalReference)
+  AASd-123: 7 violation(s) — ModelReference first key type 'GlobalReference' is not in AasIdentifiables
+  AASd-124: 1 violation(s) — ExternalReference last key type 'Submodel' is not in GenericGloballyIdentifiables or GenericFragmentKeys
+  AASd-127: 43 violation(s) — FragmentReference preceded by 'SubmodelElement' instead of File or Blob
+  AASd-131: 1 violation(s) — AssetInformation has neither globalAssetId nor specificAssetIds

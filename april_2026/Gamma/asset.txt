@@ -1,0 +1,17 @@
+assetKind distribution
+  Kind                     Count    Share
+  ----------------------------------------
+  Type                     18959   100.0%
+  Instance                     3     0.0%
+
+specificAssetId key frequency
+  (none found)
+
+globalAssetId format classification  (total: 18962)
+  Format         Count    Share
+  ------------------------------
+  IRI            18962   100.0%
+
+--- STDERR ---
+WARNING:neo4j.notifications:Received notification from DBMS server: <GqlStatusObject gql_status='01N51', status_description='warn: relationship type does not exist. The relationship type `specificAssetId` does not exist. Verify that the spelling is correct.', position=<SummaryInputPosition line=2, column=38, offset=38>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 38, 'line': 2, 'column': 38}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: '\n        MATCH (a:AssetInformation)-[:specificAssetId]->(id)\n        RETURN id.name AS key, count(a) AS count\n        ORDER BY count DESC\n        '
+WARNING:neo4j.notifications:Received notification from DBMS server: <GqlStatusObject gql_status='01N52', status_description='warn: property key does not exist. The property `name` does not exist. Verify that the spelling is correct.', position=<SummaryInputPosition line=3, column=19, offset=79>, raw_classification='UNRECOGNIZED', classification=<NotificationClassification.UNRECOGNIZED: 'UNRECOGNIZED'>, raw_severity='WARNING', severity=<NotificationSeverity.WARNING: 'WARNING'>, diagnostic_record={'_classification': 'UNRECOGNIZED', '_severity': 'WARNING', '_position': {'offset': 79, 'line': 3, 'column': 19}, 'OPERATION': '', 'OPERATION_CODE': '0', 'CURRENT_SCHEMA': '/'}> for query: '\n        MATCH (a:AssetInformation)-[:specificAssetId]->(id)\n        RETURN id.name AS key, count(a) AS count\n        ORDER BY count DESC\n        '

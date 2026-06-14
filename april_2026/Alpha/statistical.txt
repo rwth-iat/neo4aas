@@ -1,0 +1,13 @@
+Node counts
+  AssetAdministrationShell      117418
+  Submodel                      482842
+  SubmodelElement             11735862
+
+SubmodelElement nesting depth  (n=9450463)
+  Statistic        Value
+  ------------------------
+  min                  1
+  max                  6
+  mean              2.30
+  median             2.0
+  std               0.61

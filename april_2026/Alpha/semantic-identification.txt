@@ -1,0 +1,42 @@
+semanticId coverage
+                                    With     Total    Share
+  --------------------------------------------------------
+  Submodel                        482842    482842   100.0%
+  SubmodelElement               11386981  11735862    97.0%
+
+ID-type distribution  (total occurrences: 11386981)
+  Type           Count    Share
+  ------------------------------
+  IRDI         6469268    56.8%
+  IRI          4917713    43.2%
+
+Source distribution  (total occurrences: 11386981)
+  Source           Count    Share
+  --------------------------------
+  ECLASS         6469268    56.8%
+  IDTA           4888700    42.9%
+  Custom           29013     0.3%
+
+Top semanticIds by occurrence (top 20):
+     Count  Type    Source    ID
+  ----------------------------------------------------------------------
+    607424  IRDI    ECLASS    0173-1#02-AAQ326#002
+    352254  IRDI    ECLASS    0173-1#02-AAO134#002
+    352254  IRDI    ECLASS    0173-1#02-AAO132#002
+    352254  IRDI    ECLASS    0173-1#02-AAO128#002
+    352254  IRDI    ECLASS    0173-1#02-AAO129#002
+    352254  IRDI    ECLASS    0173-1#02-AAO201#002
+    255170  IRDI    ECLASS    0173-1#02-AAO677#002
+    234836  IRDI    ECLASS    0173-1#02-AAQ836#005
+    234836  IRI     IDTA      https://admin-shell.io/zvei/nameplate/1/0/ContactInformation/IPCommunication
+    234836  IRI     IDTA      https://admin-shell.io/zvei/nameplate/1/0/ContactInformation
+    234836  IRI     IDTA      https://admin-shell.io/vdi/2770/1/0/DocumentClassification
+    234836  IRDI    ECLASS    0173-1#02-AAO198#002
+    234836  IRI     IDTA      https://admin-shell.io/zvei/nameplate/1/0/ContactInformation/IPCommunication/TypeOfCommunication
+    234836  IRI     IDTA      https://admin-shell.io/vdi/2770/1/0/DocumentClassification/ClassId
+    234836  IRI     IDTA      https://admin-shell.io/vdi/2770/1/0/DocumentClassification/ClassificationSystem
+    234836  IRI     IDTA      https://admin-shell.io/vdi/2770/1/0/DocumentClassification/ClassName
+    234836  IRDI    ECLASS    0173-1#02-AAO136#002
+    234836  IRDI    ECLASS    0173-1#02-AAO735#003
+    234836  IRDI    ECLASS    0173-1#02-AAO127#003
+    234836  IRDI    ECLASS    0173-1#02-AAO130#002

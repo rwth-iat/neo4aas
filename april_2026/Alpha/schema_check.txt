@@ -1,0 +1,25 @@
+Schema validation — JSON — data/Alpha_AAS_JSON  [known version 3.1]
+Files to check: 117418
+
+--- AAS Schema 3.1 ---
+Schema-valid files  :    0 / 117418  (0.0%)
+AJV violations total: 825509
+
+============================================================
+Known AAS version : 3.1  (825509 violations)
+============================================================
+
+------------------------------------------------------------
+AJV violations by type (AAS 3.1, sorted by frequency):
+------------------------------------------------------------
+  355838  minLength — must NOT have fewer than 1 characters
+  352254  oneOf — must match exactly one schema in oneOf
+  117417  pattern — must match pattern "^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+$"
+
+
+--- Constraint check (AAS 3.1) ---
+Checked 25 constraint(s). 128799 violation(s) found.
+  AASd-002: 117417 violation(s) — idShort '200-601/999-991' does not match the required pattern
+  AASd-122: 5546 violation(s) — ExternalReference first key type is 'Submodel' (must be GlobalReference)
+  AASd-124: 5546 violation(s) — ExternalReference last key type 'Submodel' is not in GenericGloballyIdentifiables or GenericFragmentKeys
+  AASd-129: 290 violation(s) — SubmodelElement has TemplateQualifier but is not under a Template Submodel
