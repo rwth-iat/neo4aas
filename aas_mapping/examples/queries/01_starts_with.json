@@ -1,9 +1,0 @@
-{
-    "$condition": {
-      "$starts-with": [
-        { "$field": "$sme.ProductCode#value" },
-        { "$strVal": "ABC-" }
-      ]
-    }
-  }
-    

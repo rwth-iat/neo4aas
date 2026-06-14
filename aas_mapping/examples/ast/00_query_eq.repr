@@ -1,1 +1,0 @@
-Condition(Eq(Field("$aas#idShort"), Field("$aas#assetInformation.assetType")))

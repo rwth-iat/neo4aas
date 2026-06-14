@@ -1,4 +1,0 @@
-# Python bytecode files
-*.pyc
-# Python cache directories
-__pycache__/

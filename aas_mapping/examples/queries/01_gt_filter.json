@@ -1,9 +1,0 @@
-{
-    "$condition": {
-      "$gt": [
-        { "$field": "$sme.Temperature#value" },
-        { "$numVal": 50 }
-      ]
-    }
-  }
-    

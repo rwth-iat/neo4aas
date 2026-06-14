@@ -1,1 +1,0 @@
-Condition(Not(Eq(Field("$sme.Status#value"), StringValue("Inactive"))))

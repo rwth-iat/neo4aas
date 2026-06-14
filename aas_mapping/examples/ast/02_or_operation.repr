@@ -1,1 +1,0 @@
-Condition(Or([Eq(Field("$sme.Material#value"), StringValue("Metal")), Le(Field("$sme.Weight#value"), NumberValue(50))]))

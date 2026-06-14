@@ -1,1 +1,0 @@
-Condition(And([Eq(Field("$sme.Color#value"), StringValue("Blue")), Gt(Field("$sme.Size#value"), NumberValue(50))]))

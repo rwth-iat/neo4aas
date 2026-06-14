@@ -1,1 +1,0 @@
-Condition(Or([Contains(Field("$sme.Description#value"), StringValue("urgent")), Eq(Field("$sm#idShort"), StringValue("MaintenanceLog"))]))

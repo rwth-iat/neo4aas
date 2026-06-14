@@ -1,1 +1,0 @@
-Condition(Ge(Field("$sme.Weight#value"), NumberValue(100)))

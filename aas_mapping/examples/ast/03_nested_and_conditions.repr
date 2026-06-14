@@ -1,1 +1,0 @@
-Condition(And([Eq(Field("$sm#idShort"), StringValue("TechnicalData")), Lt(Field("$sme.Pressure#value"), NumberValue(200))]))

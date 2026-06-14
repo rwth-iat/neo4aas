@@ -1,8 +1,0 @@
-{
-    "$condition": {
-      "$regex": [
-        { "$field": "$sme.SerialNumber#value" },
-        { "$strVal": "SN[0-9]{4}" }
-      ]
-    }
-  }

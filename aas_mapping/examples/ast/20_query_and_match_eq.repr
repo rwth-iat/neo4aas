@@ -1,1 +1,0 @@
-Condition(And([Match([Eq(Field("$sm#idShort"), StringValue("TechnicalData")), Eq(Field("$sme.ProductClassifications.ProductClassificationItem.ProductClassId#value"), StringValue("27-37-09-05"))]), Match([Eq(Field("$sm#idShort"), StringValue("TechnicalData")), Eq(Field("$sme#semanticId"), StringValue("0173-1#02-BAF016#006")), Lt(Field("$sme#value"), NumberValue(100))])]))

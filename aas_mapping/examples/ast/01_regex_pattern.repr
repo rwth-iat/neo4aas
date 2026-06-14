@@ -1,1 +1,0 @@
-Condition(Regex(Field("$sme.SerialNumber#value"), StringValue("SN[0-9]{4}")))

@@ -1,1 +1,0 @@
-Condition(Match([Eq(Field("$sme.Documents[].DocumentClassification.Class#value"), StringValue("03-01")), Eq(Field("$sme.Documents[].DocumentVersion.SMLLanguages[]#language"), StringValue("nl"))]))

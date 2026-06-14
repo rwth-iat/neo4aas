@@ -1,1 +1,0 @@
-Condition(Match([Eq(Field("$sme.FileVersion[].FileVersionId#value"), StringValue("1.1")), Eq(Field("$sme.FileVersion[].FileName#value"), StringValue("SomeFile"))]))

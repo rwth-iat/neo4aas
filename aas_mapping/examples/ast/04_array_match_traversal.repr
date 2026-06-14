@@ -1,1 +1,0 @@
-Condition(Match([Eq(Field("$sme.Components[].Name#value"), StringValue("Motor")), Eq(Field("$sme.Components[].Status#value"), StringValue("Active"))]))
