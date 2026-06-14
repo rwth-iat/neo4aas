@@ -1,0 +1,66 @@
+{
+  "submodel_type_distribution": {
+    "total": 482842,
+    "idta_template_ids_available": true,
+    "deprecated_template_ids_available": true,
+    "distribution": [
+      {
+        "id_short": "Nameplate",
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate",
+        "count": 117418,
+        "share_pct": 24.3181,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "TechnicalData",
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2",
+        "count": 117418,
+        "share_pct": 24.3181,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "ContactInformation",
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformation",
+        "count": 117418,
+        "share_pct": 24.3181,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "MCAD",
+        "semantic_id": "https://admin-shell.io/sandbox/idta/handover/MCAD/0/1/",
+        "count": 117418,
+        "share_pct": 24.3181,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "CarbonFootprint",
+        "semantic_id": "https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/1/0",
+        "count": 7614,
+        "share_pct": 1.5769,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "Electrical_and_Fluid_CAD",
+        "semantic_id": "https://admin-shell.io/sandbox/eplan/EFCAD/0/1/",
+        "count": 5546,
+        "share_pct": 1.1486,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "ProductChangeNotifications",
+        "semantic_id": "0173-1#01-AHE582#003",
+        "count": 10,
+        "share_pct": 0.0021,
+        "origin": "Proprietary"
+      }
+    ]
+  },
+  "submodels_per_aas": {
+    "n_shells": 117418,
+    "min": 4,
+    "max": 7,
+    "mean": 4.1122,
+    "median": 4.0,
+    "std": 0.3912
+  }
+}

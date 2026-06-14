@@ -1,0 +1,129 @@
+{
+  "semantic_id": {
+    "coverage": {
+      "Submodel": {
+        "with_semantic_id": 29973,
+        "total": 29973,
+        "share_pct": 100.0
+      },
+      "SubmodelElement": {
+        "with_semantic_id": 3184604,
+        "total": 3184604,
+        "share_pct": 100.0
+      }
+    },
+    "id_type_distribution": {
+      "total_occurrences": 3184604,
+      "distribution": [
+        {
+          "type": "IRDI",
+          "count": 2401662,
+          "share_pct": 75.4148
+        },
+        {
+          "type": "IRI",
+          "count": 772951,
+          "share_pct": 24.2715
+        },
+        {
+          "type": "Custom",
+          "count": 9991,
+          "share_pct": 0.3137
+        }
+      ]
+    },
+    "source_distribution": {
+      "total_occurrences": 3184604,
+      "distribution": [
+        {
+          "source": "ECLASS",
+          "count": 2401662,
+          "share_pct": 75.4148
+        },
+        {
+          "source": "Custom",
+          "count": 634196,
+          "share_pct": 19.9144
+        },
+        {
+          "source": "IDTA",
+          "count": 148746,
+          "share_pct": 4.6708
+        }
+      ]
+    },
+    "all_semantic_ids": [
+      {
+        "semantic_id": "0173-1#02-AAY811#001",
+        "count": 1892307,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://example.com/ids/ConceptDescription/4353_1815_4842_4689",
+        "count": 624205,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI501#001/0173-1#01-AHF580#001",
+        "count": 374523,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io",
+        "count": 128764,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI500#001/0173-1#01-AHF579#001*01",
+        "count": 124841,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation",
+        "count": 19982,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "todo",
+        "count": 9991,
+        "type": "Custom",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH990#001",
+        "count": 9991,
+        "type": "IRDI",
+        "source": "ECLASS"
+      }
+    ]
+  },
+  "supplemental_semantic_id": {
+    "coverage": {
+      "Submodel": {
+        "with_supplemental_semantic_id": 0,
+        "total": 29973,
+        "share_pct": 0.0
+      },
+      "SubmodelElement": {
+        "with_supplemental_semantic_id": 0,
+        "total": 3184604,
+        "share_pct": 0.0
+      }
+    },
+    "id_type_distribution": {
+      "total_occurrences": 0,
+      "distribution": []
+    },
+    "source_distribution": {
+      "total_occurrences": 0,
+      "distribution": []
+    },
+    "all_supplemental_semantic_ids": []
+  }
+}

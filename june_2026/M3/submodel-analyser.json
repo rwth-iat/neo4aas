@@ -1,0 +1,220 @@
+{
+  "submodel_type_distribution": {
+    "total": 154985,
+    "idta_template_ids_available": true,
+    "deprecated_template_ids_available": true,
+    "distribution": [
+      {
+        "id_short": "ContactInformations",
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations",
+        "count": 22650,
+        "share_pct": 14.6143,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "TechnicalData",
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2",
+        "count": 22647,
+        "share_pct": 14.6124,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "Nameplate",
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate",
+        "count": 22647,
+        "share_pct": 14.6124,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "HandoverDocumentation",
+        "semantic_id": "0173-1#01-AHF578#001",
+        "count": 22478,
+        "share_pct": 14.5033,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "Mcad",
+        "semantic_id": "https://admin-shell.io/sandbox/idta/handover/MCAD/0/1/",
+        "count": 17201,
+        "share_pct": 11.0985,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "RelationshipCombinables",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+        "count": 9663,
+        "share_pct": 6.2348,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "RelationshipAlternatives",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+        "count": 9123,
+        "share_pct": 5.8864,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "RelationshipAccessories",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+        "count": 9045,
+        "share_pct": 5.836,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "CarbonFootprint",
+        "semantic_id": "https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/1/0",
+        "count": 4331,
+        "share_pct": 2.7945,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "RelationshipDeviceside_Panelfeedthrough",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+        "count": 3552,
+        "share_pct": 2.2918,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "RelationshipTools",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+        "count": 3471,
+        "share_pct": 2.2396,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "RelationshipInserts",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+        "count": 2767,
+        "share_pct": 1.7853,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "RelationshipSpareparts",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+        "count": 2545,
+        "share_pct": 1.6421,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "RelationshipHoods_Housings",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+        "count": 1317,
+        "share_pct": 0.8498,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "RelationshipContacts",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+        "count": 1017,
+        "share_pct": 0.6562,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "RelationshipSystemcables",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+        "count": 395,
+        "share_pct": 0.2549,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "RelationshipSuccessors",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+        "count": 40,
+        "share_pct": 0.0258,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "CarbonFootprint",
+        "semantic_id": "https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/0/9",
+        "count": 23,
+        "share_pct": 0.0148,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "RelationshipTerminationblocks",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+        "count": 22,
+        "share_pct": 0.0142,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "ProductChangeNotifications",
+        "semantic_id": "0173-1#01-AHE582#003",
+        "count": 19,
+        "share_pct": 0.0123,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "RelationshipConnectors",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+        "count": 4,
+        "share_pct": 0.0026,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "RawMaterials",
+        "semantic_id": "https://dpp40.M3.com/concept-descriptions/RawMaterials/0/1",
+        "count": 4,
+        "share_pct": 0.0026,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "CircularEconomyData",
+        "semantic_id": "https://dpp40.M3.com/concept-descriptions/CircularEconomyData/0/1",
+        "count": 4,
+        "share_pct": 0.0026,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "Nameplate",
+        "semantic_id": "https://admin-shell.io/idta/nameplate/3/0/Nameplate",
+        "count": 4,
+        "share_pct": 0.0026,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "TechnicalData",
+        "semantic_id": "0173-1#01-AHX837#002",
+        "count": 4,
+        "share_pct": 0.0026,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "HandoverDocumentation",
+        "semantic_id": "0173-1#01-AHF578#003",
+        "count": 4,
+        "share_pct": 0.0026,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "Models3D",
+        "semantic_id": "https://admin-shell.io/idta/Models3D/1/0",
+        "count": 4,
+        "share_pct": 0.0026,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "HierarchicalStructures",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Submodel",
+        "count": 3,
+        "share_pct": 0.0019,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "HierarchicalStructures",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel",
+        "count": 1,
+        "share_pct": 0.0006,
+        "origin": "IDTA"
+      }
+    ]
+  },
+  "submodels_per_aas": {
+    "n_shells": 22648,
+    "min": 3,
+    "max": 15,
+    "mean": 6.8432,
+    "median": 7.0,
+    "std": 1.687
+  }
+}

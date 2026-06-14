@@ -1,0 +1,52 @@
+{
+  "submodel_type_distribution": {
+    "total": 65319,
+    "idta_template_ids_available": true,
+    "deprecated_template_ids_available": true,
+    "distribution": [
+      {
+        "id_short": "Nameplate",
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate",
+        "count": 15749,
+        "share_pct": 24.1109,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "TechnicalData",
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2",
+        "count": 15749,
+        "share_pct": 24.1109,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "HandoverDocumentation",
+        "semantic_id": "0173-1#01-AHF578#001",
+        "count": 15748,
+        "share_pct": 24.1094,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "TechnicalData",
+        "semantic_id": "0173-1#01-AHX837#002",
+        "count": 15501,
+        "share_pct": 23.7312,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "CarbonFootprint",
+        "semantic_id": "https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/1/0",
+        "count": 2572,
+        "share_pct": 3.9376,
+        "origin": "IDTA"
+      }
+    ]
+  },
+  "submodels_per_aas": {
+    "n_shells": 15749,
+    "min": 3,
+    "max": 5,
+    "mean": 4.1632,
+    "median": 4,
+    "std": 0.3698
+  }
+}

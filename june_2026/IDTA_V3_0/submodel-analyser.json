@@ -1,0 +1,381 @@
+{
+  "submodel_type_distribution": {
+    "total": 86,
+    "idta_template_ids_available": true,
+    "deprecated_template_ids_available": true,
+    "distribution": [
+      {
+        "id_short": "TimeSeries",
+        "semantic_id": "https://admin-shell.io/idta/TimeSeries/1/1",
+        "count": 4,
+        "share_pct": 4.6512,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "ContactInformations",
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "TechnicalData",
+        "semantic_id": "0173-1#01-AHX837#002",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "HandoverDocumentation",
+        "semantic_id": "0173-1#01-AHF578#003",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "SimulationModels",
+        "semantic_id": "https://admin-shell.io/idta/SimulationModels/SimulationModels/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "Nameplate",
+        "semantic_id": "https://admin-shell.io/idta/nameplate/3/0/Nameplate",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "SoftwareNameplate",
+        "semantic_id": "https://admin-shell.io/idta/SoftwareNameplate/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "ServiceRequestNotification",
+        "semantic_id": "0173-1#01-AHX443#001",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "IEC81346Structure",
+        "semantic_id": null,
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": null
+      },
+      {
+        "id_short": "HierarchicalStructures",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "Reliability",
+        "semantic_id": "https://admin-shell.io/idta/iec62683/1/0/Reliability",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "FunctionalSafety",
+        "semantic_id": "https://admin-shell.io/idta/iec62683/1/0/FunctionalSafety",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "ControlComponentType",
+        "semantic_id": "https://admin-shell.io/idta/ControlComponent/Type/2/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "ControlComponentInstance",
+        "semantic_id": "https://admin-shell.io/idta/ControlComponent/Instance/2/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "AssetInterfacesDescription",
+        "semantic_id": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Submodel",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "PAMSpecificationSheet",
+        "semantic_id": "0173-1#01-AGC973#003",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "PowerDriveTrainSizing",
+        "semantic_id": "https://admin-shell.io/idta/PowerDriveTrainSizing/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "WirelessCommunication",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/WirelessCommunication/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "CarbonFootprint",
+        "semantic_id": "https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "Models3D",
+        "semantic_id": "https://admin-shell.io/idta/Models3D/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "AssetInterfacesMappingConfiguration",
+        "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/1/0/Submodel",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "InspectionDocumentsOfSteelProducts",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/InspectionDocumentsOfSteelProducts/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "AssetLocation",
+        "semantic_id": "https://admin-shell.io/idta/smt/assetlocation/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "WorkstationWorkerMatchingData",
+        "semantic_id": "https://admin-shell.io/idta/sm/workstationworkermatchingdata",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "TechnicalDataAGV",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/technicaldataagv/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "ControlConfig__00__",
+        "semantic_id": "https://admin-shell.io/idta/ControlConfig/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "DataRetentionPolicies",
+        "semantic_id": "https://admin-shell.io/idta/DataRetentionPolicies/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "AIDataset",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/AIDataset/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "AIDeployment",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/AIDeployment/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "AIModelNameplate",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/AIModelNameplate/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "IntelligentInformationforUse",
+        "semantic_id": "https://admin-shell.io/idta/IntelligentInformationForUse/1/0",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "TechnicalData",
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2",
+        "count": 2,
+        "share_pct": 2.3256,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "SimulationModels",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/SimulationModels/1/1",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "DEXPI",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/DEXPI/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "ControlComponentType",
+        "semantic_id": "http://admin-shell.io/idta/ControlComponent/Type/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "ControlComponentInstance",
+        "semantic_id": "https://admin-shell.io/idta/ControlComponent/Instance/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "MeasurementValue",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/measurementValue/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "ProcessParameters",
+        "semantic_id": "https://admin-shell-io/idta/SubmodelTemplate/ProcessParameters/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "ExecutedProcesses",
+        "semantic_id": "https://admin-shell.io/idta/ExecutedProcesses/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "BackendSpecificMaterialInformation",
+        "semantic_id": "https://admin-shell.io/idta/BackendSpecificMaterialInformation/1/0/",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "BackendSpecificMaterialInformation",
+        "semantic_id": "https://admin-shell.io/idta/BackendSpecificMaterialInformation/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "PlasticsAndRubberMouldsIdentification",
+        "semantic_id": "https://admin-shell.io/idta/euromap/Moulds/Identification/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "PredictiveMaintenance",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/PredictiveMaintenance/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "DigitalQualityDocuments",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/DigitalQualityDocument/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "ProductionCalendar",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/ProductionCalendar/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "CompanyData",
+        "semantic_id": "https://admin-shell.io/idta/CompanyData/1/0/CompanyData",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "EnergyFlexibilityDataModel",
+        "semantic_id": null,
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": null
+      },
+      {
+        "id_short": "PurchaseOrder",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/PurchaseOrder/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "MaintenanceInstructions",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/MaintenanceInstructions/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "QualityControlForMachining",
+        "semantic_id": null,
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": null
+      },
+      {
+        "id_short": "MaterialDataForEN18065ClassificationOfPlastics",
+        "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/en18065materialdata/en18065MaterialData/1/0",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "CarbonFootprint",
+        "semantic_id": "https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/0/9",
+        "count": 1,
+        "share_pct": 1.1628,
+        "origin": "IDTA"
+      }
+    ]
+  },
+  "submodels_per_aas": {
+    "n_shells": 51,
+    "min": 1,
+    "max": 4,
+    "mean": 1.6863,
+    "median": 2,
+    "std": 0.5828
+  }
+}

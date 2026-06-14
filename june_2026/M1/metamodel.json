@@ -1,0 +1,74 @@
+{
+  "submodel_element_types": {
+    "total": 11735862,
+    "distribution": [
+      {
+        "type": "MultiLanguageProperty",
+        "count": 5309389,
+        "share_pct": 45.2407
+      },
+      {
+        "type": "Property",
+        "count": 3881008,
+        "share_pct": 33.0696
+      },
+      {
+        "type": "SubmodelElementCollection",
+        "count": 2262517,
+        "share_pct": 19.2787
+      },
+      {
+        "type": "File",
+        "count": 260056,
+        "share_pct": 2.2159
+      },
+      {
+        "type": "SubmodelElementList",
+        "count": 22882,
+        "share_pct": 0.195
+      },
+      {
+        "type": "ReferenceElement",
+        "count": 10,
+        "share_pct": 0.0001
+      }
+    ]
+  },
+  "value_types": {
+    "total_with_value_type": 3881008,
+    "distribution": [
+      {
+        "value_type": "xs:string",
+        "count": 3733134,
+        "share_pct": 96.1898
+      },
+      {
+        "value_type": "xs:boolean",
+        "count": 117418,
+        "share_pct": 3.0255
+      },
+      {
+        "value_type": "xs:dateTime",
+        "count": 15228,
+        "share_pct": 0.3924
+      },
+      {
+        "value_type": "xs:decimal",
+        "count": 7614,
+        "share_pct": 0.1962
+      },
+      {
+        "value_type": "xs:double",
+        "count": 7614,
+        "share_pct": 0.1962
+      }
+    ]
+  },
+  "optional_features": {
+    "submodel_qualifier": 0,
+    "submodel_extension": 0,
+    "submodel_element_qualifier": 2000802,
+    "submodel_element_extension": 0,
+    "embedded_data_specification": 5140511
+  }
+}

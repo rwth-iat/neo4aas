@@ -1,0 +1,26 @@
+{
+  "format": "json",
+  "directory": "data/M9_AAS_JSON",
+  "detected_version": "3.0",
+  "known_version": null,
+  "schema_results": [
+    {
+      "schema_label": "AAS 3.0 AJV",
+      "version": "3.0",
+      "valid_count": 967,
+      "invalid_count": 0,
+      "valid_pct": 100.0,
+      "total_violations": 0,
+      "violations": []
+    },
+    {
+      "schema_label": "AAS 3.1 AJV",
+      "version": "3.1",
+      "valid_count": 967,
+      "invalid_count": 0,
+      "valid_pct": 100.0,
+      "total_violations": 0,
+      "violations": []
+    }
+  ]
+}

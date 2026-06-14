@@ -1,0 +1,1291 @@
+{
+  "semantic_id": {
+    "coverage": {
+      "Submodel": {
+        "with_semantic_id": 482842,
+        "total": 482842,
+        "share_pct": 100.0
+      },
+      "SubmodelElement": {
+        "with_semantic_id": 11386981,
+        "total": 11735862,
+        "share_pct": 97.0272
+      }
+    },
+    "id_type_distribution": {
+      "total_occurrences": 11386981,
+      "distribution": [
+        {
+          "type": "IRDI",
+          "count": 6469268,
+          "share_pct": 56.8128
+        },
+        {
+          "type": "IRI",
+          "count": 4917713,
+          "share_pct": 43.1872
+        }
+      ]
+    },
+    "source_distribution": {
+      "total_occurrences": 11386981,
+      "distribution": [
+        {
+          "source": "ECLASS",
+          "count": 6469268,
+          "share_pct": 56.8128
+        },
+        {
+          "source": "IDTA",
+          "count": 4888700,
+          "share_pct": 42.9324
+        },
+        {
+          "source": "Custom",
+          "count": 29013,
+          "share_pct": 0.2548
+        }
+      ]
+    },
+    "all_semantic_ids": [
+      {
+        "semantic_id": "0173-1#02-AAQ326#002",
+        "count": 607424,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO134#002",
+        "count": 352254,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO132#002",
+        "count": 352254,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO128#002",
+        "count": 352254,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO129#002",
+        "count": 352254,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO201#002",
+        "count": 352254,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO677#002",
+        "count": 255170,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAQ836#005",
+        "count": 234836,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformation/IPCommunication",
+        "count": 234836,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformation",
+        "count": 234836,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/DocumentClassification",
+        "count": 234836,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO198#002",
+        "count": 234836,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformation/IPCommunication/TypeOfCommunication",
+        "count": 234836,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/DocumentClassification/ClassId",
+        "count": 234836,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/DocumentClassification/ClassificationSystem",
+        "count": 234836,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/DocumentClassification/ClassName",
+        "count": 234836,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO136#002",
+        "count": 234836,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO735#003",
+        "count": 234836,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO127#003",
+        "count": 234836,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO130#002",
+        "count": 234836,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO131#002",
+        "count": 234836,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO133#002",
+        "count": 234836,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO208#003",
+        "count": 234836,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO209#003",
+        "count": 234836,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO210#002",
+        "count": 234836,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAW338#001",
+        "count": 137752,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation/Phone",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/GeneralInformation/1/1",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/ProductClassificationItem/1/1",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/ProductClassifications/1/1",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/TechnicalProperties/1/1",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/FurtherInformation/1/1",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAQ833#005",
+        "count": 117418,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/DocumentId",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/DocumentVersion",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/Document",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/ManufacturerLogo/1/1",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/StoredDocumentRepresentation/DigitalFile",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation/Language",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/ManufacturerPartNumber/1/1",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/ManufacturerOrderCode/1/1",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/ProductClassificationSystem/1/1",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/ClassificationSystemVersion/1/1",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/ValidDate/1/1",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO204#003",
+        "count": 117418,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/DocumentId/IsPrimary",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/DocumentDescription/Language",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/Organization/OrganizationName",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/Organization/OrganizationOfficialName",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAW001#001",
+        "count": 117418,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO227#002",
+        "count": 117418,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO676#003",
+        "count": 117418,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/TextStatement/1/1",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO200#002",
+        "count": 117418,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/DocumentDescription/Title",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/DocumentDescription/SubTitle",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/DocumentDescription/Summary",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/DocumentDescription/KeyWords",
+        "count": 117418,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAU734#001",
+        "count": 20334,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAA351#014",
+        "count": 20334,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://M1.com/ids/cd/0085_9011_8032_2109",
+        "count": 20063,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#02-AAB713#006",
+        "count": 19995,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/ProductImage/1/1",
+        "count": 19675,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-BAF419#004",
+        "count": 17683,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAF019#004",
+        "count": 17653,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAB577#008",
+        "count": 17208,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAF726#003",
+        "count": 16450,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAC963#008",
+        "count": 15972,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAA295#006",
+        "count": 15366,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAB499#007",
+        "count": 15280,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAE218#003",
+        "count": 14176,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAC892#006MM2",
+        "count": 13258,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAC892#006AWG",
+        "count": 12988,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAP638#001",
+        "count": 12421,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAP402#001",
+        "count": 12392,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAC900#006",
+        "count": 10953,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/AddressInformation",
+        "count": 7614,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/idta/CarbonFootprint/ProductCarbonFootprint/1/0",
+        "count": 7614,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/idta/CarbonFootprint/PcfCalculationMethods/1/0",
+        "count": 7614,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/idta/CarbonFootprint/LifeCyclePhases/1/0",
+        "count": 7614,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/idta/CarbonFootprint/ProductCarbonFootprints/1/0",
+        "count": 7614,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-ABG854#003",
+        "count": 7614,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABG855#003",
+        "count": 7614,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABG856#003",
+        "count": 7614,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABG857#003",
+        "count": 7614,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABG858#003",
+        "count": 7614,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH956#001",
+        "count": 7614,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH957#001",
+        "count": 7614,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH958#001",
+        "count": 7614,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH959#001",
+        "count": 7614,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO259#005",
+        "count": 7614,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/idta/CarbonFootprint/PublicationDate/1/0",
+        "count": 7614,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/idta/CarbonFootprint/ExpirationDate/1/0",
+        "count": 7614,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAZ353#001",
+        "count": 7080,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI503#001/0173-1#01-AHF582#001",
+        "count": 5546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI500#001/0173-1#01-AHF579#001",
+        "count": 5546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI504#001/0173-1#01-AHF583#001",
+        "count": 5545,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI502#001/0173-1#01-AHF581#001",
+        "count": 5185,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH996#001",
+        "count": 5185,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH997#001",
+        "count": 5185,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI001#001",
+        "count": 5185,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI000#001",
+        "count": 5185,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO102#003",
+        "count": 5185,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://M1.com/ids/cd/5443_5070_8032_1979",
+        "count": 4092,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/sandbox/SG2/TechnicalData/ProductClassId/1/1",
+        "count": 1529,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-BAC487#013",
+        "count": 1529,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAC140#008",
+        "count": 1529,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAA018#007",
+        "count": 1528,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO995#001",
+        "count": 1526,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAD931#005",
+        "count": 1498,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAG640#009",
+        "count": 1205,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAC137#006",
+        "count": 1200,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAC476#007",
+        "count": 1200,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAD774#008",
+        "count": 1195,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAI844#004",
+        "count": 1194,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAC740#007",
+        "count": 1194,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAC677#007",
+        "count": 1194,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAC034#010",
+        "count": 1193,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAC375#010",
+        "count": 1193,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAC820#006",
+        "count": 1193,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAC821#006",
+        "count": 1193,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://M1.com/ids/cd/3482_6011_8032_2014",
+        "count": 1193,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://M1.com/ids/cd/9394_7011_8032_1065",
+        "count": 1193,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#02-BAC739#007",
+        "count": 1192,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://M1.com/ids/cd/4484_9011_8032_1770",
+        "count": 1192,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#02-BAC676#007",
+        "count": 1192,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://M1.com/ids/cd/5594_9011_8032_2811",
+        "count": 1192,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#02-AAB787#007",
+        "count": 1192,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAB940#007",
+        "count": 1187,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAB789#007",
+        "count": 1187,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAP530#001",
+        "count": 1116,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAP403#001",
+        "count": 1113,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAB937#007",
+        "count": 1045,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAD246#006",
+        "count": 895,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAS574#002",
+        "count": 890,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAS575#003",
+        "count": 882,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAD123#008",
+        "count": 811,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAD124#010",
+        "count": 808,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAE496#006",
+        "count": 330,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAB422#008",
+        "count": 326,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAM355#004",
+        "count": 326,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAD581#008",
+        "count": 326,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAC078#007",
+        "count": 150,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAD399#008",
+        "count": 80,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAD563#008",
+        "count": 80,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAD569#008",
+        "count": 80,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAC469#009",
+        "count": 80,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://M1.com/ids/cd/5010_6070_8032_2823",
+        "count": 78,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#02-AAC114#007",
+        "count": 71,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAC970#007",
+        "count": 71,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAC918#008",
+        "count": 71,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAR710#002",
+        "count": 20,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI295#003/0173-1#01-AHE584#003",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "http://admin-shell.io/VDMA/Fluidics/ProductChangeNotification/LifeCycleData/Milestone/1/0",
+        "count": 10,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI296#002/0173-1#01-AHE585#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "http://admin-shell.io/VDMA/Fluidics/ProductChangeNotification/PcnChangeInformation/1/0",
+        "count": 10,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI298#002/0173-1#01-AHE587#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI297#003/0173-1#01-AHE586#003",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI294#003/0173-1#01-AHE583#003",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABG775#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "http://admin-shell.io/VDMA/Fluidics/ProductChangeNotification/LifeCycleData/List/1/0",
+        "count": 10,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI296#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI298#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI294#003",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABG772#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "http://admin-shell.io/VDMA/Fluidics/ProductChangeNotification/PcnType/1/0",
+        "count": 10,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-ABG773#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABF815#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABF813#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABG774#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABF816#003",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAR709#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABG776#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO677#004",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "http://admin-shell.io/VDMA/Fluidics/ProductChangeNotification/PcnChangeInformation/ChangeTitle/1/0",
+        "count": 10,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "http://admin-shell.io/VDMA/Fluidics/ProductChangeNotification/PcnChangeInformation/ChangeDetail/1/0",
+        "count": 10,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAU731#003",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAW338#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO227#004",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://M1.com/ids/cd/7060_6070_8032_4018",
+        "count": 6,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#02-BAB838#006",
+        "count": 6,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAE540#004",
+        "count": 5,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAI465#002",
+        "count": 5,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://M1.com/ids/cd/1544_5070_8032_0566",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#02-BAB664#014",
+        "count": 3,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAT080#001",
+        "count": 1,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAG975#012",
+        "count": 1,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAQ611#003",
+        "count": 1,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAF890#002",
+        "count": 1,
+        "type": "IRDI",
+        "source": "ECLASS"
+      }
+    ]
+  },
+  "supplemental_semantic_id": {
+    "coverage": {
+      "Submodel": {
+        "with_supplemental_semantic_id": 0,
+        "total": 482842,
+        "share_pct": 0.0
+      },
+      "SubmodelElement": {
+        "with_supplemental_semantic_id": 13189,
+        "total": 11735862,
+        "share_pct": 0.1124
+      }
+    },
+    "id_type_distribution": {
+      "total_occurrences": 28417,
+      "distribution": [
+        {
+          "type": "IRDI",
+          "count": 15258,
+          "share_pct": 53.6932
+        },
+        {
+          "type": "IRI",
+          "count": 13159,
+          "share_pct": 46.3068
+        }
+      ]
+    },
+    "source_distribution": {
+      "total_occurrences": 28417,
+      "distribution": [
+        {
+          "source": "ECLASS",
+          "count": 7644,
+          "share_pct": 26.8994
+        },
+        {
+          "source": "IDTA",
+          "count": 7614,
+          "share_pct": 26.7938
+        },
+        {
+          "source": "IEC CDD",
+          "count": 7614,
+          "share_pct": 26.7938
+        },
+        {
+          "source": "Custom",
+          "count": 5545,
+          "share_pct": 19.513
+        }
+      ]
+    },
+    "all_supplemental_semantic_ids": [
+      {
+        "semantic_id": "https://admin-shell.io/smt-dropin/smt-dropin-use/1/0",
+        "count": 7614,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0112/2///61360_7#AAS002#001",
+        "count": 7614,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0173-1#02-AAQ837#008",
+        "count": 7614,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "http://eplan.com/semanticId/concept/eplan_edz",
+        "count": 5545,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI294#003~0/0173-1#01-AHE583#003",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI296#002~0/0173-1#01-AHE585#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI298#002~0/0173-1#01-AHE587#002",
+        "count": 10,
+        "type": "IRDI",
+        "source": "ECLASS"
+      }
+    ]
+  }
+}

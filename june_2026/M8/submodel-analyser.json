@@ -1,0 +1,31 @@
+{
+  "submodel_type_distribution": {
+    "total": 3444,
+    "idta_template_ids_available": true,
+    "deprecated_template_ids_available": true,
+    "distribution": [
+      {
+        "id_short": "HandoverDocumentation",
+        "semantic_id": "0173-1#01-AHF578#001",
+        "count": 1722,
+        "share_pct": 50.0,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "Nameplate",
+        "semantic_id": "https://admin-shell.io/idta/nameplate/3/0/Nameplate",
+        "count": 1722,
+        "share_pct": 50.0,
+        "origin": "IDTA"
+      }
+    ]
+  },
+  "submodels_per_aas": {
+    "n_shells": 1722,
+    "min": 2,
+    "max": 2,
+    "mean": 2,
+    "median": 2.0,
+    "std": 0.0
+  }
+}

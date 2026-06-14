@@ -1,0 +1,114 @@
+{
+  "submodel_element_types": {
+    "total": 6937500,
+    "distribution": [
+      {
+        "type": "Property",
+        "count": 3265422,
+        "share_pct": 47.0691
+      },
+      {
+        "type": "MultiLanguageProperty",
+        "count": 2084328,
+        "share_pct": 30.0444
+      },
+      {
+        "type": "SubmodelElementCollection",
+        "count": 1285301,
+        "share_pct": 18.5269
+      },
+      {
+        "type": "File",
+        "count": 297496,
+        "share_pct": 4.2882
+      },
+      {
+        "type": "SubmodelElementList",
+        "count": 4831,
+        "share_pct": 0.0696
+      },
+      {
+        "type": "ReferenceElement",
+        "count": 112,
+        "share_pct": 0.0016
+      },
+      {
+        "type": "Entity",
+        "count": 6,
+        "share_pct": 0.0001
+      },
+      {
+        "type": "RelationshipElement",
+        "count": 3,
+        "share_pct": 0.0
+      },
+      {
+        "type": "Operation",
+        "count": 1,
+        "share_pct": 0.0
+      }
+    ]
+  },
+  "value_types": {
+    "total_with_value_type": 3265422,
+    "distribution": [
+      {
+        "value_type": "xs:string",
+        "count": 2757338,
+        "share_pct": 84.4405
+      },
+      {
+        "value_type": "xs:boolean",
+        "count": 181762,
+        "share_pct": 5.5663
+      },
+      {
+        "value_type": "xs:double",
+        "count": 164096,
+        "share_pct": 5.0253
+      },
+      {
+        "value_type": "xs:date",
+        "count": 127267,
+        "share_pct": 3.8974
+      },
+      {
+        "value_type": "xs:integer",
+        "count": 18863,
+        "share_pct": 0.5777
+      },
+      {
+        "value_type": "xs:int",
+        "count": 16070,
+        "share_pct": 0.4921
+      },
+      {
+        "value_type": "xs:anyURI",
+        "count": 14,
+        "share_pct": 0.0004
+      },
+      {
+        "value_type": "xs:dateTime",
+        "count": 5,
+        "share_pct": 0.0002
+      },
+      {
+        "value_type": "xs:decimal",
+        "count": 5,
+        "share_pct": 0.0002
+      },
+      {
+        "value_type": "xs:time",
+        "count": 2,
+        "share_pct": 0.0001
+      }
+    ]
+  },
+  "optional_features": {
+    "submodel_qualifier": 2,
+    "submodel_extension": 0,
+    "submodel_element_qualifier": 89,
+    "submodel_element_extension": 0,
+    "embedded_data_specification": 1697770
+  }
+}

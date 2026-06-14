@@ -1,0 +1,4563 @@
+{
+  "semantic_id": {
+    "coverage": {
+      "Submodel": {
+        "with_semantic_id": 3866,
+        "total": 3866,
+        "share_pct": 100.0
+      },
+      "SubmodelElement": {
+        "with_semantic_id": 1340760,
+        "total": 1340768,
+        "share_pct": 99.9994
+      }
+    },
+    "id_type_distribution": {
+      "total_occurrences": 1340760,
+      "distribution": [
+        {
+          "type": "IRDI",
+          "count": 1118760,
+          "share_pct": 83.4422
+        },
+        {
+          "type": "IRI",
+          "count": 222000,
+          "share_pct": 16.5578
+        }
+      ]
+    },
+    "source_distribution": {
+      "total_occurrences": 1340760,
+      "distribution": [
+        {
+          "source": "ECLASS",
+          "count": 1118235,
+          "share_pct": 83.4031
+        },
+        {
+          "source": "IDTA",
+          "count": 119150,
+          "share_pct": 8.8868
+        },
+        {
+          "source": "Custom",
+          "count": 102850,
+          "share_pct": 7.671
+        },
+        {
+          "source": "IEC CDD",
+          "count": 525,
+          "share_pct": 0.0392
+        }
+      ]
+    },
+    "all_semantic_ids": [
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation/Phone",
+        "count": 46369,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAQ834#005",
+        "count": 46369,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation",
+        "count": 46369,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO134#002",
+        "count": 46369,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAW001#001",
+        "count": 46369,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO128#002",
+        "count": 46369,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO132#002",
+        "count": 46369,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO136#002",
+        "count": 46369,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO195#002",
+        "count": 46369,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO129#002",
+        "count": 42505,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAN468#006",
+        "count": 38227,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI502#001/0173-1#01-AHF581#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI501#001/0173-1#01-AHF580#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI503#001/0173-1#01-AHF582#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI500#001/0173-1#01-AHF579#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI504#001/0173-1#01-AHF583#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI505#001/0173-1#01-AHF584#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH996#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH997#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH994#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO099#002",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO100#002",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI002#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI004#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI000#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI001#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO102#003",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH999#001",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO106#002",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO105#002",
+        "count": 34546,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAQ326#002",
+        "count": 28980,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#01-AGZ673#001",
+        "count": 5993,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate/Markings/Marking/MarkingFile",
+        "count": 5026,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate/Markings/Marking/MarkingName",
+        "count": 5026,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAQ325#003",
+        "count": 2894,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO676#003",
+        "count": 1934,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO677#002",
+        "count": 1934,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/ProductClassId/1/1",
+        "count": 1934,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/ProductClassificationSystem/1/1",
+        "count": 1934,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/ClassificationSystemVersion/1/1",
+        "count": 1934,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO227#002",
+        "count": 1930,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAW338#001",
+        "count": 1930,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/ProductClassificationItem/1/1",
+        "count": 1926,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00005",
+        "count": 1644,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate/Markings/Marking/ExplosionSafety/AmbientConditions",
+        "count": 1447,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate/Markings/Marking/ExplosionSafeties/ExplosionSafety",
+        "count": 1447,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAT372#001",
+        "count": 1447,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAK297#004",
+        "count": 1439,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAM668#001",
+        "count": 1399,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00041",
+        "count": 1363,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00185",
+        "count": 1360,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00695",
+        "count": 1071,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00520",
+        "count": 1022,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00521",
+        "count": 1022,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00357",
+        "count": 1022,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00854",
+        "count": 1022,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01085",
+        "count": 1022,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02837_MAX",
+        "count": 992,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02837_MIN",
+        "count": 992,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03371_MAX",
+        "count": 990,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03371_MIN",
+        "count": 990,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00001",
+        "count": 971,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00429",
+        "count": 970,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/GeneralInformation/1/1",
+        "count": 967,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/ProductClassifications/1/1",
+        "count": 967,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/MainSection/1/1",
+        "count": 967,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/TechnicalProperties/1/1",
+        "count": 967,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/ManufacturerLogo/1/1",
+        "count": 967,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAY811#001",
+        "count": 967,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00026",
+        "count": 967,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#02-AAU732#001",
+        "count": 967,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAU731#001",
+        "count": 967,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00010",
+        "count": 967,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00708",
+        "count": 964,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#01-AGZ672#001",
+        "count": 919,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00027_02",
+        "count": 909,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate/Markings/Marking/ExplosionSafeties",
+        "count": 903,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00008_01",
+        "count": 901,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00009_01",
+        "count": 901,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00010_01",
+        "count": 901,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00011_01",
+        "count": 901,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00012_01",
+        "count": 901,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00022_01",
+        "count": 901,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00049_01",
+        "count": 901,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00010_02",
+        "count": 901,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00011_02",
+        "count": 901,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00012_02",
+        "count": 901,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00022_02",
+        "count": 901,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00049_02",
+        "count": 901,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#02-AAZ952#001",
+        "count": 892,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-BAA039#010",
+        "count": 892,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00009",
+        "count": 871,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01339",
+        "count": 833,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01151",
+        "count": 822,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00002",
+        "count": 790,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03372_MAX",
+        "count": 758,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03372_MIN",
+        "count": 758,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00035",
+        "count": 751,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00043",
+        "count": 717,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02764_MAX",
+        "count": 660,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02764_MIN",
+        "count": 660,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02826_MIN",
+        "count": 659,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02826_MAX",
+        "count": 656,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00131",
+        "count": 576,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00028",
+        "count": 572,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00028_02",
+        "count": 571,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02697",
+        "count": 565,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00013_01",
+        "count": 563,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00013_02",
+        "count": 563,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00014_01",
+        "count": 562,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00015_01",
+        "count": 562,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00017_01",
+        "count": 562,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00139_01",
+        "count": 562,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00017_02",
+        "count": 562,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00139_02",
+        "count": 562,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO371#004",
+        "count": 555,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00003",
+        "count": 535,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00132",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00134",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01723",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01724",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01697",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00019",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00033",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00037",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00040",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00041",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00044",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00046",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00047",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00048",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00139",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00281",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00309",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00333",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00429",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00454",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00981",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01129",
+        "count": 527,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00130",
+        "count": 526,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00508",
+        "count": 526,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00007",
+        "count": 526,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00289",
+        "count": 526,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00421",
+        "count": 526,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABH783#001",
+        "count": 525,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00004",
+        "count": 518,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00016_01",
+        "count": 514,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00018_01",
+        "count": 514,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00101_01",
+        "count": 514,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00016_02",
+        "count": 514,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00018_02",
+        "count": 514,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00101_02",
+        "count": 514,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "0173-1#05-AAA567#004",
+        "count": 507,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02698",
+        "count": 497,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00090_MAX",
+        "count": 495,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00091_MAX",
+        "count": 495,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03693",
+        "count": 495,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01439",
+        "count": 495,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00070",
+        "count": 472,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00445",
+        "count": 468,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00446",
+        "count": 463,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00027_01",
+        "count": 440,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00028_01",
+        "count": 440,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02549_07",
+        "count": 440,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02764_NOTE",
+        "count": 437,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02826_NOTE",
+        "count": 437,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02827_MIN",
+        "count": 435,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02766_MAX",
+        "count": 432,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02766_MIN",
+        "count": 432,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02827_MAX",
+        "count": 432,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02766_NOTE",
+        "count": 432,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02827_NOTE",
+        "count": 432,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00010",
+        "count": 411,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02107",
+        "count": 411,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00029_01",
+        "count": 382,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00010_01",
+        "count": 357,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00010_02",
+        "count": 357,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00039",
+        "count": 350,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00439",
+        "count": 332,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00010_07",
+        "count": 325,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00790",
+        "count": 311,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00791",
+        "count": 311,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00040",
+        "count": 307,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02764",
+        "count": 307,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02765",
+        "count": 307,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01525",
+        "count": 292,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00042",
+        "count": 288,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00385",
+        "count": 279,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01526",
+        "count": 243,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00539",
+        "count": 232,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00551",
+        "count": 232,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/MARA_BRGEW",
+        "count": 221,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/MARA_MSTAE",
+        "count": 221,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01297",
+        "count": 220,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00127",
+        "count": 212,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00262",
+        "count": 200,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02203",
+        "count": 190,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02936",
+        "count": 190,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03629_VAL1",
+        "count": 190,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00455",
+        "count": 190,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01073",
+        "count": 190,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01135",
+        "count": 190,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01136",
+        "count": 190,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00545_01",
+        "count": 189,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00545_02",
+        "count": 189,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02183",
+        "count": 188,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02185",
+        "count": 188,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02187",
+        "count": 188,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03091_MAX",
+        "count": 186,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02184",
+        "count": 186,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02186",
+        "count": 186,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03629_VAL2",
+        "count": 180,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00620",
+        "count": 176,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00005",
+        "count": 175,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00005_01",
+        "count": 175,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00005_02",
+        "count": 175,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00025",
+        "count": 175,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00038",
+        "count": 175,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00495",
+        "count": 175,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00496",
+        "count": 175,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01420",
+        "count": 175,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01421",
+        "count": 175,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01524",
+        "count": 175,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02937",
+        "count": 175,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02938",
+        "count": 175,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00275",
+        "count": 175,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZUL4",
+        "count": 174,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZUL2",
+        "count": 174,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00414",
+        "count": 172,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00007",
+        "count": 168,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03091_MIN",
+        "count": 161,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02933",
+        "count": 151,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00275",
+        "count": 148,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00692",
+        "count": 144,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00620_EINW",
+        "count": 142,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00259_01",
+        "count": 140,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00541_01",
+        "count": 140,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00542_01",
+        "count": 140,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01192_01",
+        "count": 140,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01193_01",
+        "count": 140,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00259_02",
+        "count": 140,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00542_02",
+        "count": 140,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01192_02",
+        "count": 140,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01193_02",
+        "count": 140,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00001",
+        "count": 136,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02978_VAL1",
+        "count": 136,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02978_VAL2",
+        "count": 136,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03374_MAX",
+        "count": 136,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03375_MAX",
+        "count": 136,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02305",
+        "count": 136,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00030_01",
+        "count": 132,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01191_01",
+        "count": 130,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02228",
+        "count": 117,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00481",
+        "count": 117,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00030",
+        "count": 116,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00529",
+        "count": 116,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00659",
+        "count": 116,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01074",
+        "count": 116,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01075",
+        "count": 116,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00134",
+        "count": 116,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00344",
+        "count": 116,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00345",
+        "count": 116,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00593",
+        "count": 116,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00030_01",
+        "count": 115,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00030_02",
+        "count": 115,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00030_07",
+        "count": 115,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00221",
+        "count": 103,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01417",
+        "count": 103,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01418",
+        "count": 103,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02476",
+        "count": 103,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02960",
+        "count": 103,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02959",
+        "count": 102,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00126",
+        "count": 102,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03547",
+        "count": 100,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03548",
+        "count": 100,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00072",
+        "count": 95,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00072_01",
+        "count": 95,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00072_02",
+        "count": 95,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03363_MAX",
+        "count": 95,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03363_MIN",
+        "count": 95,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01139",
+        "count": 95,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00050",
+        "count": 93,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00530",
+        "count": 93,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01445",
+        "count": 89,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03365_MAX",
+        "count": 88,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03365_MIN",
+        "count": 88,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00084",
+        "count": 86,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02766",
+        "count": 84,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02767",
+        "count": 84,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02188",
+        "count": 84,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00137",
+        "count": 79,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00088",
+        "count": 74,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00064",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00064_01",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00064_02",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00064_05",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00064_06",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00398",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00506",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01056",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03374_MIN",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03375_MIN",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03376_MAX",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03376_MIN",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03517_MAX",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03517_MIN",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03518_MAX",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03518_MIN",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00010_05",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00011_05",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00012_05",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00049_05",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03483_05",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03485_05",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03486_05",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03487_05",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03498_05",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00010_06",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00011_06",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00012_06",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00049_06",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03483_06",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03485_06",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03486_06",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03487_06",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03498_06",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03377_MAX",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03377_MIN",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03704",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03705",
+        "count": 68,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02754",
+        "count": 66,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00415",
+        "count": 62,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02978",
+        "count": 61,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00006",
+        "count": 56,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02717",
+        "count": 56,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00552",
+        "count": 54,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00241_01",
+        "count": 53,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00241_02",
+        "count": 53,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02718",
+        "count": 53,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03378_MAX",
+        "count": 53,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03378_MIN",
+        "count": 53,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03379_MAX",
+        "count": 53,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03379_MIN",
+        "count": 53,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03380_MAX",
+        "count": 53,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03380_MIN",
+        "count": 53,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03381_MAX",
+        "count": 53,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03381_MIN",
+        "count": 53,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00105",
+        "count": 52,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01137",
+        "count": 52,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00102",
+        "count": 51,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02770",
+        "count": 51,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02771",
+        "count": 51,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00111",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00112",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03539",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03540",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03541",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03542",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03543",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03544",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03545",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03546",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03539_NOTE",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03540_NOTE",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03541_NOTE",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03542_NOTE",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03543_NOTE",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03544_NOTE",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03545_NOTE",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03546_NOTE",
+        "count": 50,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00103",
+        "count": 49,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00302",
+        "count": 49,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01624",
+        "count": 49,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01926",
+        "count": 49,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00029",
+        "count": 49,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01404_01",
+        "count": 49,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01404_02",
+        "count": 49,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00015",
+        "count": 49,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00027",
+        "count": 49,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00127",
+        "count": 49,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00413",
+        "count": 49,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00104",
+        "count": 48,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00106",
+        "count": 48,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00113",
+        "count": 48,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00126",
+        "count": 48,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00016",
+        "count": 48,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02416",
+        "count": 47,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00130",
+        "count": 46,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00004",
+        "count": 45,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00004_01",
+        "count": 45,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00004_02",
+        "count": 45,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00117",
+        "count": 45,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01530",
+        "count": 45,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01531",
+        "count": 45,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01565",
+        "count": 45,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02931",
+        "count": 45,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02932",
+        "count": 45,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00623",
+        "count": 45,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02408",
+        "count": 44,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02409",
+        "count": 44,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02417",
+        "count": 44,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02418",
+        "count": 44,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02410",
+        "count": 43,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02411",
+        "count": 43,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02281",
+        "count": 42,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02282",
+        "count": 42,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00110",
+        "count": 41,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00114",
+        "count": 41,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02414",
+        "count": 41,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02415",
+        "count": 41,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02419",
+        "count": 41,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02980",
+        "count": 41,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02837",
+        "count": 40,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02838",
+        "count": 40,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03559_VAL1",
+        "count": 34,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03563_MIN",
+        "count": 34,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00422",
+        "count": 33,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00423",
+        "count": 33,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01413",
+        "count": 32,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00024",
+        "count": 32,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00131",
+        "count": 32,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00090",
+        "count": 32,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00091",
+        "count": 32,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00131_EINW",
+        "count": 32,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00624",
+        "count": 32,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01725",
+        "count": 32,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00879",
+        "count": 31,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02406",
+        "count": 27,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02407",
+        "count": 27,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00014",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00014_01",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00014_02",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00554",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03092_MAX",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03092_MIN",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03094_MAX",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03094_MIN",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01590",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01593",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02010",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02011",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02259",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02260",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00014",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00197",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00199",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01082",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01083",
+        "count": 25,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00009",
+        "count": 24,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00009_01",
+        "count": 24,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00009_02",
+        "count": 24,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00128",
+        "count": 24,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01049",
+        "count": 24,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01078",
+        "count": 24,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02964",
+        "count": 24,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02967",
+        "count": 24,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02968",
+        "count": 24,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03560",
+        "count": 20,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03561",
+        "count": 20,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00595",
+        "count": 12,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03557",
+        "count": 10,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03558",
+        "count": 10,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00158",
+        "count": 9,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00624",
+        "count": 7,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01415",
+        "count": 7,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02773",
+        "count": 6,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03360",
+        "count": 6,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03361",
+        "count": 6,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00031",
+        "count": 6,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00471",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03549",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03550",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03551",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03552",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03553",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03554",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03555",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03556",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03549_NOTE",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03550_NOTE",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03551_NOTE",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03552_NOTE",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03553_NOTE",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03554_NOTE",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03555_NOTE",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03556_NOTE",
+        "count": 5,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00006",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00006_01",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00006_02",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01304",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00122",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01066",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01068",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00772",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00773",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00850",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00500",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00563",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01256",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01269",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02182",
+        "count": 4,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00003",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00003_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00003_02",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00516",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00122_W",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00228",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00229",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00231",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00451_MAX",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01065",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01067",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01256",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01258",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01259",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01260",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01261",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01301",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01350",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01351",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01352",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02412",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02413",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02420",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02609",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02610",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02611",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02612",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02615",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02616",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02617",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02618",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02619",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02620",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02622",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02623",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02624",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02625",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02626",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02627",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02629",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02630",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02631",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02632",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02635",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02636",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02637",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02638",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02639",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02640",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02641",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02642",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02643",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02645",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02646",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02647",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02648",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02672",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02673",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02674",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02828_MAX",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02882",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02883",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02884",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02885",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02886",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02887",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02888",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02889",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02890",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02893",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02894",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02898",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02903",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02904",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02920",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02921",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00050_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00051_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00053_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00054_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00057_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02736_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02739_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02741_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02742_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02743_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02744_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02745_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02746_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02747_01",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00053_02",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00054_02",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00056_02",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02736_02",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02739_02",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02741_02",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02742_02",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02743_02",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02744_02",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02745_02",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02746_02",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02747_02",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00186",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01240",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01243",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02675",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00102",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00116",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00223",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00224",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00226",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00227",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00231",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00470",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00480",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00604",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00605",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00641",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00680",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01201",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01202",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01205",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01206",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01208",
+        "count": 3,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01186",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00551_MAX",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00551_MIN",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02700",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02770_MAX",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02770_MIN",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02831_MAX",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02831_MIN",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02939",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02940",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03343_MAX",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03343_MIN",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00152",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00153",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02738_01",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02738_02",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02621",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02628",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02644",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02649",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01165",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01166",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01167",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01168",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01185",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00771",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00444",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00670",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00671",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00679",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01204",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01207",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02677",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00629",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01414",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00010_20",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01606_20",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01582",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02696",
+        "count": 2,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03675_MAX",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03675_MIN",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01353",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02892",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02905",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02906",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02907",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02909",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02737_01",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02740_01",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02737_02",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02740_02",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02676",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03677_MAX",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN03677_MIN",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00002",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00002_01",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00002_02",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00002_05",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/class/ZCL00002_06",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00217",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01041",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01579",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02755",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02756",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02757",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02758",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02759",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02763",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02768",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02769",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN02772",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00029",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00027",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00374",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01044",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN01580",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00121",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00474",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00555",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00744",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00749",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00755",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00839",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00840",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00841",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00844",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00868",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00869",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00871",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00943",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00953",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00954",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00955",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00956",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00957",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01013",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01257",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01258",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01260",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01261",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01262",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01263",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01264",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01265",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01266",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01267",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01268",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01270",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01271",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01272",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01273",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01274",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01275",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01276",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01277",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01278",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01279",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01280",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01281",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT01282",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMN00532",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      },
+      {
+        "semantic_id": "https://dt.M9.com/id/cd/ZMT00354",
+        "count": 1,
+        "type": "IRI",
+        "source": "Custom"
+      }
+    ]
+  },
+  "supplemental_semantic_id": {
+    "coverage": {
+      "Submodel": {
+        "with_supplemental_semantic_id": 0,
+        "total": 3866,
+        "share_pct": 0.0
+      },
+      "SubmodelElement": {
+        "with_supplemental_semantic_id": 0,
+        "total": 1340768,
+        "share_pct": 0.0
+      }
+    },
+    "id_type_distribution": {
+      "total_occurrences": 0,
+      "distribution": []
+    },
+    "source_distribution": {
+      "total_occurrences": 0,
+      "distribution": []
+    },
+    "all_supplemental_semantic_ids": []
+  }
+}

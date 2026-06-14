@@ -1,0 +1,39 @@
+{
+  "version": "3.1",
+  "total_checked": 25,
+  "checked_constraints": [
+    "AASd-002",
+    "AASd-005",
+    "AASd-014",
+    "AASd-021",
+    "AASd-022",
+    "AASd-077",
+    "AASd-107",
+    "AASd-108",
+    "AASd-109",
+    "AASd-114",
+    "AASd-117",
+    "AASd-118",
+    "AASd-119",
+    "AASd-121",
+    "AASd-122",
+    "AASd-123",
+    "AASd-124",
+    "AASd-125",
+    "AASd-126",
+    "AASd-127",
+    "AASd-128",
+    "AASd-129",
+    "AASd-131",
+    "AASd-133",
+    "AASd-134"
+  ],
+  "total_violations": 1921,
+  "violations_by_constraint": [
+    {
+      "constraint_id": "AASd-022",
+      "count": 1921,
+      "example": "Duplicate idShort 'Ausfuehrung_des_Prozessanschlusses' within parent namespace"
+    }
+  ]
+}

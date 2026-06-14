@@ -1,0 +1,45 @@
+{
+  "submodel_type_distribution": {
+    "total": 3866,
+    "idta_template_ids_available": true,
+    "deprecated_template_ids_available": true,
+    "distribution": [
+      {
+        "id_short": "Nameplate",
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate",
+        "count": 967,
+        "share_pct": 25.0129,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "TechnicalData",
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2",
+        "count": 967,
+        "share_pct": 25.0129,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "HandoverDocumentation",
+        "semantic_id": "0173-1#01-AHF578#001",
+        "count": 966,
+        "share_pct": 24.9871,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "ContactInformations",
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations",
+        "count": 966,
+        "share_pct": 24.9871,
+        "origin": "IDTA"
+      }
+    ]
+  },
+  "submodels_per_aas": {
+    "n_shells": 967,
+    "min": 3,
+    "max": 4,
+    "mean": 3.9979,
+    "median": 4,
+    "std": 0.0455
+  }
+}

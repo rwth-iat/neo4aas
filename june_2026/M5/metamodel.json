@@ -1,0 +1,89 @@
+{
+  "submodel_element_types": {
+    "total": 11099002,
+    "distribution": [
+      {
+        "type": "Property",
+        "count": 6881474,
+        "share_pct": 62.0008
+      },
+      {
+        "type": "SubmodelElementCollection",
+        "count": 2212973,
+        "share_pct": 19.9385
+      },
+      {
+        "type": "MultiLanguageProperty",
+        "count": 1379582,
+        "share_pct": 12.4298
+      },
+      {
+        "type": "File",
+        "count": 477421,
+        "share_pct": 4.3015
+      },
+      {
+        "type": "SubmodelElementList",
+        "count": 132083,
+        "share_pct": 1.19
+      },
+      {
+        "type": "ReferenceElement",
+        "count": 15469,
+        "share_pct": 0.1394
+      }
+    ]
+  },
+  "value_types": {
+    "total_with_value_type": 6881474,
+    "distribution": [
+      {
+        "value_type": "xs:string",
+        "count": 4248596,
+        "share_pct": 61.7396
+      },
+      {
+        "value_type": "xs:int",
+        "count": 1667294,
+        "share_pct": 24.2287
+      },
+      {
+        "value_type": "xs:float",
+        "count": 594671,
+        "share_pct": 8.6416
+      },
+      {
+        "value_type": "xs:boolean",
+        "count": 190400,
+        "share_pct": 2.7668
+      },
+      {
+        "value_type": "xs:date",
+        "count": 140949,
+        "share_pct": 2.0482
+      },
+      {
+        "value_type": "xs:anyURI",
+        "count": 34367,
+        "share_pct": 0.4994
+      },
+      {
+        "value_type": "xs:double",
+        "count": 5144,
+        "share_pct": 0.0748
+      },
+      {
+        "value_type": "xs:dateTime",
+        "count": 53,
+        "share_pct": 0.0008
+      }
+    ]
+  },
+  "optional_features": {
+    "submodel_qualifier": 0,
+    "submodel_extension": 0,
+    "submodel_element_qualifier": 0,
+    "submodel_element_extension": 0,
+    "embedded_data_specification": 551762
+  }
+}

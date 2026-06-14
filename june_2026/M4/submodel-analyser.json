@@ -1,0 +1,129 @@
+{
+  "submodel_type_distribution": {
+    "total": 112924,
+    "idta_template_ids_available": true,
+    "deprecated_template_ids_available": true,
+    "distribution": [
+      {
+        "id_short": "Nameplate",
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate",
+        "count": 18962,
+        "share_pct": 16.7918,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "MCAD",
+        "semantic_id": "https://admin-shell.io/sandbox/idta/handover/MCAD/0/1/",
+        "count": 18962,
+        "share_pct": 16.7918,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "Electrical_and_Fluid_CAD",
+        "semantic_id": "https://admin-shell.io/sandbox/idta/handover/EFCAD/0/1/",
+        "count": 18962,
+        "share_pct": 16.7918,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "HandoverDocumentation",
+        "semantic_id": "0173-1#01-AHF578#001",
+        "count": 18863,
+        "share_pct": 16.7042,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "TechnicalData",
+        "semantic_id": "https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2",
+        "count": 18863,
+        "share_pct": 16.7042,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "ContactInformations",
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations",
+        "count": 18003,
+        "share_pct": 15.9426,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "HandoverDocumentation",
+        "semantic_id": "0173-1#01-AHF578#003",
+        "count": 99,
+        "share_pct": 0.0877,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "SimulationModels",
+        "semantic_id": "https://admin-shell.io/idta/SimulationModels/SimulationModels/1/0",
+        "count": 99,
+        "share_pct": 0.0877,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "TechnicalData",
+        "semantic_id": "0173-1#01-AHX837#002",
+        "count": 98,
+        "share_pct": 0.0868,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "SoftwareNameplate",
+        "semantic_id": "https://admin-shell.io/idta/SoftwareNameplate/1/0",
+        "count": 7,
+        "share_pct": 0.0062,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "HierarchicalStructures",
+        "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel",
+        "count": 1,
+        "share_pct": 0.0009,
+        "origin": "IDTA"
+      },
+      {
+        "id_short": "History",
+        "semantic_id": null,
+        "count": 1,
+        "share_pct": 0.0009,
+        "origin": null
+      },
+      {
+        "id_short": "OperationalData",
+        "semantic_id": null,
+        "count": 1,
+        "share_pct": 0.0009,
+        "origin": null
+      },
+      {
+        "id_short": "RDecision",
+        "semantic_id": null,
+        "count": 1,
+        "share_pct": 0.0009,
+        "origin": null
+      },
+      {
+        "id_short": "ProductChangeNotifications",
+        "semantic_id": "0173-10029#01-XFB001#001",
+        "count": 1,
+        "share_pct": 0.0009,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "Reliability",
+        "semantic_id": "https://admin-shell.io/idta/iec62683/1/0/Reliability",
+        "count": 1,
+        "share_pct": 0.0009,
+        "origin": "IDTA"
+      }
+    ]
+  },
+  "submodels_per_aas": {
+    "n_shells": 18962,
+    "min": 5,
+    "max": 14,
+    "mean": 5.9553,
+    "median": 6.0,
+    "std": 0.2409
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "format": "aasx",
+  "directory": "data/M8_AAS_AASX",
+  "detected_version": "3.0",
+  "known_version": "3.0",
+  "schema_results": [
+    {
+      "schema_label": "AAS 3.0 XSD",
+      "version": "3.0",
+      "valid_count": 1722,
+      "invalid_count": 0,
+      "valid_pct": 100.0,
+      "total_violations": 0,
+      "violations": []
+    }
+  ],
+  "aasx_inner_format": "xml",
+  "aasx_json_entries": 0,
+  "aasx_xml_entries": 1722
+}

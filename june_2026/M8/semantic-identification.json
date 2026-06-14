@@ -1,0 +1,380 @@
+{
+  "semantic_id": {
+    "coverage": {
+      "Submodel": {
+        "with_semantic_id": 3444,
+        "total": 3444,
+        "share_pct": 100.0
+      },
+      "SubmodelElement": {
+        "with_semantic_id": 439307,
+        "total": 439307,
+        "share_pct": 100.0
+      }
+    },
+    "id_type_distribution": {
+      "total_occurrences": 439307,
+      "distribution": [
+        {
+          "type": "IRDI",
+          "count": 435863,
+          "share_pct": 99.216
+        },
+        {
+          "type": "IRI",
+          "count": 3444,
+          "share_pct": 0.784
+        }
+      ]
+    },
+    "source_distribution": {
+      "total_occurrences": 439307,
+      "distribution": [
+        {
+          "source": "ECLASS",
+          "count": 400726,
+          "share_pct": 91.2178
+        },
+        {
+          "source": "IEC CDD",
+          "count": 35137,
+          "share_pct": 7.9983
+        },
+        {
+          "source": "IDTA",
+          "count": 3444,
+          "share_pct": 0.784
+        }
+      ]
+    },
+    "all_semantic_ids": [
+      {
+        "semantic_id": "0173-1#02-ABI502#003/0173-1#01-AHF581#003*01",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI501#003/0173-1#01-AHF580#001*03",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI503#003/0173-1#01-AHF582#003*01",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI500#003/0173-1#01-AHF579#003*01",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH996#003",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH997#003",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH994#003",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO099#004",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI004#003",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI002#003",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI000#003",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI001#003",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAP003#005",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABJ219#003",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABG940#004",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABK126#003",
+        "count": 21629,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAN468#009",
+        "count": 19792,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAN466#004",
+        "count": 13991,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH999#003",
+        "count": 13991,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0112/2///61360_7#AAS009#001",
+        "count": 2912,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABH783#003",
+        "count": 2912,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABO097#001",
+        "count": 2912,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABA231#009",
+        "count": 2912,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABO100#002",
+        "count": 2912,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61360_7#AAS006#001",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/AddressInformation",
+        "count": 1722,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABP462#001",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABB757#007",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABA951#009",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABN590#002",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/idta/nameplate/3/0/UniqueFacilityIdentifier",
+        "count": 1722,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABP000#002",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0173-1#02-AA0132#002",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AA0134#002",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AA0128#002",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AA0129#002",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABA565#009",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABA567#009",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABP463#001",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABA950#008",
+        "count": 1694,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABP464#002",
+        "count": 1692,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61360_7#AAS011#001",
+        "count": 1692,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      },
+      {
+        "semantic_id": "0112/2///61987#ABH830#002",
+        "count": 1,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      }
+    ]
+  },
+  "supplemental_semantic_id": {
+    "coverage": {
+      "Submodel": {
+        "with_supplemental_semantic_id": 0,
+        "total": 3444,
+        "share_pct": 0.0
+      },
+      "SubmodelElement": {
+        "with_supplemental_semantic_id": 1722,
+        "total": 439307,
+        "share_pct": 0.392
+      }
+    },
+    "id_type_distribution": {
+      "total_occurrences": 5166,
+      "distribution": [
+        {
+          "type": "IRDI",
+          "count": 3444,
+          "share_pct": 66.6667
+        },
+        {
+          "type": "IRI",
+          "count": 1722,
+          "share_pct": 33.3333
+        }
+      ]
+    },
+    "source_distribution": {
+      "total_occurrences": 5166,
+      "distribution": [
+        {
+          "source": "ECLASS",
+          "count": 1722,
+          "share_pct": 33.3333
+        },
+        {
+          "source": "IDTA",
+          "count": 1722,
+          "share_pct": 33.3333
+        },
+        {
+          "source": "IEC CDD",
+          "count": 1722,
+          "share_pct": 33.3333
+        }
+      ]
+    },
+    "all_supplemental_semantic_ids": [
+      {
+        "semantic_id": "0173-1#02-AAQ837#008/0173-1#01-ADR448#008",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/smt-dropin/smt-dropin-use/1/0",
+        "count": 1722,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0112/2///61360_7#AAS002#001",
+        "count": 1722,
+        "type": "IRDI",
+        "source": "IEC CDD"
+      }
+    ]
+  }
+}

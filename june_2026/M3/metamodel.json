@@ -1,0 +1,109 @@
+{
+  "submodel_element_types": {
+    "total": 8711543,
+    "distribution": [
+      {
+        "type": "Property",
+        "count": 2935707,
+        "share_pct": 33.699
+      },
+      {
+        "type": "MultiLanguageProperty",
+        "count": 2892434,
+        "share_pct": 33.2023
+      },
+      {
+        "type": "SubmodelElementCollection",
+        "count": 1471947,
+        "share_pct": 16.8965
+      },
+      {
+        "type": "Entity",
+        "count": 1230863,
+        "share_pct": 14.1291
+      },
+      {
+        "type": "File",
+        "count": 167296,
+        "share_pct": 1.9204
+      },
+      {
+        "type": "SubmodelElementList",
+        "count": 13270,
+        "share_pct": 0.1523
+      },
+      {
+        "type": "RelationshipElement",
+        "count": 21,
+        "share_pct": 0.0002
+      },
+      {
+        "type": "ReferenceElement",
+        "count": 5,
+        "share_pct": 0.0001
+      }
+    ]
+  },
+  "value_types": {
+    "total_with_value_type": 2935707,
+    "distribution": [
+      {
+        "value_type": "xs:string",
+        "count": 2818967,
+        "share_pct": 96.0234
+      },
+      {
+        "value_type": "xs:float",
+        "count": 71962,
+        "share_pct": 2.4513
+      },
+      {
+        "value_type": "xs:boolean",
+        "count": 26537,
+        "share_pct": 0.9039
+      },
+      {
+        "value_type": "xs:integer",
+        "count": 17582,
+        "share_pct": 0.5989
+      },
+      {
+        "value_type": "xs:double",
+        "count": 362,
+        "share_pct": 0.0123
+      },
+      {
+        "value_type": "xs:int",
+        "count": 165,
+        "share_pct": 0.0056
+      },
+      {
+        "value_type": "xs:date",
+        "count": 107,
+        "share_pct": 0.0036
+      },
+      {
+        "value_type": "xs:anyURI",
+        "count": 14,
+        "share_pct": 0.0005
+      },
+      {
+        "value_type": "xs:unsignedLong",
+        "count": 6,
+        "share_pct": 0.0002
+      },
+      {
+        "value_type": "xs:dateTime",
+        "count": 5,
+        "share_pct": 0.0002
+      }
+    ]
+  },
+  "optional_features": {
+    "submodel_qualifier": 0,
+    "submodel_extension": 0,
+    "submodel_element_qualifier": 461,
+    "submodel_element_extension": 0,
+    "embedded_data_specification": 1125192
+  }
+}

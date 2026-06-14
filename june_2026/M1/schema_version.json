@@ -1,0 +1,26 @@
+{
+  "format": "json",
+  "directory": "data/M1_AAS_JSON",
+  "detected_version": "3.1",
+  "known_version": "3.1",
+  "schema_results": [
+    {
+      "schema_label": "AAS 3.1 AJV",
+      "version": "3.1",
+      "valid_count": 0,
+      "invalid_count": 117418,
+      "valid_pct": 0.0,
+      "total_violations": 473255,
+      "violations": [
+        {
+          "type": "minLength — must NOT have fewer than 1 characters",
+          "count": 355838
+        },
+        {
+          "type": "pattern — must match pattern \"^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+$\"",
+          "count": 117417
+        }
+      ]
+    }
+  ]
+}

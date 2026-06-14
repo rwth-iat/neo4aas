@@ -1,0 +1,164 @@
+{
+  "submodel_element_types": {
+    "total": 3281,
+    "distribution": [
+      {
+        "type": "Property",
+        "count": 2117,
+        "share_pct": 64.523
+      },
+      {
+        "type": "SubmodelElementCollection",
+        "count": 498,
+        "share_pct": 15.1783
+      },
+      {
+        "type": "MultiLanguageProperty",
+        "count": 216,
+        "share_pct": 6.5834
+      },
+      {
+        "type": "SubmodelElementList",
+        "count": 120,
+        "share_pct": 3.6574
+      },
+      {
+        "type": "ReferenceElement",
+        "count": 90,
+        "share_pct": 2.7431
+      },
+      {
+        "type": "RelationshipElement",
+        "count": 75,
+        "share_pct": 2.2859
+      },
+      {
+        "type": "File",
+        "count": 56,
+        "share_pct": 1.7068
+      },
+      {
+        "type": "Entity",
+        "count": 48,
+        "share_pct": 1.463
+      },
+      {
+        "type": "Range",
+        "count": 48,
+        "share_pct": 1.463
+      },
+      {
+        "type": "Blob",
+        "count": 10,
+        "share_pct": 0.3048
+      },
+      {
+        "type": "Operation",
+        "count": 3,
+        "share_pct": 0.0914
+      }
+    ]
+  },
+  "value_types": {
+    "total_with_value_type": 2165,
+    "distribution": [
+      {
+        "value_type": "xs:string",
+        "count": 1567,
+        "share_pct": 72.3788
+      },
+      {
+        "value_type": "xs:long",
+        "count": 179,
+        "share_pct": 8.2679
+      },
+      {
+        "value_type": "xs:float",
+        "count": 90,
+        "share_pct": 4.157
+      },
+      {
+        "value_type": "xs:anyURI",
+        "count": 77,
+        "share_pct": 3.5566
+      },
+      {
+        "value_type": "xs:double",
+        "count": 66,
+        "share_pct": 3.0485
+      },
+      {
+        "value_type": "xs:boolean",
+        "count": 53,
+        "share_pct": 2.448
+      },
+      {
+        "value_type": "xs:dateTime",
+        "count": 36,
+        "share_pct": 1.6628
+      },
+      {
+        "value_type": "xs:integer",
+        "count": 30,
+        "share_pct": 1.3857
+      },
+      {
+        "value_type": "xs:date",
+        "count": 28,
+        "share_pct": 1.2933
+      },
+      {
+        "value_type": "xs:int",
+        "count": 20,
+        "share_pct": 0.9238
+      },
+      {
+        "value_type": "xs:positiveInteger",
+        "count": 4,
+        "share_pct": 0.1848
+      },
+      {
+        "value_type": "xs:time",
+        "count": 4,
+        "share_pct": 0.1848
+      },
+      {
+        "value_type": "xs:duration",
+        "count": 3,
+        "share_pct": 0.1386
+      },
+      {
+        "value_type": "xs:gYear",
+        "count": 3,
+        "share_pct": 0.1386
+      },
+      {
+        "value_type": "xs:unsignedLong",
+        "count": 2,
+        "share_pct": 0.0924
+      },
+      {
+        "value_type": "xs:unsignedShort",
+        "count": 1,
+        "share_pct": 0.0462
+      },
+      {
+        "value_type": "xs:short",
+        "count": 1,
+        "share_pct": 0.0462
+      },
+      {
+        "value_type": "xs:decimal",
+        "count": 1,
+        "share_pct": 0.0462
+      }
+    ]
+  },
+  "optional_features": {
+    "submodel_qualifier": 19,
+    "submodel_extension": 0,
+    "submodel_element_qualifier": 3264,
+    "submodel_element_extension": 0,
+    "embedded_data_specification": 2163
+  }
+}

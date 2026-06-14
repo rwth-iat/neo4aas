@@ -1,0 +1,15 @@
+{
+  "node_counts": {
+    "AssetAdministrationShell": 22648,
+    "Submodel": 154985,
+    "SubmodelElement": 8711543
+  },
+  "nesting_depth": {
+    "n": 6045686,
+    "min": 1,
+    "max": 10,
+    "mean": 2.4095,
+    "median": 2.0,
+    "std": 0.5877
+  }
+}

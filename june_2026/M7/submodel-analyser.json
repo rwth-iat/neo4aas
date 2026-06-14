@@ -1,0 +1,38 @@
+{
+  "submodel_type_distribution": {
+    "total": 7458,
+    "idta_template_ids_available": true,
+    "deprecated_template_ids_available": true,
+    "distribution": [
+      {
+        "id_short": "DigitalNameplate",
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate",
+        "count": 2486,
+        "share_pct": 33.3333,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "HandoverDocumentation",
+        "semantic_id": "0173-1#01-AHF578#001",
+        "count": 2486,
+        "share_pct": 33.3333,
+        "origin": "Proprietary"
+      },
+      {
+        "id_short": "ContactInformations",
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations",
+        "count": 2486,
+        "share_pct": 33.3333,
+        "origin": "IDTA"
+      }
+    ]
+  },
+  "submodels_per_aas": {
+    "n_shells": 2486,
+    "min": 3,
+    "max": 3,
+    "mean": 3,
+    "median": 3.0,
+    "std": 0.0
+  }
+}

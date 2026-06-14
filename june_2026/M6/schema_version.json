@@ -1,0 +1,22 @@
+{
+  "format": "xml",
+  "directory": "data/M6_AAS_XML",
+  "detected_version": "3.0",
+  "known_version": "3.0",
+  "schema_results": [
+    {
+      "schema_label": "AAS 3.0 XSD",
+      "version": "3.0",
+      "valid_count": 0,
+      "invalid_count": 9991,
+      "valid_pct": 0.0,
+      "total_violations": 9991,
+      "violations": [
+        {
+          "type": "Element '{https://admin-shell.io/aas/3/0}idShort': This element is not expected. Expected is one of ( {https://admin-shell.io/aas/3/0}semanticId, {https://admin-shell.io/aas/3/0}supplementalSemanticIds, {https://admin-shell.io/aas/3/0}qualifiers, {https://admin-shell.io/aas/3/0}embeddedDataSpecifications, {https://admin-shell.io/aas/3/0}value ).",
+          "count": 9991
+        }
+      ]
+    }
+  ]
+}

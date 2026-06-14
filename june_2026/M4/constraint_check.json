@@ -1,0 +1,89 @@
+{
+  "version": "3.1",
+  "total_checked": 25,
+  "checked_constraints": [
+    "AASd-002",
+    "AASd-005",
+    "AASd-014",
+    "AASd-021",
+    "AASd-022",
+    "AASd-077",
+    "AASd-107",
+    "AASd-108",
+    "AASd-109",
+    "AASd-114",
+    "AASd-117",
+    "AASd-118",
+    "AASd-119",
+    "AASd-121",
+    "AASd-122",
+    "AASd-123",
+    "AASd-124",
+    "AASd-125",
+    "AASd-126",
+    "AASd-127",
+    "AASd-128",
+    "AASd-129",
+    "AASd-131",
+    "AASd-133",
+    "AASd-134"
+  ],
+  "total_violations": 65274,
+  "violations_by_constraint": [
+    {
+      "constraint_id": "AASd-002",
+      "count": 46857,
+      "example": "idShort '' does not match the required pattern"
+    },
+    {
+      "constraint_id": "AASd-014",
+      "count": 4,
+      "example": "SelfManagedEntity has neither globalAssetId nor specificAssetId"
+    },
+    {
+      "constraint_id": "AASd-022",
+      "count": 18122,
+      "example": "Duplicate idShort 'AmbientTemperature' within parent namespace"
+    },
+    {
+      "constraint_id": "AASd-108",
+      "count": 98,
+      "example": "Child type does not match SubmodelElementList/typeValueListElement 'SubmodelElementCollection'"
+    },
+    {
+      "constraint_id": "AASd-109",
+      "count": 1,
+      "example": "SubmodelElementList with Property/Range typeValueListElement is missing valueTypeListElement"
+    },
+    {
+      "constraint_id": "AASd-119",
+      "count": 1,
+      "example": "TemplateQualifier used on element with kind='Instance' (expected Template)"
+    },
+    {
+      "constraint_id": "AASd-122",
+      "count": 8,
+      "example": "ExternalReference first key type is 'ConceptDescription' (must be GlobalReference)"
+    },
+    {
+      "constraint_id": "AASd-123",
+      "count": 3,
+      "example": "ModelReference first key type 'GlobalReference' is not in AasIdentifiables"
+    },
+    {
+      "constraint_id": "AASd-124",
+      "count": 8,
+      "example": "ExternalReference last key type 'ConceptDescription' is not in GenericGloballyIdentifiables or GenericFragmentKeys"
+    },
+    {
+      "constraint_id": "AASd-128",
+      "count": 98,
+      "example": "Key value after SubmodelElementList is not an integer"
+    },
+    {
+      "constraint_id": "AASd-129",
+      "count": 74,
+      "example": "SubmodelElement has TemplateQualifier but is not under a Template Submodel"
+    }
+  ]
+}

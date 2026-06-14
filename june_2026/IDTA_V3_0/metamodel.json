@@ -1,0 +1,169 @@
+{
+  "submodel_element_types": {
+    "total": 6733,
+    "distribution": [
+      {
+        "type": "Property",
+        "count": 4064,
+        "share_pct": 60.3594
+      },
+      {
+        "type": "SubmodelElementCollection",
+        "count": 1175,
+        "share_pct": 17.4514
+      },
+      {
+        "type": "MultiLanguageProperty",
+        "count": 476,
+        "share_pct": 7.0697
+      },
+      {
+        "type": "SubmodelElementList",
+        "count": 278,
+        "share_pct": 4.1289
+      },
+      {
+        "type": "RelationshipElement",
+        "count": 193,
+        "share_pct": 2.8665
+      },
+      {
+        "type": "ReferenceElement",
+        "count": 185,
+        "share_pct": 2.7477
+      },
+      {
+        "type": "File",
+        "count": 132,
+        "share_pct": 1.9605
+      },
+      {
+        "type": "Range",
+        "count": 128,
+        "share_pct": 1.9011
+      },
+      {
+        "type": "Entity",
+        "count": 76,
+        "share_pct": 1.1288
+      },
+      {
+        "type": "Blob",
+        "count": 20,
+        "share_pct": 0.297
+      },
+      {
+        "type": "Operation",
+        "count": 6,
+        "share_pct": 0.0891
+      }
+    ]
+  },
+  "value_types": {
+    "total_with_value_type": 4192,
+    "distribution": [
+      {
+        "value_type": "xs:string",
+        "count": 2956,
+        "share_pct": 70.5153
+      },
+      {
+        "value_type": "xs:long",
+        "count": 358,
+        "share_pct": 8.5401
+      },
+      {
+        "value_type": "xs:float",
+        "count": 238,
+        "share_pct": 5.6775
+      },
+      {
+        "value_type": "xs:anyURI",
+        "count": 129,
+        "share_pct": 3.0773
+      },
+      {
+        "value_type": "xs:double",
+        "count": 119,
+        "share_pct": 2.8387
+      },
+      {
+        "value_type": "xs:dateTime",
+        "count": 97,
+        "share_pct": 2.3139
+      },
+      {
+        "value_type": "xs:boolean",
+        "count": 97,
+        "share_pct": 2.3139
+      },
+      {
+        "value_type": "xs:integer",
+        "count": 59,
+        "share_pct": 1.4074
+      },
+      {
+        "value_type": "xs:date",
+        "count": 47,
+        "share_pct": 1.1212
+      },
+      {
+        "value_type": "xs:int",
+        "count": 39,
+        "share_pct": 0.9303
+      },
+      {
+        "value_type": "xs:decimal",
+        "count": 18,
+        "share_pct": 0.4294
+      },
+      {
+        "value_type": "xs:positiveInteger",
+        "count": 10,
+        "share_pct": 0.2385
+      },
+      {
+        "value_type": "xs:unsignedShort",
+        "count": 5,
+        "share_pct": 0.1193
+      },
+      {
+        "value_type": "xs:unsignedLong",
+        "count": 4,
+        "share_pct": 0.0954
+      },
+      {
+        "value_type": "xs:duration",
+        "count": 4,
+        "share_pct": 0.0954
+      },
+      {
+        "value_type": "xs:time",
+        "count": 4,
+        "share_pct": 0.0954
+      },
+      {
+        "value_type": "xs:nonNegativeInteger",
+        "count": 3,
+        "share_pct": 0.0716
+      },
+      {
+        "value_type": "xs:gYear",
+        "count": 3,
+        "share_pct": 0.0716
+      },
+      {
+        "value_type": "xs:short",
+        "count": 2,
+        "share_pct": 0.0477
+      }
+    ]
+  },
+  "optional_features": {
+    "submodel_qualifier": 38,
+    "submodel_extension": 0,
+    "submodel_element_qualifier": 6311,
+    "submodel_element_extension": 0,
+    "embedded_data_specification": 4575
+  }
+}

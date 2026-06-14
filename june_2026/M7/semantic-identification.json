@@ -1,0 +1,281 @@
+{
+  "semantic_id": {
+    "coverage": {
+      "Submodel": {
+        "with_semantic_id": 7458,
+        "total": 7458,
+        "share_pct": 100.0
+      },
+      "SubmodelElement": {
+        "with_semantic_id": 3476034,
+        "total": 3883828,
+        "share_pct": 89.5002
+      }
+    },
+    "id_type_distribution": {
+      "total_occurrences": 3476034,
+      "distribution": [
+        {
+          "type": "IRDI",
+          "count": 3063451,
+          "share_pct": 88.1306
+        },
+        {
+          "type": "IRI",
+          "count": 412583,
+          "share_pct": 11.8694
+        }
+      ]
+    },
+    "source_distribution": {
+      "total_occurrences": 3476034,
+      "distribution": [
+        {
+          "source": "ECLASS",
+          "count": 3063451,
+          "share_pct": 88.1306
+        },
+        {
+          "source": "IDTA",
+          "count": 412583,
+          "share_pct": 11.8694
+        }
+      ]
+    },
+    "all_semantic_ids": [
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation",
+        "count": 203897,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO204#003",
+        "count": 203897,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO895#003",
+        "count": 203897,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO132#002",
+        "count": 203897,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAW001#001",
+        "count": 203897,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAQ326#002",
+        "count": 203897,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO134#002",
+        "count": 203897,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO127#003",
+        "count": 203897,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO136#002",
+        "count": 203897,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation/AvailableTime/",
+        "count": 203897,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO198#002",
+        "count": 203897,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO128#002",
+        "count": 203897,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI502#001/0173-1#01-AHF581#001*01",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI501#001/0173-1#01-AHF580#001*01",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI503#001/0173-1#01-AHF582#001*01",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI500#001/0173-1#01-AHF579#001*01",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH996#001",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH997#001",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH994#001",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO099#002",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH995#001",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAN468#006",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO100#002",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI000#001",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI001#001",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI002#001",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI004#001",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-ABI504#001/0173-1#01-AHF583#001",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO102#003",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO105#002",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAO106#002",
+        "count": 53668,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "0173-1#02-AAY811#001",
+        "count": 2486,
+        "type": "IRDI",
+        "source": "ECLASS"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate/CompanyLogo",
+        "count": 2486,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "https://admin-shell.io/vdi/2770/1/0/EntityForDocumentation",
+        "count": 2303,
+        "type": "IRI",
+        "source": "IDTA"
+      },
+      {
+        "semantic_id": "0173-1#02-ABH990#001",
+        "count": 2303,
+        "type": "IRDI",
+        "source": "ECLASS"
+      }
+    ]
+  },
+  "supplemental_semantic_id": {
+    "coverage": {
+      "Submodel": {
+        "with_supplemental_semantic_id": 0,
+        "total": 7458,
+        "share_pct": 0.0
+      },
+      "SubmodelElement": {
+        "with_supplemental_semantic_id": 0,
+        "total": 3883828,
+        "share_pct": 0.0
+      }
+    },
+    "id_type_distribution": {
+      "total_occurrences": 0,
+      "distribution": []
+    },
+    "source_distribution": {
+      "total_occurrences": 0,
+      "distribution": []
+    },
+    "all_supplemental_semantic_ids": []
+  }
+}
