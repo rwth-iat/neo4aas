@@ -35,6 +35,14 @@ class Neo4jObjectStore(AbstractObjectStore[Identifier, Identifiable]):
         obj = json.loads(json.dumps(data), cls=StrictAASFromJsonDecoder)
         return obj
 
+    def commit(self, x: Identifiable) -> None:
+        if not self._client.identifiable_exists(x.id):
+            raise KeyError(f"Identifiable object with id {x.id} not found in Neo4j store")
+        self._client.remove_identifiable(x.id)
+        data = json.dumps(obj=x, cls=AASToJsonEncoder)
+        data_dict = json.loads(data)
+        self._client.add_identifiable(data_dict)
+
     def discard(self, x: Identifiable) -> None:
         self._client.remove_identifiable(x.id)
 
