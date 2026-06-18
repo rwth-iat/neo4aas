@@ -15,7 +15,15 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest>=7.0",
+    "testcontainers[neo4j]>=4.0",
 ]
+mcp = [
+    "mcp[cli]>=1.2",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+aas4graph-mcp = "aas_mapping.mcp_server.server:main"
 
 [tool.setuptools.packages.find]
 include = ["aas_mapping*"]
