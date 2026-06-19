@@ -21,7 +21,7 @@ class JsonFromNeo4jExporter(BaseNeo4JClient):
             relationships,
             key=lambda x: (
                 x.get("type"),  # Primary sort by type
-                x.get("properties", {}).get("value", {}).get("list_index", float("inf"))  # Secondary sort
+                x.get("properties", {}).get("list_index", float("inf"))  # Secondary sort
             )
         )
 
