@@ -7,7 +7,9 @@ logger = logging.getLogger(__name__)
 
 class JsonFromNeo4jExporter(BaseNeo4JClient):
     def _get_node_properties(self, node: Dict) -> Dict:
-        return {key: value for key, value in node['properties'].items()}
+        # A node may carry no scalar properties (its content lives in child nodes /
+        # relationships), in which case the subgraph JSON omits the `properties` key.
+        return dict(node.get('properties', {}))
 
     def _create_list_of_dicts(self, *lists: List[List[any]], keys: List[str]) -> List[Dict]:
         if len(keys) != len(lists):

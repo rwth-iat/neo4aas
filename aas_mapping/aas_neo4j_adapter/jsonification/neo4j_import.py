@@ -99,10 +99,6 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
             if plain:
                 create_data[key] = plain
 
-        for labels in grouped_nodes.keys():
-            for label in labels:
-                session.run(f"CREATE INDEX IF NOT EXISTS FOR (n:{label}) ON (n.uid)")
-
         uid_to_internal_id = {}
         if create_data:
             for record in session.run(create_nodes_query, data=create_data):
@@ -223,7 +219,8 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         with self.driver.session() as session:
             # 1. Create Nodes in Batches
             node_start_time = time.time()
-            self.uid_to_internal_id.update(self._create_nodes(session, grouped_nodes))
+            created_map = self._create_nodes(session, grouped_nodes)
+            self.uid_to_internal_id.update(created_map)
             if exist_uid_to_internal_id:
                 # Merge existing UID to internal ID mapping with newly created nodes
                 self.uid_to_internal_id.update(exist_uid_to_internal_id)
@@ -242,10 +239,12 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
             stats.total_relationships_created += relationship_count
             logger.info(f"Created {relationship_count} relationships in {relationship_creation_time:.2f} seconds")
 
-            # 3. Cleanup UIDs in Batches
-            # self._cleanup_uids_in_session(session, list(uid_to_internal_id.values()), db_batch_size)
+            # 3. Cleanup UIDs in Batches — uid is an import-internal tracking property and
+            # must not persist on nodes. Only this batch's nodes are touched (the in-memory
+            # uid -> elementId map is kept for later relationship wiring). hash is preserved
+            # for deduplication.
+            self._cleanup_uids_in_session(session, list(created_map.values()), db_batch_size)
 
-        # del grouped_nodes, uid_to_internal_id
         del grouped_nodes
 
         return stats

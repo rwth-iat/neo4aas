@@ -10,7 +10,7 @@ Ideas for optimizing the AAS → Neo4j mapping. Grounded in the current schema.
 | 1 | `Identifiable.id` → uniqueness constraint | correctness + perf | low | low | ✅ done |
 | 2 | DB-level dedup (MERGE on `hash`) + index | storage + correctness | med | med | ✅ done |
 | 3 | Denormalize `target_id = keys_value[0]` (indexed) | query perf | low | low |
-| 4 | Remove `uid` leak | correctness + storage | low | low |
+| 4 | Remove `uid` leak | correctness + storage | low | low | ✅ done |
 | 5 | Collapse parallel `:child` + semantic edge | storage | high | med |
 | 6 | Typed value shadow prop for range queries | query perf | med | low |
 | 7 | Incremental `resolve_references()` | write perf | med | low |
@@ -49,6 +49,8 @@ CREATE INDEX concept_description_hash IF NOT EXISTS FOR (c:ConceptDescription) O
 Every node carries a never-cleaned `uid` int that leaks into exported dicts (cleanup step is commented out — tracked in TODOs.md "Open Bugs"). Remove it post-import. Storage + round-trip cleanliness.
 
 - File: [jsonification/neo4j_import.py](aas_mapping/aas_neo4j_adapter/jsonification/neo4j_import.py)
+
+**✅ Implemented** — `_upload_nodes_and_relationships` now runs `_cleanup_uids_in_session` for the current batch's nodes after relationship wiring (kept the in-memory `uid → elementId` map; `hash` preserved for dedup). Removed the now-pointless per-label `uid` index. Exposed and fixed a latent exporter bug: a node with no scalar properties (e.g. `EmbeddedDataSpecification`) lost its only property (`uid`) and the subgraph JSON then omits `properties`; `_get_node_properties` now tolerates a missing `properties` key. Tests in `test_uid_cleanup.py` (no `uid` on any node post-import; `hash` retained).
 
 ---
 
