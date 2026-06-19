@@ -1,0 +1,16 @@
+{
+  "$condition": {
+    "$and": [
+      { "$eq": [
+          { "$field": "$aas#idShort" },
+          { "$strVal": "MyShell" }
+        ]
+      },
+      { "$eq": [
+          { "$field": "$sme.ProductClassifications.ProductClassificationItem.ProductClassId#value" },
+          { "$strVal": "27-37-09-05" }
+        ]
+      }
+    ]
+  }
+}

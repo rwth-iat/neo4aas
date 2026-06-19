@@ -105,6 +105,24 @@ The shared positional index enables reconstruction during export.
 
 `Reference` and `ConceptDescription` nodes are deduplicated using SHA256 hashing of their properties. This prevents duplicate semantic identifiers across multiple AAS imports.
 
+### Reference Resolution
+
+A `ModelReference` stores its target only as key values (e.g. `keys_value = ["urn:sm/1"]`), not as a graph edge. To let queries *follow* a reference (for example "all AAS whose submodel matches …"), the adapter materializes a `:references` edge from each `ModelReference` node to the `Identifiable` it points at, matching `keys_value[0]` against `Identifiable.id`:
+
+```
+(:Reference {type:'ModelReference'})-[:references]->(:Identifiable)
+```
+
+This is driven from the application layer (the chosen approach): `AASNeo4JClient.resolve_references()` (re)creates these edges and deletes stale ones, and `Neo4jObjectStore` calls it automatically after every `add` / `commit` / `discard` / `remove`. The operation is idempotent — it converges to the same graph on repeated runs — and order-independent: a reference added before its target is linked once the target appears. For bulk imports that bypass the object store, call `client.resolve_references()` once after loading.
+
+The full key chain is followed, so a `ModelReference` resolves to its actual target Referable — not just the top-level Identifiable. Each descending key is matched as an `idShort` (under a `SubmodelElementCollection` / `Submodel`) **or** as a 0-based list index (under a `SubmodelElementList`):
+
+```
+child.idShort = key  OR  edge.list_index = toInteger(key)
+```
+
+> **Alternative — APOC triggers.** The same resolution Cypher could instead run inside a DB-native `apoc.trigger` so that *out-of-band* writes (e.g. edits via the Neo4j Browser) are also maintained automatically. That requires `apoc.trigger.enabled=true` in `neo4j.conf` and is harder to test, so the application-layer approach is used here.
+
 ---
 
 ## AAS Query Language (AASQL)
@@ -127,6 +145,16 @@ $<root>#<attribute>[.<nested>]
 ```
 
 Examples: `$aas#idShort`, `$aas#assetInformation.assetType`, `$sme.Color#value`
+
+### Cross-root queries ($aas + $sm/$sme)
+
+A query may combine roots. When `$aas` is mixed with `$sm`/`$sme`, the compiler scopes the submodel conditions to the matching AAS's submodels by bridging through the `:references` edge (see [Reference Resolution](#reference-resolution)):
+
+```cypher
+MATCH (aas)-[:submodels]->(:Reference)-[:references]->(sm)
+```
+
+so the query returns "all AAS whose (referenced) submodel satisfies the condition" — not a cartesian product. The `RETURN` variable defaults to the outermost root (precedence `aas > sm > cd`, so an `$aas`+`$sme` query returns the AAS). Pass `convert_aasql_to_cypher(query, target="sm")` to force the returned type for a given endpoint (e.g. a Submodel repository).
 
 ### Supported operators
 

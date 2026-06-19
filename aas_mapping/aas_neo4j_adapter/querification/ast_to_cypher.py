@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Optional, Tuple
 import re
 
 from aas_mapping.aas_neo4j_adapter.querification.ast_nodes import *  # noqa: F401,F403
@@ -360,14 +360,45 @@ def _remove_duplicate_matches(matches: list[str]) -> list[str]:
     return unique_matches
 
 
-def converter(ast: Condition) -> str:
+def _select_return_var(combined_matches: list[str], target: Optional[str]) -> str:
+    """Pick the RETURN variable for a query.
+
+    When ``target`` is given it wins (an endpoint declaring its object type, e.g.
+    ``"aas"`` at an AAS repository). Otherwise the outermost root present is chosen
+    by precedence ``aas > sm > cd``: this is what the IDTA query-language spec means
+    by "the default return type is the respective object" — combining ``$aas`` with
+    ``$sm``/``$sme`` filters submodels but still yields the AAS. Falls back to the
+    first MATCH fragment's variable when none of those roots are present
+    (e.g. descriptor roots).
+    """
+    if target:
+        return target
+    joined = "\n".join(combined_matches)
+    if "(aas:" in joined:
+        return "aas"
+    if "(sm:Submodel" in joined:
+        return "sm"
+    if "(cd:" in joined:
+        return "cd"
+    match_var = re.findall(r"\((\w+):", combined_matches[0])
+    return match_var[0] if match_var else "sm"
+
+
+def converter(ast: Condition, target: Optional[str] = None) -> str:
     """
     Convert an AST Condition node to a full Cypher query string.
 
     The returned string contains MATCH, WHERE and RETURN clauses.
     - MATCH clause is assembled from match fragments collected during expression conversion.
     - WHERE clause contains the boolean expression produced by `_convert_expression`.
-    - RETURN clause returns the main identifier from the first match fragment.
+    - RETURN clause returns the outermost root (see `_select_return_var`); pass
+      `target` to force a specific variable for an endpoint-typed result.
+
+    Cross-root scoping: when a query mixes `$aas` with `$sm`/`$sme`, an
+    `(aas)-[:submodels]->(:Reference)-[:references]->(sm)` bridge is added so the
+    submodel conditions only apply to submodels of the matching AAS, per the IDTA
+    query-language spec. The bridge relies on the `:references` edges maintained by
+    `AASNeo4JClient.resolve_references()`.
 
     Example output:
         MATCH (sm:Submodel)-[:submodelElements]->(sme0:SubmodelElement {idShort: 'x'})
@@ -385,9 +416,13 @@ def converter(ast: Condition) -> str:
 
     combined_where, combined_matches = [where_parts], _remove_duplicate_matches(match_parts)
 
-    first_match = combined_matches[0]
-    match_var = re.findall(r"\((\w+):", first_match)
-    return_var = match_var[0] if match_var else "sm"
+    joined = "\n".join(combined_matches)
+    has_aas = "(aas:" in joined
+    has_sm = "(sm:Submodel" in joined
+    if has_aas and has_sm:
+        combined_matches.append("(aas)-[:submodels]->(:Reference)-[:references]->(sm)")
+
+    return_var = _select_return_var(combined_matches, target)
 
     cypher = "MATCH " + "\nMATCH ".join(combined_matches)
     cypher += "\nWHERE " + " AND ".join(combined_where)
@@ -395,7 +430,7 @@ def converter(ast: Condition) -> str:
     return cypher
 
 
-def converter_full(query: Query) -> str:
+def converter_full(query: Query, target: Optional[str] = None) -> str:
     """
     Convert a full AASQL Query (with optional $select) to Cypher.
 
@@ -406,10 +441,12 @@ def converter_full(query: Query) -> str:
         the v3.2 spec only defines ``"id"`` as a valid $select value; any
         other selection semantics are unspecified.
 
+    `target` forces the RETURN variable (endpoint-typed result); see `converter`.
+
     Descriptor roots ($aasdesc / $smdesc) compile correctly but will return
     empty results until descriptor ingestion is implemented in neo4j_import.py.
     """
-    cypher = converter(query.condition)
+    cypher = converter(query.condition, target=target)
     if query.select == "id":
         prefix, var = cypher.rsplit("\nRETURN ", 1)
         cypher = prefix + "\nRETURN " + var.strip() + ".id"

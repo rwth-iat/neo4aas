@@ -23,6 +23,7 @@ class Neo4jObjectStore(AbstractObjectStore[Identifier, Identifiable]):
         data = json.dumps(obj=x, cls=AASToJsonEncoder)
         data_dict = json.loads(data)
         self._client.add_identifiable(data_dict)
+        self._client.resolve_references()
 
     def get_item(self, identifier: Identifier) -> Identifiable:
         return self.get_identifiable(identifier)
@@ -42,9 +43,11 @@ class Neo4jObjectStore(AbstractObjectStore[Identifier, Identifiable]):
         data = json.dumps(obj=x, cls=AASToJsonEncoder)
         data_dict = json.loads(data)
         self._client.add_identifiable(data_dict)
+        self._client.resolve_references()
 
     def discard(self, x: Identifiable) -> None:
         self._client.remove_identifiable(x.id)
+        self._client.resolve_references()
 
     def remove(self, x: Identifiable) -> None:
         if not self._client.identifiable_exists(x.id):
@@ -53,6 +56,7 @@ class Neo4jObjectStore(AbstractObjectStore[Identifier, Identifiable]):
         result = self._client.remove_identifiable(x.id)
         if result == 0:
             raise KeyError(f"The Identifiable could not be removed: {x.id}")
+        self._client.resolve_references()
 
     def __contains__(self, x: object) -> bool:
         if isinstance(x, Identifier):

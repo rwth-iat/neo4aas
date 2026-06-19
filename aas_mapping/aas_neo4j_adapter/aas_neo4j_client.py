@@ -218,20 +218,52 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     def count_identifiables(self) -> int:
         return self.count_nodes_with_label("Identifiable")
 
-    def create_reference_relationships(self) -> int:
-        """Create :references edges from ModelReference nodes to the Identifiable they point to.
+    def resolve_references(self) -> int:
+        """Maintain :references edges from every ModelReference to the Referable it targets.
 
-        Matches keys_value[0] of each ModelReference against Identifiable.id.
-        Returns the number of relationships created.
+        A ModelReference addresses its target by a chain of keys: ``keys_value[0]`` is the
+        global ``id`` of an Identifiable (AAS / Submodel / ConceptDescription), and each
+        subsequent key descends into a nested Referable. The mode of a descending key
+        depends on the parent: it is an ``idShort`` under a SubmodelElementCollection /
+        Submodel, but a 0-based list index under a SubmodelElementList. A single match
+        pattern handles both — ``child.idShort = key OR edge.list_index = toInteger(key)``
+        (``toInteger`` of an idShort is null, so only the right branch ever matches).
+
+        All ``:references`` edges are dropped and rebuilt, so the result is idempotent and
+        self-healing: retargeted, deleted, or re-identified targets leave no stale links,
+        and a reference added before its target is linked once the target appears.
+        Returns the number of references that resolved to a target.
         """
-        clause = (
+        self.execute_clause("MATCH (:Reference)-[rel:references]->() DELETE rel")
+
+        refs = self.execute_clause(
             "MATCH (r:Reference {type: 'ModelReference'}) "
-            "MATCH (target:Identifiable {id: r.keys_value[0]}) "
-            "MERGE (r)-[:references]->(target) "
-            "RETURN count(*) AS created"
-        )
-        result = self.execute_clause(clause, single=True)
-        return result["created"] if result else 0
+            "WHERE r.keys_value IS NOT NULL AND size(r.keys_value) > 0 "
+            "RETURN id(r) AS rid, r.keys_value AS kv"
+        ) or []
+
+        resolved = 0
+        for rec in refs:
+            rid, kv = rec["rid"], rec["kv"]
+            clause = "MATCH (r) WHERE id(r) = $rid\nMATCH (t0:Identifiable {id: $k0})"
+            params = {"rid": rid, "k0": kv[0]}
+            last = "t0"
+            for i in range(1, len(kv)):
+                nxt = f"t{i}"
+                clause += (
+                    f"\nMATCH ({last})-[e{i}]->({nxt}:Referable) "
+                    f"WHERE {nxt}.idShort = $k{i} OR e{i}.list_index = toInteger($k{i})"
+                )
+                params[f"k{i}"] = kv[i]
+                last = nxt
+            clause += f"\nMERGE (r)-[:references]->({last})\nRETURN count(*) AS c"
+            result = self.execute_clause(clause, single=True, params=params)
+            if result and result["c"]:
+                resolved += 1
+        return resolved
+
+    # Backwards-compatible alias for the create-only name.
+    create_reference_relationships = resolve_references
 
     def _find_node(self, parent_id: str, id_short_path: Optional[str] = None) -> int:
         """
