@@ -49,7 +49,9 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
         # and provides the backing index for id lookups in one rule.
         "CREATE CONSTRAINT identifiable_id IF NOT EXISTS FOR (r:Identifiable) REQUIRE r.id IS UNIQUE;",
         "CREATE INDEX referable_idshort IF NOT EXISTS FOR (r:Referable) ON (r.idShort);",
-        "CREATE INDEX rel_list_index IF NOT EXISTS FOR () - [r:value]-() ON (r.list_index);"
+        "CREATE INDEX rel_list_index IF NOT EXISTS FOR () - [r:value]-() ON (r.list_index);",
+        # Backing hash indexes for cross-import deduplication are derived from
+        # `deduplicated_object_types` in optimize_database(), so they always match the config.
     ],
     # Node types whose instances are content-deduplicated by SHA256 hash of their properties.
     # When two nodes of a deduplicated type have identical properties, only one is created in

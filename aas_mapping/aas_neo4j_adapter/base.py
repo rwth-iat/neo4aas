@@ -80,8 +80,18 @@ class BaseNeo4JClient:
         ]
 
     def optimize_database(self):
-        """Optimize the Neo4j database by creating all necessary indexes."""
-        for clause in self.model_config.default_optimization_clauses:
+        """Optimize the Neo4j database by creating all necessary indexes.
+
+        Beyond the static clauses, a `hash` index is created for every deduplicated type
+        so the backing index always matches `deduplicated_object_types` (nodes of those
+        types are MERGEd on `hash` during import).
+        """
+        clauses = list(self.model_config.default_optimization_clauses)
+        clauses += [
+            f"CREATE INDEX IF NOT EXISTS FOR (n:{label}) ON (n.hash)"
+            for label in self.model_config.deduplicated_object_types
+        ]
+        for clause in clauses:
             try:
                 self.execute_clause(clause, single=True)
             except neo4j.exceptions.ClientError as e:

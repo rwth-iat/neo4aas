@@ -57,44 +57,74 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
             target.setdefault(key, []).extend(value)
 
     def _create_nodes(self, session: Session, grouped_nodes: Dict[Tuple[str], List[Dict]]) -> Dict[int, int]:
-        """Create nodes in Neo4j and return uid to internal_id mapping."""
+        """Create nodes in Neo4j and return uid to internal_id mapping.
+
+        Nodes of a deduplicated type carry a ``hash`` property (assigned in
+        ``_deduplicate_nodes``) and are MERGEd on it, so an identical node imported by a
+        different client / process reuses the canonical node already in the database
+        instead of creating a duplicate. All other nodes are created as before.
+        """
         create_nodes_query = """
         UNWIND keys($data) AS labelsString
-        
+
         WITH split(labelsString, ",") AS labels, $data[labelsString] AS nodesProperties
-        
+
         UNWIND nodesProperties AS nodeProperties
         CALL apoc.create.node(labels, nodeProperties) YIELD node AS n
 
         RETURN elementId(n) AS internal_id, nodeProperties.uid AS uid
         """
+        # MERGE deduplicated nodes on their content hash so repeated imports of the same
+        # Reference / ConceptDescription converge to a single node across client instances.
+        merge_nodes_query = """
+        UNWIND keys($data) AS labelsString
 
-        # Convert tuple keys to strings for Neo4j compatibility
-        data_for_query = {
-            ",".join(label_tuple): node_list
-            for label_tuple, node_list in grouped_nodes.items()
-        }
+        WITH split(labelsString, ",") AS labels, $data[labelsString] AS nodesProperties
+
+        UNWIND nodesProperties AS nodeProperties
+        CALL apoc.merge.node(labels, {hash: nodeProperties.hash}, nodeProperties, {}) YIELD node AS n
+
+        RETURN elementId(n) AS internal_id, nodeProperties.uid AS uid
+        """
+
+        # Split into MERGE-by-hash (deduplicated, have a `hash`) and plain CREATE.
+        merge_data: Dict[str, List[Dict]] = {}
+        create_data: Dict[str, List[Dict]] = {}
+        for label_tuple, node_list in grouped_nodes.items():
+            key = ",".join(label_tuple)
+            dedup = [n for n in node_list if "hash" in n]
+            plain = [n for n in node_list if "hash" not in n]
+            if dedup:
+                merge_data[key] = dedup
+            if plain:
+                create_data[key] = plain
 
         for labels in grouped_nodes.keys():
             for label in labels:
                 session.run(f"CREATE INDEX IF NOT EXISTS FOR (n:{label}) ON (n.uid)")
 
         uid_to_internal_id = {}
-        # Create nodes
-        result = session.run(create_nodes_query, data=data_for_query)
-        for record in result:
-            uid_to_internal_id[record['uid']] = record['internal_id']
+        if create_data:
+            for record in session.run(create_nodes_query, data=create_data):
+                uid_to_internal_id[record['uid']] = record['internal_id']
+        if merge_data:
+            for record in session.run(merge_nodes_query, data=merge_data):
+                uid_to_internal_id[record['uid']] = record['internal_id']
 
         return uid_to_internal_id
 
     def _create_relationships(self, session: Session, relationships: Dict[str, List],
                               uid_to_internal_id: Dict[int, int], db_batch_size: int = 10000):
         """Create relationships in Neo4j."""
+        # MERGE (not CREATE) so a relationship onto a reused deduplicated node is not
+        # duplicated when the same edge is seen again by a later import. The relationship
+        # properties (e.g. list_index) are part of the merge key, so distinct list
+        # positions remain distinct edges.
         create_rels_query = """
         UNWIND $relationships AS rel
         MATCH (from_node) WHERE elementId(from_node) = rel.from_id
         MATCH (to_node) WHERE elementId(to_node) = rel.to_id
-        CALL apoc.create.relationship(from_node, rel.rel_type, rel.rel_props, to_node) YIELD rel AS r
+        CALL apoc.merge.relationship(from_node, rel.rel_type, rel.rel_props, {}, to_node, {}) YIELD rel AS r
         RETURN count(*) AS created
         """
 

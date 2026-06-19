@@ -8,7 +8,7 @@ Ideas for optimizing the AAS → Neo4j mapping. Grounded in the current schema.
 | # | Idea | Impact | Effort | Risk | Status |
 |---|------|--------|--------|------|--------|
 | 1 | `Identifiable.id` → uniqueness constraint | correctness + perf | low | low | ✅ done |
-| 2 | Index/constrain the dedup `hash` | import perf | low | low |
+| 2 | DB-level dedup (MERGE on `hash`) + index | storage + correctness | med | med | ✅ done |
 | 3 | Denormalize `target_id = keys_value[0]` (indexed) | query perf | low | low |
 | 4 | Remove `uid` leak | correctness + storage | low | low |
 | 5 | Collapse parallel `:child` + semantic edge | storage | high | med |
@@ -34,9 +34,11 @@ FOR (n:Identifiable) REQUIRE n.id IS UNIQUE;
 `Reference` and `ConceptDescription` are deduplicated by SHA256 `hash`, but **no index exists on `hash`** — every dedup MERGE scans. Add an index, or a uniqueness constraint so dedup happens DB-side via `MERGE` and the in-memory hash dict can be dropped.
 
 ```cypher
-CREATE CONSTRAINT reference_hash IF NOT EXISTS
-FOR (r:Reference) REQUIRE r.hash IS UNIQUE;
+CREATE INDEX reference_hash IF NOT EXISTS FOR (r:Reference) ON (r.hash);
+CREATE INDEX concept_description_hash IF NOT EXISTS FOR (c:ConceptDescription) ON (c.hash);
 ```
+
+**✅ Implemented** — node creation now MERGEs deduplicated-type nodes on `hash` (`apoc.merge.node`) instead of plain CREATE, and relationship creation uses `apoc.merge.relationship`, so a Reference/ConceptDescription imported by a *different* client/process reuses the canonical node and accrues no duplicate edges ([neo4j_import.py `_create_nodes` / `_create_relationships`](aas_mapping/aas_neo4j_adapter/jsonification/neo4j_import.py)). A backing `hash` index is created for every `deduplicated_object_types` entry (derived in `optimize_database()`), so adding/removing a deduplicated type needs no index edits and never silently falls back to a full scan. Tests in `test_dedup.py` (cross-client Reference dedup with shared incoming edges; distinct refs not merged). Plain index (not uniqueness constraint) chosen: MERGE itself guarantees a single node, and over-constraining interacts with the #8 self-loop case.
 
 ### 3. Denormalize the resolution / lookup key
 `keys_value[0]` is a **list element** → Neo4j cannot index it. Reference resolution and the AAS→SM join repeatedly match `Identifiable.id = r.keys_value[0]` (list deref, unindexed on the Reference side). Store a scalar `target_id = keys_value[0]` on each Reference and index it → indexed join.

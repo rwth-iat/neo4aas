@@ -103,7 +103,7 @@ The shared positional index enables reconstruction during export.
 
 ### Deduplication
 
-`Reference` and `ConceptDescription` nodes are deduplicated using SHA256 hashing of their properties. This prevents duplicate semantic identifiers across multiple AAS imports.
+`Reference` and `ConceptDescription` nodes are deduplicated using SHA256 hashing of their properties. This prevents duplicate semantic identifiers across multiple AAS imports. Dedup is enforced at the database level: such nodes are MERGEd on their `hash` (and relationships are MERGEd too), so identical nodes imported by separate client instances/processes converge to one canonical node instead of being duplicated.
 
 ### Reference Resolution
 
