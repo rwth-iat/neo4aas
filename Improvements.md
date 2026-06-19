@@ -5,9 +5,9 @@ Ideas for optimizing the AAS → Neo4j mapping. Grounded in the current schema.
 **Current indexes** (only these): `Identifiable.id`, `Referable.idShort`, `:value(list_index)`
 — see [aas_neo4j_client.py:48-50](aas_mapping/aas_neo4j_adapter/aas_neo4j_client.py#L48-L50).
 
-| # | Idea | Impact | Effort | Risk |
-|---|------|--------|--------|------|
-| 1 | `Identifiable.id` → uniqueness constraint | correctness + perf | low | low |
+| # | Idea | Impact | Effort | Risk | Status |
+|---|------|--------|--------|------|--------|
+| 1 | `Identifiable.id` → uniqueness constraint | correctness + perf | low | low | ✅ done |
 | 2 | Index/constrain the dedup `hash` | import perf | low | low |
 | 3 | Denormalize `target_id = keys_value[0]` (indexed) | query perf | low | low |
 | 4 | Remove `uid` leak | correctness + storage | low | low |
@@ -27,6 +27,8 @@ Today it's a plain INDEX ([aas_neo4j_client.py:48](aas_mapping/aas_neo4j_adapter
 CREATE CONSTRAINT identifiable_id IF NOT EXISTS
 FOR (n:Identifiable) REQUIRE n.id IS UNIQUE;
 ```
+
+**✅ Implemented** — replaced the `Identifiable.id` index in `default_optimization_clauses` ([aas_neo4j_client.py:47-53](aas_mapping/aas_neo4j_adapter/aas_neo4j_client.py#L47-L53)). Tests in `test_schema_constraints.py` (constraint present, duplicate id rejected at DB level, idempotent re-run). The manual `identifiable_exists()` pre-check is kept for a clean `KeyError`; the constraint is the backstop.
 
 ### 2. Index / constrain the dedup key
 `Reference` and `ConceptDescription` are deduplicated by SHA256 `hash`, but **no index exists on `hash`** — every dedup MERGE scans. Add an index, or a uniqueness constraint so dedup happens DB-side via `MERGE` and the in-memory hash dict can be dropped.

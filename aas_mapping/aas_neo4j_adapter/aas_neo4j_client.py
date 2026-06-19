@@ -45,9 +45,11 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
     virtual_relationships=("child", "references"),
 
     default_optimization_clauses=[
-        "CREATE INDEX FOR (r:Identifiable) ON (r.id);",
-        "CREATE INDEX FOR (r:Referable) ON (r.idShort);",
-        "CREATE INDEX rel_list_index FOR () - [r:value]-() ON (r.list_index);"
+        # Uniqueness constraint enforces a single node per Identifiable id (per the AAS spec)
+        # and provides the backing index for id lookups in one rule.
+        "CREATE CONSTRAINT identifiable_id IF NOT EXISTS FOR (r:Identifiable) REQUIRE r.id IS UNIQUE;",
+        "CREATE INDEX referable_idshort IF NOT EXISTS FOR (r:Referable) ON (r.idShort);",
+        "CREATE INDEX rel_list_index IF NOT EXISTS FOR () - [r:value]-() ON (r.list_index);"
     ],
     # Node types whose instances are content-deduplicated by SHA256 hash of their properties.
     # When two nodes of a deduplicated type have identical properties, only one is created in

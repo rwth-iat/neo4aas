@@ -44,6 +44,11 @@ class BaseNeo4JClient:
     def __init__(self, uri: str, user: str , password: Optional[str] = None, model_config: Neo4jModelConfig = None):
         self.driver = neo4j.GraphDatabase.driver(uri, auth=(user, password)) if uri else None
         self.model_config = model_config or EMPTY_NEO4J_MODEL_CONFIG
+        # Ensure schema (indexes/constraints) exists for every client. Idempotent: the
+        # clauses use IF NOT EXISTS / are guarded in optimize_database, so this is a cheap
+        # no-op once the schema is present.
+        if self.driver is not None:
+            self.optimize_database()
 
     def execute_clause(self, clause: CypherClause, single: bool = False, params: dict | None = None):
         """Execute the generated Cypher clauses in the Neo4j database. After execution, the clauses are cleared."""
