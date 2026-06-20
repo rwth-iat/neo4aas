@@ -1,6 +1,10 @@
 from typing import Optional, Tuple
 import re
 
+# Containment edge types, used for variable-length traversal when a bare `$sme` (no idShort
+# path) requests a recursive search over all SubmodelElements at any depth, per the spec.
+_RECURSIVE_CONTAINMENT = ":submodelElements|value|statements|annotations*1.."
+
 from aas_mapping.aas_neo4j_adapter.querification.ast_nodes import *  # noqa: F401,F403
 
 
@@ -43,7 +47,8 @@ def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
             return "", f"sme{scope['anchor']}"
         scope["anchor"] = depth
         mapping["sme"] = depth + 1
-        match_part += f"(sme{depth}: SubmodelElement)"
+        # Recursive: correlate to any SubmodelElement at any depth.
+        match_part = f"(sm:Submodel)-[{_RECURSIVE_CONTAINMENT}]->(sme{depth}:SubmodelElement)"
         return match_part, f"sme{depth}"
 
     # Named path: deduplicate across OR arms so the same SME path reuses one MATCH variable
@@ -80,7 +85,8 @@ def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
         if path_segments:
             mapping["_path_cache"][root] = last_root
         return match_part, last_root
-    match_part += f"(sme{depth}: SubmodelElement)"
+    # Bare `$sme` with no idShort path: recursive search over all SubmodelElements at any depth.
+    match_part = f"(sm:Submodel)-[{_RECURSIVE_CONTAINMENT}]->(sme{depth}:SubmodelElement)"
     last_root = f"sme{depth}"
     mapping["sme"] = depth + 1
     return match_part, last_root

@@ -149,6 +149,8 @@ $<root>#<attribute>[.<nested>]
 
 Examples: `$aas#idShort`, `$aas#assetInformation.assetType`, `$sme.Color#value`
 
+A `$sme` with **no idShort path** (e.g. `$sme#value`) searches **all** SubmodelElements at any depth (recursive traversal over the containment edges), per the spec.
+
 ### MultiLanguageProperty
 
 `#value` works for both `Property` and `MultiLanguageProperty`. A `Property` stores a scalar value; an MLP stores text per language. `#value` matches the text in **any** language (`$sme.Note#value $contains "Hal"`), and `#language` filters by language code (`$sme.Note#language $eq "nl"`). All operators (`$eq`, `$contains`, `$starts-with`, `$regex`, …) apply.
