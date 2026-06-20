@@ -49,7 +49,7 @@ class UploadStats:
         logger.info(f"Total relationship creation time: {self.total_relationship_creation_time:.2f} seconds")
 
 
-NEO4J_INTERNAL_NODE_KEYS = frozenset({"uid", "hash"})
+NEO4J_INTERNAL_NODE_KEYS = frozenset({"uid", "hash", "target_id"})
 
 
 def hash_dict_obj(obj: dict) -> str:

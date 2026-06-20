@@ -50,6 +50,8 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
         "CREATE CONSTRAINT identifiable_id IF NOT EXISTS FOR (r:Identifiable) REQUIRE r.id IS UNIQUE;",
         "CREATE INDEX referable_idshort IF NOT EXISTS FOR (r:Referable) ON (r.idShort);",
         "CREATE INDEX rel_list_index IF NOT EXISTS FOR () - [r:value]-() ON (r.list_index);",
+        # Indexed lookup of "references targeting id X" for incremental resolution.
+        "CREATE INDEX reference_target_id IF NOT EXISTS FOR (r:Reference) ON (r.target_id);",
         # Backing hash indexes for cross-import deduplication are derived from
         # `deduplicated_object_types` in optimize_database(), so they always match the config.
     ],
@@ -226,33 +228,33 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     def count_identifiables(self) -> int:
         return self.count_nodes_with_label("Identifiable")
 
-    def resolve_references(self) -> int:
-        """Maintain :references edges from every ModelReference to the Referable it targets.
+    # Shared fragments for the resolvers: a ModelReference `r` is resolvable when it has a
+    # non-empty keys_value chain; the resolvers consume (rid, kv) records.
+    _MODELREF_COND = "r.keys_value IS NOT NULL AND size(r.keys_value) > 0"
+    _MODELREF_RETURN = "RETURN id(r) AS rid, r.keys_value AS kv"
+
+    def _resolve_refs(self, refs: list) -> int:
+        """(Re)build the ``:references`` edge for each given reference.
 
         A ModelReference addresses its target by a chain of keys: ``keys_value[0]`` is the
         global ``id`` of an Identifiable (AAS / Submodel / ConceptDescription), and each
         subsequent key descends into a nested Referable. The mode of a descending key
-        depends on the parent: it is an ``idShort`` under a SubmodelElementCollection /
-        Submodel, but a 0-based list index under a SubmodelElementList. A single match
-        pattern handles both — ``child.idShort = key OR edge.list_index = toInteger(key)``
-        (``toInteger`` of an idShort is null, so only the right branch ever matches).
+        depends on the parent: an ``idShort`` under a SubmodelElementCollection / Submodel,
+        a 0-based list index under a SubmodelElementList. One match pattern handles both —
+        ``child.idShort = key OR edge.list_index = toInteger(key)`` (``toInteger`` of an
+        idShort is null, so only the right branch ever matches).
 
-        All ``:references`` edges are dropped and rebuilt, so the result is idempotent and
-        self-healing: retargeted, deleted, or re-identified targets leave no stale links,
-        and a reference added before its target is linked once the target appears.
+        Each reference's existing ``:references`` edge is dropped first, so re-resolving a
+        reference is idempotent and self-healing. ``refs`` items are ``{rid, kv}`` records.
         Returns the number of references that resolved to a target.
         """
-        self.execute_clause("MATCH (:Reference)-[rel:references]->() DELETE rel")
-
-        refs = self.execute_clause(
-            "MATCH (r:Reference {type: 'ModelReference'}) "
-            "WHERE r.keys_value IS NOT NULL AND size(r.keys_value) > 0 "
-            "RETURN id(r) AS rid, r.keys_value AS kv"
-        ) or []
-
         resolved = 0
         for rec in refs:
             rid, kv = rec["rid"], rec["kv"]
+            self.execute_clause(
+                "MATCH (r)-[rel:references]->() WHERE id(r) = $rid DELETE rel",
+                params={"rid": rid},
+            )
             clause = "MATCH (r) WHERE id(r) = $rid\nMATCH (t0:Identifiable {id: $k0})"
             params = {"rid": rid, "k0": kv[0]}
             last = "t0"
@@ -269,6 +271,47 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
             if result and result["c"]:
                 resolved += 1
         return resolved
+
+    def resolve_references(self) -> int:
+        """Rebuild every ``:references`` edge across the whole graph (idempotent).
+
+        Drops all ``:references`` edges, then resolves every ModelReference. Use after a
+        bulk import; single-object writes via :class:`Neo4jObjectStore` use the incremental
+        :meth:`resolve_references_for`. Returns the number of references resolved.
+        """
+        self.execute_clause("MATCH (:Reference)-[rel:references]->() DELETE rel")
+        refs = self.execute_clause(
+            f"MATCH (r:Reference {{type: 'ModelReference'}}) "
+            f"WHERE {self._MODELREF_COND} {self._MODELREF_RETURN}"
+        ) or []
+        return self._resolve_refs(refs)
+
+    def resolve_references_for(self, identifier: str) -> int:
+        """Incrementally (re)resolve only the references affected by adding ``identifier``.
+
+        Two reference sets are affected when an Identifiable appears:
+        - references **inside** its subgraph (newly imported references), and
+        - references **targeting** it (``target_id == identifier``) which may now resolve
+          into its freshly-available subtree — found by an indexed lookup.
+
+        Removing an Identifiable needs no work here: ``DETACH DELETE`` drops every
+        ``:references`` edge pointing into the deleted subtree. Returns refs resolved.
+        """
+        in_subtree = self.execute_clause(
+            "MATCH (root:Identifiable {id: $id}) "
+            "CALL apoc.path.subgraphAll(root, {relationshipFilter: '>'}) YIELD nodes "
+            "UNWIND nodes AS r "
+            f"WITH r WHERE r:Reference AND r.type = 'ModelReference' AND {self._MODELREF_COND} "
+            f"{self._MODELREF_RETURN}",
+            params={"id": identifier},
+        ) or []
+        targeting = self.execute_clause(
+            f"MATCH (r:Reference {{target_id: $id, type: 'ModelReference'}}) "
+            f"WHERE {self._MODELREF_COND} {self._MODELREF_RETURN}",
+            params={"id": identifier},
+        ) or []
+        by_rid = {rec["rid"]: rec for rec in (*in_subtree, *targeting)}
+        return self._resolve_refs(list(by_rid.values()))
 
     # Backwards-compatible alias for the create-only name.
     create_reference_relationships = resolve_references

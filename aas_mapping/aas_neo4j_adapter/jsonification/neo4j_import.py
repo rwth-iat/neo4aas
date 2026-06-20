@@ -349,6 +349,13 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
             else:
                 node_properties[key] = value
 
+        # Denormalize the first key of a Reference into an indexed scalar `target_id`
+        # (== keys_value[0], the targeted Identifiable's id). References are content-
+        # addressed/immutable, so this never needs re-syncing. Used for indexed lookup of
+        # "references targeting id X" during incremental resolution.
+        if "Reference" in node_labels and node_properties.get("keys_value"):
+            node_properties["target_id"] = node_properties["keys_value"][0]
+
         nodes.append(node_properties)
         return nodes, relationships
 

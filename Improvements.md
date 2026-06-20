@@ -9,11 +9,11 @@ Ideas for optimizing the AAS → Neo4j mapping. Grounded in the current schema.
 |---|------|--------|--------|------|--------|
 | 1 | `Identifiable.id` → uniqueness constraint | correctness + perf | low | low | ✅ done |
 | 2 | DB-level dedup (MERGE on `hash`) + index | storage + correctness | med | med | ✅ done |
-| 3 | Denormalize `target_id = keys_value[0]` (indexed) | query perf | low | low | ⤳ merged into #7 |
+| 3 | Denormalize `target_id = keys_value[0]` (indexed) | query perf | low | low | ✅ done (in #7) |
 | 4 | Remove `uid` leak | correctness + storage | low | low | ✅ done |
 | 5 | Remove redundant `:child` edge (keep semantic) | storage + simpler model | med | med | ✅ done |
 | 6 | Typed value shadow prop for range queries | query perf | med | low |
-| 7 | Incremental `resolve_references()` (+ `target_id` index) | write perf | med | low |
+| 7 | Incremental `resolve_references()` (+ `target_id` index) | write perf | med | low | ✅ done |
 | 8 | Fix dedup self-loop (`referredSemanticId`) | correctness | med | low |
 
 ---
@@ -88,6 +88,8 @@ The second case needs an **indexed lookup from the Reference side** by target id
 - incremental resolve: `MATCH (r:Reference {target_id: $new_id})` (indexed) instead of scanning all.
 
 - File: [aas_neo4j_client.py](aas_mapping/aas_neo4j_adapter/aas_neo4j_client.py) `resolve_references()`
+
+**✅ Implemented.** Added `resolve_references_for(identifier)`: resolves only references **inside** that Identifiable's subgraph plus references **targeting** it (`target_id == id`, indexed) — the two sets affected when an Identifiable appears. `Neo4jObjectStore.add`/`commit` call it instead of the full rebuild; `discard`/`remove` drop the resolve call entirely, since `DETACH DELETE` already removes every `:references` edge into the deleted subtree. The full `resolve_references()` remains for bulk imports. `#3` folded in: `target_id = keys_value[0]` is written on every Reference at import (References are content-addressed/immutable, so it never needs re-sync), indexed via `:Reference(target_id)`, and stripped on export through `NEO4J_INTERNAL_NODE_KEYS`. Per-write cost drops from O(all refs) to O(refs in the object + refs targeting it). Tests in `test_incremental_resolution.py`.
 
 ### 8. Fix the dedup self-loop
 `referredSemanticId` is stored as a relationship, invisible to the SHA256 hash, so two References differing only in `referredSemanticId` collapse into one node → self-loops, breaking round-trip (`IDTA 02056` xfail). Fold the `referredSemanticId` target into the hash, or exclude such References from dedup.
