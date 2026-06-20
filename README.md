@@ -107,13 +107,16 @@ The shared positional index enables reconstruction during export.
 
 ### Reference Resolution
 
-A `ModelReference` stores its target only as key values (e.g. `keys_value = ["urn:sm/1"]`), not as a graph edge. To let queries *follow* a reference (for example "all AAS whose submodel matches …"), the adapter materializes a `:references` edge from each `ModelReference` node to the `Identifiable` it points at, matching `keys_value[0]` against `Identifiable.id`:
+A `ModelReference` stores its target only as key values (e.g. `keys_value = ["urn:sm/1", "Color"]`), not as a graph edge. To let queries *follow* a reference (for example "all AAS whose submodel matches …"), the adapter materializes a `:references` edge from each `ModelReference` node to the **target Referable** it points at — `keys_value[0]` selects the entry `Identifiable` by `id`, then the remaining keys descend to the actual target:
 
 ```
-(:Reference {type:'ModelReference'})-[:references]->(:Identifiable)
+(:Reference {type:'ModelReference'})-[:references]->(:Referable)
 ```
 
-This is driven from the application layer (the chosen approach): `AASNeo4JClient.resolve_references()` (re)creates these edges and deletes stale ones, and `Neo4jObjectStore` calls it automatically after every `add` / `commit` / `discard` / `remove`. The operation is idempotent — it converges to the same graph on repeated runs — and order-independent: a reference added before its target is linked once the target appears. For bulk imports that bypass the object store, call `client.resolve_references()` once after loading.
+This is driven from the application layer (the chosen approach), idempotent and order-independent (a reference added before its target is linked once the target appears):
+
+- `AASNeo4JClient.resolve_references()` rebuilds **all** edges — use it once after a bulk import that bypasses the object store.
+- `AASNeo4JClient.resolve_references_for(id)` is **incremental** — it re-resolves only references inside that Identifiable's subgraph plus references *targeting* it (found via an indexed `target_id == keys_value[0]` lookup). `Neo4jObjectStore.add` / `commit` call this. `discard` / `remove` need no resolution because `DETACH DELETE` drops every `:references` edge into the deleted subtree.
 
 The full key chain is followed, so a `ModelReference` resolves to its actual target Referable — not just the top-level Identifiable. Each descending key is matched as an `idShort` (under a `SubmodelElementCollection` / `Submodel`) **or** as a 0-based list index (under a `SubmodelElementList`):
 
@@ -145,6 +148,12 @@ $<root>#<attribute>[.<nested>]
 ```
 
 Examples: `$aas#idShort`, `$aas#assetInformation.assetType`, `$sme.Color#value`
+
+### MultiLanguageProperty
+
+`#value` works for both `Property` and `MultiLanguageProperty`. A `Property` stores a scalar value; an MLP stores text per language. `#value` matches the text in **any** language (`$sme.Note#value $contains "Hal"`), and `#language` filters by language code (`$sme.Note#language $eq "nl"`). All operators (`$eq`, `$contains`, `$starts-with`, `$regex`, …) apply.
+
+> **Note:** combining `#value` and `#language` in a `$match` is **not** correlated to the same language entry yet — it matches if some text *and* some language satisfy the conditions independently.
 
 ### Cross-root queries ($aas + $sm/$sme)
 

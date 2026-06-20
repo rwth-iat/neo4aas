@@ -1,3 +1,3 @@
 MATCH (sm:Submodel)-[:submodelElements]->(sme0:SubmodelElement {idShort: 'SerialNumber'})
-WHERE sme0.value =~ 'SN[0-9]{4}'
+WHERE any(v0 IN coalesce(sme0.value_text, [sme0.value]) WHERE v0 =~ 'SN[0-9]{4}')
 RETURN sm

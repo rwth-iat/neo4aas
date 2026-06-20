@@ -1,3 +1,3 @@
 MATCH (sm:Submodel)-[:submodelElements]->(sme0:SubmodelElement {idShort: 'Material'})
-WHERE sme0.value <> 'Plastic'
+WHERE any(v0 IN coalesce(sme0.value_text, [sme0.value]) WHERE v0 <> 'Plastic')
 RETURN sm

@@ -168,16 +168,17 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
             case "name":
                 where_part += f"{last_root}.name"
             case "value":
-                # If value is part of MultiLanguageProperty, we need to access value_type. We make sure last_root is multiLanguageProperty
-                if last_root == "multiLanguageProperty":
-                    where_part += f"{last_root}.value_text"
-                    isList = True
                 # If value follows a keys[..] segment, dereference the flattened keys_value list.
-                elif index is not None:
+                if index is not None:
                     where_part += f"{last_root}.keys_value[{index}]"
                     index = None
                 else:
-                    where_part += f"{last_root}.value"
+                    # SME #value is type-polymorphic and not known at compile time: a Property
+                    # stores a scalar `.value`, a MultiLanguageProperty stores its text in the
+                    # `value_text[]` list. coalesce handles both (MLP -> text list; Property ->
+                    # single value wrapped in a list); isList makes comparisons wrap in any().
+                    where_part += f"coalesce({last_root}.value_text, [{last_root}.value])"
+                    isList = True
             case "externalSubjectId":
                 if "externalSubjectId" not in mapping:
                     mapping["externalSubjectId"] = 0
@@ -316,11 +317,19 @@ def _convert_expression(exp: Expression, mapping: dict[str, int]) -> Tuple[str, 
             left = _convert_value(exp.left, mapping)
             right = _convert_value(exp.right, mapping)
             operator = exp.get_operator()
-            # If field returns a list, compare using IN (scalar IN list — scalar on left)
-            if (left[2] or right[2]) and operator == "=":
-                if left[2]:
-                    return f"{right[0]} IN {left[0]}", [left[1], right[1]]
-                return f"{left[0]} IN {right[0]}", [left[1], right[1]]
+            # If a side is multi-valued (e.g. #value on a MultiLanguageProperty -> value_text[],
+            # or #language -> value_language[]), the comparison must hold for *some* element.
+            # Wrap it in any(v IN list WHERE v <op> scalar), which works for every operator
+            # ($eq, $contains, $starts-with, $regex, $gt, …), not just equality.
+            if left[2] or right[2]:
+                list_expr, scalar, scalar_on_right = (
+                    (left[0], right[0], True) if left[2] else (right[0], left[0], False)
+                )
+                idx = mapping.get("_anyvar", 0)
+                mapping["_anyvar"] = idx + 1
+                v = f"v{idx}"
+                predicate = f"{v} {operator} {scalar}" if scalar_on_right else f"{scalar} {operator} {v}"
+                return f"any({v} IN {list_expr} WHERE {predicate})", [left[1], right[1]]
             return f"{left[0]} {operator} {right[0]}", [left[1], right[1]]
         case Not():
             inner, fields = _convert_expression(exp.operand, mapping)

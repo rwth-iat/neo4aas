@@ -1,4 +1,4 @@
 MATCH (sm:Submodel)-[:submodelElements]->(sme0:SubmodelElement {idShort: 'Description'})
 MATCH (sm:Submodel)
-WHERE (sme0.value CONTAINS 'urgent' OR sm.idShort = 'MaintenanceLog')
+WHERE (any(v0 IN coalesce(sme0.value_text, [sme0.value]) WHERE v0 CONTAINS 'urgent') OR sm.idShort = 'MaintenanceLog')
 RETURN sm
