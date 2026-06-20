@@ -44,7 +44,7 @@ AAS JSON file
     └─→ AASNeo4JClient.upload_json_file()
             └─→ JsonToNeo4jImporter._process_dict()
                     ├─→ Scalars become node properties
-                    ├─→ Dicts become child nodes (CHILD relationship)
+                    ├─→ Dicts become child nodes (edge named after the attribute)
                     └─→ Lists become multiple nodes with list_index tracking
                             └─→ APOC batch create nodes + relationships
 ```
@@ -76,8 +76,8 @@ AASQL JSON query
 |---|---|
 | `Referable` | Node |
 | `AssetInformation` | Node |
-| Containment (Referable → Referable) | `CHILD` relationship |
-| `Reference` | `REFERENCES` relationship |
+| Containment (Referable → Referable) | semantic edge named after the attribute (`:value`, `:submodelElements`, `:statements`, …); list members carry `list_index` |
+| `Reference` | `:references` edge (materialized by `resolve_references()`) |
 | Scalar property | Node property |
 
 ### Multi-label Inheritance

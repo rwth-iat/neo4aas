@@ -316,11 +316,11 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
                 nodes.extend(child_nodes)
                 self._merge_relationships(relationships, child_rels)
 
-                # Create relationship to the last created node
+                # Create relationship to the last created node. Containment is represented
+                # only by the semantic edge (named after the attribute); no separate :child
+                # edge — navigation traverses the semantic edges directly.
                 if child_nodes:
                     self._add_relationship(relationships, key, node_uid, child_nodes[-1]['uid'])
-                    if "Referable" in child_nodes[-1]['labels']:
-                        self._add_relationship(relationships, "child", node_uid, child_nodes[-1]['uid'])
 
             elif isinstance(value, list):
                 for i, item in enumerate(value, start=0):

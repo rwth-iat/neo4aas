@@ -167,7 +167,6 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         parent_node_internal_id = self._find_node(parent_id, id_short_path)
         nodes, relationships = self._process_dict(obj)
 
-        self._add_relationship(relationships, "child", parent_node_internal_id, nodes[-1]['uid'])
         self._add_relationship(relationships, "value", parent_node_internal_id, nodes[-1]['uid'])
         stats = self._upload_nodes_and_relationships(nodes, relationships,
                                                      exist_uid_to_internal_id={
@@ -182,10 +181,15 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
 
     def remove_referable(self, parent_id: str, id_short_path: str = None):
         clauses, referable_node = self._find_node_clause(parent_id, id_short_path)
+        # Delete the target referable and every node in its owned subtree, but keep nodes
+        # that are still referenced from outside the subtree (e.g. deduplicated References /
+        # ConceptDescriptions shared by other elements). The target root itself is always
+        # deleted even though its container points at it from outside the subtree.
         delete_clause = (
             f"CALL apoc.path.subgraphAll({referable_node}, {{relationshipFilter: '>'}}) YIELD nodes "
             "UNWIND nodes AS node "
-            "WITH node, nodes WHERE NOT EXISTS { MATCH (other)-[]->(node) WHERE NOT other IN nodes } "
+            f"WITH {referable_node} AS root, node, nodes "
+            "WHERE node = root OR NOT EXISTS { MATCH (other)-[]->(node) WHERE NOT other IN nodes } "
             "DETACH DELETE node "
             "RETURN count(node) AS deletedNodes; "
         )
@@ -269,19 +273,23 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     # Backwards-compatible alias for the create-only name.
     create_reference_relationships = resolve_references
 
-    def _find_node(self, parent_id: str, id_short_path: Optional[str] = None) -> int:
+    def _find_node(self, parent_id: str, id_short_path: Optional[str] = None) -> str:
         """
         Find a node in the Neo4j database based on the parent ID and optional idShortPath.
+
+        Returns the node's ``elementId`` (matching what the import path uses to wire
+        relationships).
         """
         clause, found_node = self._find_node_clause(parent_id, id_short_path)
-        clause += f"RETURN ID({found_node}) AS node_id"
+        clause += f"RETURN collect(DISTINCT elementId({found_node})) AS node_ids"
         with self.driver.session() as session:
             result = session.run(clause).single()
-            if result is None:
-                raise KeyError(f"No node found with parent_id={parent_id} and id_short_path={id_short_path}")
-            elif len(result["node_id"]) != 1:
-                raise ValueError(f"Multiple nodes found with parent_id={parent_id} and id_short_path={id_short_path}")
-            return result["node_id"][0]
+        node_ids = result["node_ids"] if result else []
+        if not node_ids:
+            raise KeyError(f"No node found with parent_id={parent_id} and id_short_path={id_short_path}")
+        if len(node_ids) != 1:
+            raise ValueError(f"Multiple nodes found with parent_id={parent_id} and id_short_path={id_short_path}")
+        return node_ids[0]
 
     def _find_node_clause(self, parent_id: str, id_short_path: Optional[str] = None) -> (str, str):
         found_node = "the_node"
@@ -289,13 +297,23 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         if not id_short_path:
             return f"MATCH ({found_node}:Identifiable {{id: '{parent_id}'}})\n", found_node
 
-        clause = f"MATCH (parent:Identifiable {{id: '{parent_id}'}})"
-        id_shorts = self.itemize_id_short_path(id_short_path)
-        for i, idShort in enumerate(id_shorts):
-            if not i == len(id_shorts) - 1:
-                clause += f"-[:child]->(child_{i} {{idShort: '{idShort}'}})\n"
+        # Traverse containment by following the semantic edges (no :child edge). Each step
+        # descends to a Referable child matched either by idShort (Collection / Submodel
+        # member) or, for a SubmodelElementList member, by the edge's list_index.
+        clause = f"MATCH (parent:Identifiable {{id: '{parent_id}'}})\n"
+        segments = self.itemize_id_short_path(id_short_path)
+        prev = "parent"
+        wheres = []
+        for i, seg in enumerate(segments):
+            var = found_node if i == len(segments) - 1 else f"child_{i}"
+            clause += f"MATCH ({prev})-[e_{i}]->({var}:Referable)\n"
+            if isinstance(seg, int):
+                wheres.append(f"e_{i}.list_index = {seg}")
             else:
-                clause += f"-[:child]->({found_node} {{idShort: '{idShort}'}})\n"
+                wheres.append(f"{var}.idShort = '{seg}'")
+            prev = var
+        if wheres:
+            clause += "WHERE " + " AND ".join(wheres) + "\n"
         return clause, found_node
 
     def _get_subgraph_of_referable(self, parent_id: str, id_short_path: Optional[str] = None):
