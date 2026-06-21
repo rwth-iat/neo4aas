@@ -13,6 +13,7 @@ import pytest
 from mcp.server.fastmcp.exceptions import ToolError
 
 from aas_mapping.mcp_server import server as mcp_server
+from aas_mapping.mcp_server.abstract import build_abstract_submodel
 
 
 def _fake_ctx(client):
@@ -152,6 +153,55 @@ def test_abstract_submodel_merges_structure():
     id_shorts = {e["idShort"] for e in abstract["submodelElements"]}
     assert id_shorts == {"Title", "Author"}
     assert result["instance_count"] == 2
+
+
+def _sm(idshort, elements):
+    return {"modelType": "Submodel", "id": f"urn:{idshort}", "idShort": idshort,
+            "kind": "Instance", "submodelElements": elements}
+
+
+def test_abstract_merges_nested_entity_statements():
+    """Structure under an Entity (statements) must be merged across instances."""
+    a = _sm("Asset", [
+        {"modelType": "Entity", "idShort": "Motor", "entityType": "SelfManagedEntity",
+         "statements": [
+             {"modelType": "Property", "idShort": "Power", "valueType": "xs:int", "value": "5"},
+         ]},
+    ])
+    b = _sm("Asset", [
+        {"modelType": "Entity", "idShort": "Motor", "entityType": "SelfManagedEntity",
+         "statements": [
+             {"modelType": "Property", "idShort": "Power", "valueType": "xs:int", "value": "7"},
+             {"modelType": "Property", "idShort": "Voltage", "valueType": "xs:int", "value": "230"},
+         ]},
+    ])
+    abstract = build_abstract_submodel([a, b])
+    motor = abstract["submodelElements"][0]
+    names = {s["idShort"] for s in motor["statements"]}
+    assert names == {"Power", "Voltage"}
+    # instance values stripped
+    assert all("value" not in s for s in motor["statements"])
+
+
+def test_abstract_smlist_representative_is_union_of_items():
+    """A SubmodelElementList collapses to one representative child that unions the
+    structure of every list item (within and across instances)."""
+    a = _sm("Doc", [
+        {"modelType": "SubmodelElementList", "idShort": "Docs", "typeValueListElement": "SubmodelElementCollection",
+         "value": [
+             {"modelType": "SubmodelElementCollection", "value": [
+                 {"modelType": "Property", "idShort": "Title", "valueType": "xs:string", "value": "T1"},
+             ]},
+             {"modelType": "SubmodelElementCollection", "value": [
+                 {"modelType": "Property", "idShort": "Author", "valueType": "xs:string", "value": "A1"},
+             ]},
+         ]},
+    ])
+    abstract = build_abstract_submodel([a])
+    docs = abstract["submodelElements"][0]
+    assert len(docs["value"]) == 1  # single representative
+    rep_children = {c["idShort"] for c in docs["value"][0]["value"]}
+    assert rep_children == {"Title", "Author"}  # union of both list items
 
 
 def test_abstract_submodel_yaml_format():

@@ -22,12 +22,21 @@ _LEAF_TYPES = frozenset(
         "File",
         "ReferenceElement",
         "RelationshipElement",
-        "AnnotatedRelationshipElement",
     }
 )
 
-# Model types whose "value" or "submodelElements" is a list of child elements.
-_CONTAINER_TYPES = frozenset({"Submodel", "SubmodelElementCollection"})
+# Container model types -> the JSON key holding their child elements. Every type
+# that nests other SubmodelElements must be listed here so the structural union
+# recurses into it (Entity -> statements, AnnotatedRelationshipElement ->
+# annotations, SubmodelElementList -> value, ...).
+_CONTAINER_CHILD_KEY = {
+    "Submodel": "submodelElements",
+    "SubmodelElementCollection": "value",
+    "SubmodelElementList": "value",
+    "Entity": "statements",
+    "AnnotatedRelationshipElement": "annotations",
+}
+_CONTAINER_TYPES = frozenset(_CONTAINER_CHILD_KEY)
 
 
 def to_template(element: dict[str, Any]) -> dict[str, Any]:
@@ -51,14 +60,18 @@ def to_template(element: dict[str, Any]) -> dict[str, Any]:
         children = element.get("submodelElements", [])
         result["submodelElements"] = [to_template(c) for c in children]
 
-    elif model_type == "SubmodelElementCollection":
-        children = element.get("value", [])
-        result["value"] = [to_template(c) for c in children]
-
     elif model_type == "SubmodelElementList":
-        # Keep one representative child to show element type.
+        # A list's items share one type but may have no idShort, so collapse them to
+        # a single representative child that is the structural union of every item.
         children = element.get("value", [])
-        result["value"] = [to_template(children[0])] if children else []
+        result["value"] = [_union_template(children)] if children else []
+
+    elif model_type in _CONTAINER_TYPES:
+        # idShort-keyed containers (SubmodelElementCollection, Entity,
+        # AnnotatedRelationshipElement): recurse into their child list.
+        key = _CONTAINER_CHILD_KEY[model_type]
+        children = element.get(key, [])
+        result[key] = [to_template(c) for c in children]
 
     elif model_type in _LEAF_TYPES:
         result.pop("value", None)
@@ -68,19 +81,40 @@ def to_template(element: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def _children_key(model_type: str) -> str:
-    return "submodelElements" if model_type == "Submodel" else "value"
+def _union_template(elements: list[dict[str, Any]]) -> dict[str, Any]:
+    """Return one template element that is the structural union of *elements*.
+
+    Used for SubmodelElementList items: take the first as the base template and
+    merge every other item's structure into it.
+    """
+    union = to_template(elements[0])
+    for other in elements[1:]:
+        _merge_structure(union, to_template(other))
+    return union
 
 
 def _merge_structure(base: dict[str, Any], other: dict[str, Any]) -> None:
-    """Merge missing element paths from *other* into *base* in-place."""
+    """Merge missing element paths from *other* into *base* in-place.
+
+    Both arguments must already be in template form (see ``to_template``), so a
+    SubmodelElementList here holds at most one representative child.
+    """
     model_type = base.get("modelType", "")
     if model_type not in _CONTAINER_TYPES:
         return
 
-    key = _children_key(model_type)
+    key = _CONTAINER_CHILD_KEY[model_type]
     base_children: list[dict] = base.setdefault(key, [])
     other_children: list[dict] = other.get(key, [])
+
+    if model_type == "SubmodelElementList":
+        # Lists carry a single representative child — merge the two representatives.
+        if other_children:
+            if base_children:
+                _merge_structure(base_children[0], other_children[0])
+            else:
+                base_children.append(copy.deepcopy(other_children[0]))
+        return
 
     base_index = {c["idShort"]: c for c in base_children if "idShort" in c}
 
