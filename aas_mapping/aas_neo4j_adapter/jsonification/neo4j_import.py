@@ -30,12 +30,17 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         return self.uid_counter
 
     def _group_nodes_by_label(self, nodes: List[Dict]) -> Dict[Tuple[str], List[Dict]]:
+        """Group nodes by their (sorted) label tuple.
+
+        Each bucket holds a shallow copy of the node without the ``labels`` key: labels
+        become Neo4j node *labels* (via ``apoc.create.node``), not properties, so they must
+        not reach the property bag. Copying (instead of ``pop``) keeps the input dicts intact
+        so the caller's ``nodes`` list stays reusable and is never mutated as a side effect.
+        """
         grouped = {}
         for node in nodes:
-            labels = tuple(sorted(node.pop('labels')))
-            if labels not in grouped:
-                grouped[labels] = []
-            grouped[labels].append(node)
+            labels = tuple(sorted(node['labels']))
+            grouped.setdefault(labels, []).append({k: v for k, v in node.items() if k != 'labels'})
         return grouped
 
     def _add_relationship(self, relationships: Dict[str, List], rel_type: str, from_uid: int, to_uid: int,

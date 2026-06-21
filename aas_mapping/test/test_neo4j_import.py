@@ -24,3 +24,28 @@ def test_transient_error_during_relationship_creation_is_not_swallowed():
 
     with pytest.raises(TransientError):
         importer._create_relationships(_RaisingSession(), relationships, uid_to_internal_id)
+
+
+def test_group_nodes_by_label_does_not_mutate_input():
+    """Grouping must not strip `labels` from the caller's node dicts.
+
+    `labels` becomes Neo4j node labels, not properties, so it is excluded from each
+    grouped bucket — but via a copy, leaving the input reusable. Previously a `pop`
+    deleted `labels` in place, so a second grouping pass raised KeyError.
+    """
+    importer = JsonToNeo4jImporter(uri=None, user="x")
+    nodes = [
+        {"labels": ["Property", "SubmodelElement"], "uid": 1, "idShort": "a"},
+        {"labels": ["Submodel"], "uid": 2, "id": "urn:sm"},
+    ]
+
+    grouped = importer._group_nodes_by_label(nodes)
+
+    # Input untouched: labels still present, dicts reusable.
+    assert nodes[0]["labels"] == ["Property", "SubmodelElement"]
+    assert nodes[1]["labels"] == ["Submodel"]
+    # Buckets keyed by sorted label tuple, with labels excluded from the payload.
+    assert grouped[("Property", "SubmodelElement")] == [{"uid": 1, "idShort": "a"}]
+    assert grouped[("Submodel",)] == [{"uid": 2, "id": "urn:sm"}]
+    # Idempotent: a second pass works (no KeyError) and yields the same result.
+    assert importer._group_nodes_by_label(nodes) == grouped
