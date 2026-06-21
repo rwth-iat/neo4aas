@@ -341,7 +341,7 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     # Shared fragments for the resolvers: a ModelReference `r` is resolvable when it has a
     # non-empty keys_value chain; the resolvers consume (rid, kv) records.
     _MODELREF_COND = "r.keys_value IS NOT NULL AND size(r.keys_value) > 0"
-    _MODELREF_RETURN = "RETURN id(r) AS rid, r.keys_value AS kv"
+    _MODELREF_RETURN = "RETURN elementId(r) AS rid, r.keys_value AS kv"
 
     def _resolve_refs(self, refs: list) -> int:
         """(Re)build the ``:references`` edge for each given reference.
@@ -362,10 +362,10 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         for rec in refs:
             rid, kv = rec["rid"], rec["kv"]
             self.execute_clause(
-                "MATCH (r)-[rel:references]->() WHERE id(r) = $rid DELETE rel",
+                "MATCH (r)-[rel:references]->() WHERE elementId(r) = $rid DELETE rel",
                 params={"rid": rid},
             )
-            clause = "MATCH (r) WHERE id(r) = $rid\nMATCH (t0:Identifiable {id: $k0})"
+            clause = "MATCH (r) WHERE elementId(r) = $rid\nMATCH (t0:Identifiable {id: $k0})"
             params = {"rid": rid, "k0": kv[0]}
             last = "t0"
             for i in range(1, len(kv)):
