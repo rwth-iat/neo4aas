@@ -1,11 +1,32 @@
 import hashlib
 import json
 import logging
+import re
 import time
 from collections import abc
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+# An ECLASS/IEC 61360 IRDI looks like "0173-1#02-AAO677#002": a 4-digit ICD prefix
+# and a trailing "#<version>". The version suffix is what differs between ECLASS
+# releases of the *same* property, so the version-agnostic identity is the IRDI
+# without that suffix. _IRDI_PREFIX_RE gates on the ICD so plain URIs (which may
+# also contain a '#') are left untouched.
+_IRDI_PREFIX_RE = re.compile(r"^\d{4}-")
+_IRDI_VERSION_RE = re.compile(r"#\d+$")
+
+
+def irdi_base(value: str) -> str:
+    """Return the version-agnostic IRDI base: the IRDI minus its trailing '#<version>'.
+
+    Non-IRDI values (no 4-digit ICD prefix, or no trailing numeric version) are
+    returned unchanged, so callers can store the base unconditionally — for a
+    non-IRDI id the base simply equals the id and equality behaves as before.
+    """
+    if value and _IRDI_PREFIX_RE.match(value) and _IRDI_VERSION_RE.search(value):
+        return _IRDI_VERSION_RE.sub("", value)
+    return value
 
 
 def rm_quotes(s: str):
@@ -49,7 +70,7 @@ class UploadStats:
         logger.info(f"Total relationship creation time: {self.total_relationship_creation_time:.2f} seconds")
 
 
-NEO4J_INTERNAL_NODE_KEYS = frozenset({"uid", "hash", "target_id"})
+NEO4J_INTERNAL_NODE_KEYS = frozenset({"uid", "hash", "target_id", "target_id_base", "id_base"})
 
 
 def hash_dict_obj(obj: dict) -> str:

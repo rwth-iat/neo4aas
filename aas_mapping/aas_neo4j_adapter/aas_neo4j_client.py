@@ -6,7 +6,7 @@ import json
 from aas_mapping.aas_neo4j_adapter.base import Neo4jModelConfig
 from aas_mapping.aas_neo4j_adapter.jsonification.neo4j_export import JsonFromNeo4jExporter
 from aas_mapping.aas_neo4j_adapter.jsonification.neo4j_import import JsonToNeo4jImporter
-from aas_mapping.aas_neo4j_adapter.utils import NEO4J_INTERNAL_NODE_KEYS
+from aas_mapping.aas_neo4j_adapter.utils import NEO4J_INTERNAL_NODE_KEYS, irdi_base
 from aas_mapping.aas_neo4j_adapter.xmlification.neo4j_import import XmlToNeo4jImporter
 
 # A library must not configure the root logger (basicConfig mutates the host app's
@@ -54,6 +54,11 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
         "CREATE INDEX rel_list_index IF NOT EXISTS FOR () - [r:value]-() ON (r.list_index);",
         # Indexed lookup of "references targeting id X" for incremental resolution.
         "CREATE INDEX reference_target_id IF NOT EXISTS FOR (r:Reference) ON (r.target_id);",
+        # Version-agnostic ECLASS/IRDI discovery: indexed equality on the IRDI base
+        # (IRDI minus its trailing '#<version>'), so the same property matches across
+        # ECLASS releases. See irdi_base() and the import path.
+        "CREATE INDEX reference_target_id_base IF NOT EXISTS FOR (r:Reference) ON (r.target_id_base);",
+        "CREATE INDEX conceptdescription_id_base IF NOT EXISTS FOR (c:ConceptDescription) ON (c.id_base);",
         # Backing hash indexes for cross-import deduplication are derived from
         # `deduplicated_object_types` in optimize_database(), so they always match the config.
     ],
@@ -276,6 +281,30 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
             )
             for row in rows
         ]
+
+    def find_referables_by_semantic_id(self, irdi: str, version_agnostic: bool = True) -> list[Dict]:
+        """Find Referables whose semanticId points to the given ECLASS/IRDI concept.
+
+        ECLASS IRDIs carry a trailing '#<version>' that differs between releases of the
+        *same* property. ``version_agnostic`` (default True) matches every version by
+        comparing the indexed IRDI base (``target_id_base``); pass False for an exact
+        IRDI match including the version.
+
+        Returns one dict per matching Referable: ``{id, idShort, labels, semanticId}``
+        (``id`` is null for nested SubmodelElements, which have no global id).
+        """
+        if version_agnostic:
+            cond, key = "ref.target_id_base = $key", irdi_base(irdi)
+        else:
+            cond, key = "ref.target_id = $key", irdi
+        cypher = (
+            "MATCH (n:Referable)-[:semanticId]->(ref:Reference) "
+            f"WHERE {cond} "
+            "RETURN n.id AS id, n.idShort AS idShort, labels(n) AS labels, "
+            "ref.keys_value[0] AS semanticId"
+        )
+        rows = self.execute_clause(cypher, params={"key": key}) or []
+        return [dict(r) for r in rows]
 
     def count_nodes_with_label(self, label: str) -> int:
         """Count the number of nodes with a specific label."""
