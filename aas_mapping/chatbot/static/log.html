@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AAS Chatbot — Debug Log</title>
+  <style>
+    body { font-family: -apple-system, "Segoe UI", monospace; background: #f0f2f5; padding: 16px; }
+    h1 { font-size: 1rem; margin-bottom: 12px; color: #003D75; }
+    .row { background: white; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px;
+           box-shadow: 0 1px 2px rgba(0,0,0,0.06); font-size: 0.78rem; }
+    .head { display: flex; gap: 12px; align-items: center; margin-bottom: 6px;
+            color: #555; flex-wrap: wrap; }
+    .kind { background: #00549F; color: white; padding: 1px 6px; border-radius: 8px; font-size: 0.7rem; }
+    .ts { color: #888; }
+    .msg { color: #222; font-weight: 600; }
+    .err { color: #CC071E; }
+    pre { background: #1d1f21; color: #c5c8c6; padding: 8px;
+          border-radius: 4px; overflow: auto; font-size: 0.72rem; margin: 4px 0; }
+    .meta { color: #555; font-size: 0.72rem; }
+    button { background: #00549F; color: white; border: none; border-radius: 4px;
+             padding: 4px 10px; cursor: pointer; margin-right: 6px; font-size: 0.75rem; }
+  </style>
+</head>
+<body>
+<h1>AAS Chatbot — Debug Log (most recent first)</h1>
+<div>
+  <button onclick="refresh()">Refresh</button>
+  <label><input type="checkbox" id="auto" checked> auto-refresh every 3s</label>
+</div>
+<div id="log"></div>
+<script>
+async function refresh() {
+  const r = await fetch("/log.json");
+  const events = await r.json();
+  const el = document.getElementById("log");
+  el.innerHTML = events.slice().reverse().map(e => {
+    const ts = new Date(e.ts * 1000).toLocaleTimeString();
+    const t = e.timings || {};
+    const errLine = e.repo_error
+      ? `<div class="err">repo error: ${escapeHtml(String(e.repo_error).slice(0, 300))}</div>` : "";
+    return `<div class="row">
+      <div class="head">
+        <span class="kind">${e.kind}</span>
+        <span class="ts">${ts}</span>
+        <span class="meta">target=${e.target} · count=${e.count}
+          · gen ${t.llm_gen_ms||0}ms · repo ${t.repo_ms||0}ms · explain ${t.llm_explain_ms||0}ms
+          · retries ${t.retries||0}</span>
+      </div>
+      ${e.message ? `<div class="msg">${escapeHtml(e.message)}</div>` : ""}
+      ${errLine}
+      <pre>${escapeHtml(JSON.stringify(e.aasql, null, 2))}</pre>
+    </div>`;
+  }).join("");
+}
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+refresh();
+setInterval(() => { if (document.getElementById("auto").checked) refresh(); }, 3000);
+</script>
+</body>
+</html>

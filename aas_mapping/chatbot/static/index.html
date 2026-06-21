@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AAS Chatbot — Pumping Station</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.css">
+  <style>
+    /* RWTH corporate palette (from rwthcolors) */
+    :root {
+      --rwth-blau:      #00549F;
+      --rwth-blau-dk:   #003D75;
+      --rwth-blau-50:   #8EBAE5;
+      --rwth-schwarzblau: #000064;
+      --rwth-blau-75:   #407FB7;
+      --rwth-blau-25:   #C7DDF2;
+      --rwth-blau-10:   #E8F1FA;
+      --rwth-petrol:    #006165;
+      --rwth-petrol-dk: #00474A;
+      --rwth-petrol-10: #E5EFEF;
+      --rwth-tuerkis:   #0098A1;
+      --rwth-rot:       #CC071E;
+      --rwth-grau-bg:   #ECEDED;
+      --rwth-grau-line: #CFD1D2;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--rwth-grau-bg);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      background: var(--rwth-blau-dk);
+      color: white;
+      padding: 4px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      min-height: 0;
+    }
+    header .title-block { display: flex; align-items: baseline; gap: 10px; }
+    header h1 { font-size: 0.95rem; font-weight: 600; line-height: 1; }
+    header span { font-size: 0.75rem; opacity: 0.75; line-height: 1; }
+    header span.sep { opacity: 0.4; }
+    .header-logo {
+      height: 32px;
+      width: auto;
+      margin-left: auto;
+    }
+
+    #main {
+      flex: 1;
+      width: 100%;
+      max-width: 1600px;
+      display: grid;
+      grid-template-columns: minmax(420px, 1fr) minmax(380px, 1fr);
+      gap: 16px;
+      padding: 16px;
+      overflow: hidden;
+    }
+    @media (max-width: 980px) {
+      #main { grid-template-columns: 1fr; }
+    }
+
+    .pane {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .pane-header {
+      padding: 3px 10px;
+      background: var(--rwth-blau-10);
+      border-bottom: 1px solid var(--rwth-blau-25);
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--rwth-blau-dk);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-shrink: 0;
+      line-height: 1.4;
+    }
+    .pane-header .target-badge { font-size: 0.62rem; padding: 1px 6px; }
+    .pane-header .header-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+    }
+    .pane-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      padding: 12px 14px;
+    }
+    .pane-actions {
+      padding: 5px 10px;
+      border-top: 1px solid var(--rwth-grau-line);
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      background: #fafbfc;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .pane-actions-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    .pane-actions-row.secondary {
+      font-size: 0.68rem;
+      color: #777;
+      padding-top: 0;
+      margin-top: 0;
+    }
+
+    /* Workbench (left column) */
+    #workbench {
+      display: grid;
+      grid-template-rows: minmax(360px, 0.9fr) minmax(280px, 1.1fr);
+      gap: 16px;
+      min-height: 0;
+    }
+    #query-pane .pane-body { padding: 0; }
+    #query-pane .CodeMirror { height: 100%; min-height: 220px; }
+    #query-pane .pane-body, #query-pane .CodeMirror-scroll {
+      min-height: 220px;
+    }
+    #query-pane .pane-body .CodeMirror-wrap { height: 100%; }
+    #query-pane .editor-status { font-size: 0.75rem; color: #888; margin-left: auto; }
+    #query-pane .editor-status.error { color: var(--rwth-rot); }
+    #query-pane .target-badge,
+    .target-badge {
+      font-size: 0.7rem;
+      background: var(--rwth-blau);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .meta-line {
+      font-size: 0.68rem;
+      color: #888;
+      font-family: "SF Mono", Monaco, "Consolas", monospace;
+      white-space: nowrap;
+    }
+    .pane-actions .btn-rerun,
+    .pane-actions .btn-loadmore {
+      padding: 3px 8px;
+      font-size: 0.72rem;
+    }
+    #query-status { font-size: 0.7rem; }
+
+    .error-panel {
+      background: #FEEAEC;
+      border-top: 2px solid var(--rwth-rot);
+      color: var(--rwth-rot);
+      padding: 8px 14px;
+      font-size: 0.78rem;
+      font-family: "SF Mono", Monaco, "Consolas", monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 120px;
+      overflow: auto;
+      flex-shrink: 0;
+    }
+
+    #results-filter {
+      border: 1px solid var(--rwth-grau-line);
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-size: 0.7rem;
+      outline: none;
+      width: 130px;
+      height: 18px;
+    }
+    #results-filter:focus { border-color: var(--rwth-blau); }
+
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { background: var(--rwth-blau-10); }
+    th .sort-arrow { font-size: 0.65rem; margin-left: 3px; opacity: 0.6; }
+
+    .basyx-link {
+      color: var(--rwth-blau);
+      text-decoration: none;
+      font-size: 0.72rem;
+      margin-left: 8px;
+    }
+    .basyx-link:hover { text-decoration: underline; }
+
+    /* Bubble — clickable restore */
+    .bubble.restorable { cursor: pointer; position: relative; transition: background 0.15s; }
+    .bubble.restorable:hover { background: var(--rwth-blau-10); }
+    .restore-hint {
+      font-size: 0.7rem;
+      color: var(--rwth-blau);
+      margin-top: 6px;
+      display: inline-block;
+      font-weight: 600;
+    }
+
+    /* JSON tree view */
+    .json-tree {
+      font-family: "SF Mono", Monaco, "Consolas", monospace;
+      font-size: 0.78rem;
+      line-height: 1.5;
+    }
+    .json-tree ul { list-style: none; padding-left: 14px; margin: 0; }
+    .json-tree .key { color: var(--rwth-blau); }
+    .json-tree .str { color: var(--rwth-petrol); }
+    .json-tree .num { color: #d9531e; }
+    .json-tree .bool { color: #a11035; font-weight: 600; }
+    .json-tree .null { color: #888; font-style: italic; }
+    .json-tree .toggle {
+      cursor: pointer;
+      display: inline-block;
+      width: 14px;
+      color: #888;
+      user-select: none;
+    }
+    .json-tree .toggle:hover { color: var(--rwth-blau); }
+    .json-tree .collapsed > ul { display: none; }
+    .json-tree .count {
+      color: #888;
+      font-size: 0.72rem;
+      margin-left: 6px;
+    }
+
+    /* Chat column */
+    #chat-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-right: 4px;
+    }
+
+    .msg { display: flex; flex-direction: column; gap: 4px; }
+    .msg.user { align-items: flex-end; }
+    .msg.bot  { align-items: flex-start; }
+
+    .bubble {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .msg.user .bubble {
+      background: var(--rwth-blau);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.bot .bubble {
+      background: white;
+      color: #222;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      max-width: 95%;
+    }
+    #messages { flex: 1; overflow-y: auto; }
+
+    .error-bubble { background: #FEEAEC; border: 1px solid #F4B5BD; color: var(--rwth-rot); }
+
+    /* Explanation (always visible, on top) */
+    .explanation {
+      font-size: 0.92rem;
+      color: #222;
+      line-height: 1.55;
+      margin-bottom: 12px;
+    }
+    .explanation p { margin: 0 0 6px 0; }
+    .explanation strong { color: var(--rwth-blau); }
+
+    /* Collapsible sections */
+    .collapsible { margin-top: 10px; }
+    .collapsible-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #555;
+      user-select: none;
+      margin-bottom: 4px;
+      padding: 4px 0;
+    }
+    .collapsible-toggle:hover { color: var(--rwth-blau); }
+    .collapsible-toggle .arrow { transition: transform 0.2s; display: inline-block; }
+    .collapsible-toggle.open .arrow { transform: rotate(90deg); }
+    .collapsible-body { display: none; }
+    .collapsible-body.visible { display: block; }
+
+    /* AASQL editor (CodeMirror) */
+    .aasql-editor-host {
+      width: 100%;
+      border: 1px solid var(--rwth-grau-line);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .aasql-editor-host .CodeMirror {
+      height: auto;
+      min-height: 240px;
+      max-height: 560px;
+      font-family: "SF Mono", Monaco, "Consolas", monospace;
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+    .aasql-editor-host .CodeMirror-scroll { min-height: 240px; max-height: 560px; }
+    .CodeMirror-lint-tooltip { z-index: 200; }
+
+    .editor-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .btn-rerun {
+      background: var(--rwth-blau);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .btn-rerun:hover { background: var(--rwth-blau-dk); }
+    .btn-rerun:disabled { background: #aaa; cursor: not-allowed; }
+    .editor-status { font-size: 0.75rem; color: #888; }
+    .editor-status.error { color: #c00; }
+
+    /* Raw response */
+    .raw-response {
+      background: #1d1f21;
+      color: #c5c8c6;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: "SF Mono", Monaco, "Consolas", monospace;
+      font-size: 0.75rem;
+      max-height: 320px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Results table */
+    .results-section { margin-bottom: 4px; }
+    .results-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .count-badge {
+      background: var(--rwth-blau);
+      color: white;
+      border-radius: 10px;
+      padding: 1px 8px;
+      font-size: 0.72rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+    th {
+      background: var(--rwth-petrol-10);
+      text-align: left;
+      padding: 4px 8px;
+      border-bottom: 2px solid var(--rwth-petrol);
+      color: var(--rwth-petrol);
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    td {
+      padding: 3px 8px;
+      border-bottom: 1px solid #f0f0f0;
+      word-break: break-all;
+    }
+    tr.result-row { cursor: pointer; transition: background 0.08s; }
+    tr.result-row:hover td { background: var(--rwth-blau-10); }
+    tr.result-row:last-child td { border-bottom: none; }
+
+    /* Long ids/IRIs: truncate with ellipsis, full value on hover, click to copy. */
+    td.cell-id { max-width: 320px; }
+    .cell-id-val {
+      display: inline-block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      vertical-align: bottom;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.72rem;
+      cursor: copy;
+      /* IRIs differ at the tail, so clip the start: ellipsis on the left, end visible. */
+      direction: rtl;
+      text-align: left;
+    }
+    .cell-id-val:hover { color: var(--rwth-blau); }
+    .cell-id-val.copied { color: var(--rwth-petrol); }
+
+    .truncated-note { font-size: 0.74rem; color: #888; margin-top: 6px; display: flex; align-items: center; gap: 10px; }
+    .btn-loadmore {
+      background: var(--rwth-blau-10);
+      color: var(--rwth-blau);
+      border: 1px solid var(--rwth-blau-25);
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+    .btn-loadmore:hover { background: var(--rwth-blau-10); }
+
+    /* Detail modal */
+    #modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    #modal-overlay.visible { display: flex; }
+    #modal {
+      background: white;
+      border-radius: 10px;
+      max-width: 800px;
+      width: 90%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+    #modal-header {
+      padding: 14px 20px;
+      background: var(--rwth-blau);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #modal-header h3 { font-size: 1rem; }
+    #modal-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.4rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    #modal-body {
+      padding: 16px;
+      overflow: auto;
+      flex: 1;
+    }
+    #modal-body pre {
+      font-family: "SF Mono", Monaco, "Consolas", monospace;
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 6px;
+    }
+
+    /* Typing indicator */
+    .typing { display: flex; gap: 5px; padding: 8px 4px; }
+    .dot {
+      width: 8px; height: 8px;
+      background: #aaa;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-6px); }
+    }
+
+    /* Input bar */
+    #input-bar {
+      display: flex;
+      gap: 10px;
+      background: white;
+      border-radius: 12px;
+      padding: 10px 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      border-top: 2px solid var(--rwth-petrol);
+    }
+    #user-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 0.9rem;
+      resize: none;
+      font-family: inherit;
+      line-height: 1.4;
+      max-height: 100px;
+    }
+    #send-btn {
+      background: var(--rwth-blau);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 18px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      white-space: nowrap;
+      align-self: flex-end;
+    }
+    #send-btn:hover { background: var(--rwth-blau-dk); }
+    #send-btn:disabled { background: #aaa; cursor: not-allowed; }
+
+    /* Suggestion chips */
+    #suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 4px 0;
+    }
+    .suggestion {
+      background: white;
+      border: 1px solid var(--rwth-grau-line);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: var(--rwth-blau);
+      transition: background 0.15s;
+    }
+    .suggestion:hover { background: var(--rwth-blau-10); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="title-block">
+    <h1>AAS Chatbot</h1>
+    <span class="sep">·</span>
+    <span>Pumping Station Asset Repository</span>
+  </div>
+  <img src="/static/img/rwth-iat-logo.png" alt="IAT — RWTH Aachen University" class="header-logo">
+</header>
+
+<div id="main">
+
+  <!-- LEFT: workbench -->
+  <div id="workbench">
+    <div id="query-pane" class="pane">
+      <div class="pane-header">
+        <span>Current AASQL Query</span>
+        <span class="header-meta">
+          <span id="endpoint-preview" class="meta-line"></span>
+          <span id="timings-line" class="meta-line"></span>
+        </span>
+      </div>
+      <div class="pane-body">
+        <div id="query-editor-host" style="height:100%"></div>
+      </div>
+      <div class="pane-actions">
+        <button id="btn-run"    class="btn-rerun"    onclick="runWorkbenchQuery()">Run query</button>
+        <button id="btn-format" class="btn-loadmore" onclick="formatWorkbenchQuery()">Format</button>
+        <button id="btn-minify" class="btn-loadmore" onclick="minifyWorkbenchQuery()">Minify</button>
+        <button id="btn-curl"   class="btn-loadmore" onclick="copyAsCurl()">Copy as curl</button>
+        <span id="query-status" class="editor-status" style="margin-left:auto">No query yet — ask a question on the right.</span>
+      </div>
+      <div id="error-panel" class="error-panel" style="display:none"></div>
+    </div>
+
+    <div id="results-pane" class="pane">
+      <div class="pane-header">
+        <span>Results</span>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input id="results-filter" type="text" placeholder="Filter rows…" oninput="renderWorkbenchResults()">
+          <span id="results-count-badge" class="target-badge" style="display:none">0</span>
+        </div>
+      </div>
+      <div class="pane-body">
+        <div id="results-content"><em style="font-size:0.85rem;color:#888">No results yet.</em></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: chat -->
+  <div id="chat-column">
+    <div id="suggestions">
+      <span class="suggestion" onclick="suggest(this)">Show all temperature sensors</span>
+      <span class="suggestion" onclick="suggest(this)">Find assets from Germany</span>
+      <span class="suggestion" onclick="suggest(this)">List all pump Nameplate submodels</span>
+      <span class="suggestion" onclick="suggest(this)">How many assets are in the repository?</span>
+      <span class="suggestion" onclick="suggest(this)">Find all Endress+Hauser devices</span>
+      <span class="suggestion" onclick="suggest(this)">Show all control valves</span>
+      <span class="suggestion" onclick="suggest(this)">List TechnicalData submodels</span>
+      <span class="suggestion" onclick="suggest(this)">Find flow meters</span>
+    </div>
+
+    <div id="messages"></div>
+
+    <div id="input-bar">
+      <textarea id="user-input" rows="1" placeholder="Ask about assets in the pumping station..."></textarea>
+      <button id="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Detail modal -->
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div id="modal" onclick="event.stopPropagation()">
+    <div id="modal-header">
+      <h3 id="modal-title">AAS Object</h3>
+      <button id="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body"><pre id="modal-content"></pre></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/brace-fold.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/json-lint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/anyword-hint.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
+<script>
+const messagesEl = document.getElementById("messages");
+const inputEl    = document.getElementById("user-input");
+const sendBtn    = document.getElementById("send-btn");
+
+const PAGE_SIZE = 10;
+const BASYX_UI_URL = "http://localhost:3000";
+const REPO_PUBLIC_URL = "http://localhost:8081/api/v3.1";
+
+// Snapshots of past chat turns: bubbleId -> {aasql, target, results, count, userMessage, error, timings}
+const snapshots = new Map();
+let snapshotCounter = 0;
+
+// AASQL keywords for autocomplete
+const AASQL_KEYWORDS = [
+  "$condition", "$field", "$strVal", "$numVal",
+  "$eq", "$ne", "$contains", "$starts-with", "$ends-with",
+  "$gt", "$ge", "$lt", "$le", "$and", "$or", "$not",
+  "$aas#idShort", "$sm#idShort", "$sme.",
+  "#value", "#idShort", "#valueType",
+];
+
+function aasqlHint(cm) {
+  const cursor = cm.getCursor();
+  const token  = cm.getTokenAt(cursor);
+  const start  = token.start;
+  const end    = cursor.ch;
+  const word   = (token.string || "").replace(/^["']|["']$/g, "");
+  const list = AASQL_KEYWORDS.filter(k => k.toLowerCase().includes(word.toLowerCase()));
+  return {
+    list: list.length ? list : AASQL_KEYWORDS,
+    from: CodeMirror.Pos(cursor.line, start),
+    to:   CodeMirror.Pos(cursor.line, end),
+  };
+}
+
+inputEl.addEventListener("input", () => {
+  inputEl.style.height = "auto";
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 100) + "px";
+});
+
+inputEl.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+function suggest(el) {
+  inputEl.value = el.textContent;
+  sendMessage();
+}
+
+function appendUser(text) {
+  const msg = document.createElement("div");
+  msg.className = "msg user";
+  msg.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+  messagesEl.appendChild(msg);
+  scroll();
+}
+
+function appendTypingBubble() {
+  const msg = document.createElement("div");
+  msg.className = "msg bot";
+  msg.innerHTML = `<div class="bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  messagesEl.appendChild(msg);
+  scroll();
+  return msg;
+}
+
+function appendError(text) {
+  const msg = document.createElement("div");
+  msg.className = "msg bot";
+  msg.innerHTML = `<div class="bubble error-bubble">${escapeHtml(text)}</div>`;
+  messagesEl.appendChild(msg);
+  scroll();
+}
+
+// ---- Workbench (left panel) state ----
+const workbench = {
+  cm: null,
+  target: "submodels",
+  results: [],
+  count: 0,
+  shown: PAGE_SIZE,
+  lastUserMessage: "",
+  filter: "",
+  sortKey: null,
+  sortDir: 1,
+  lastError: null,
+  lastTimings: null,
+};
+
+function initWorkbenchEditor() {
+  workbench.cm = CodeMirror(document.getElementById("query-editor-host"), {
+    value: "",
+    mode: {name: "javascript", json: true},
+    theme: "dracula",
+    lineNumbers: true,
+    matchBrackets: true,
+    autoCloseBrackets: true,
+    foldGutter: true,
+    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers"],
+    lint: typeof jsonlint !== "undefined",
+    indentUnit: 2,
+    tabSize: 2,
+    extraKeys: {
+      "Ctrl-Space": cm => cm.showHint({hint: aasqlHint, completeSingle: false}),
+      "Cmd-Enter":  runWorkbenchQuery,
+      "Ctrl-Enter": runWorkbenchQuery,
+    },
+  });
+  workbench.cm.on("change", updateTargetPreview);
+}
+
+function detectTargetFromText(txt) {
+  return txt.includes('"$aas') ? "shells" : "submodels";
+}
+
+function updateTargetPreview() {
+  const target = detectTargetFromText(workbench.cm.getValue());
+  workbench.target = target;
+  const badge = document.getElementById("query-target-badge");
+  if (badge) {
+    badge.textContent = target;
+    badge.style.display = "inline-block";
+  }
+  const preview = document.getElementById("endpoint-preview");
+  if (preview) preview.textContent = `→ POST /query/${target}`;
+}
+
+function setWorkbench(data, userMessage) {
+  workbench.target = data.target || "submodels";
+  workbench.results = data.results || [];
+  workbench.count = data.count || 0;
+  workbench.shown = Math.min(PAGE_SIZE, workbench.results.length);
+  workbench.lastError = data.error || null;
+  workbench.lastTimings = data.timings || null;
+  workbench.sortKey = null;
+  workbench.sortDir = 1;
+  workbench.filter = "";
+  const fInput = document.getElementById("results-filter");
+  if (fInput) fInput.value = "";
+
+  if (userMessage !== undefined) workbench.lastUserMessage = userMessage;
+
+  if (workbench.cm) {
+    workbench.cm.setValue(JSON.stringify(data.aasql, null, 2));
+  }
+
+  const targetBadge = document.getElementById("query-target-badge");
+  if (targetBadge) {
+    targetBadge.textContent = workbench.target;
+    targetBadge.style.display = "inline-block";
+  }
+
+  const countBadge = document.getElementById("results-count-badge");
+  countBadge.textContent = workbench.count;
+  countBadge.style.display = "inline-block";
+
+  const status = document.getElementById("query-status");
+  status.classList.remove("error");
+  status.textContent = data.error ? "Repository error — see panel below" : "";
+
+  renderTimings();
+  renderErrorPanel();
+  updateTargetPreview();
+  renderWorkbenchResults();
+}
+
+function renderTimings() {
+  const el = document.getElementById("timings-line");
+  if (!el) return;
+  const t = workbench.lastTimings;
+  if (!t) { el.textContent = ""; return; }
+  const parts = [];
+  if (t.llm_gen_ms)     parts.push(`LLM gen ${t.llm_gen_ms}ms`);
+  if (t.repo_ms)        parts.push(`repo ${t.repo_ms}ms`);
+  if (t.llm_explain_ms) parts.push(`explain ${t.llm_explain_ms}ms`);
+  if (t.retries)        parts.push(`retries ${t.retries}`);
+  el.textContent = parts.length ? "· " + parts.join(" · ") : "";
+}
+
+function renderErrorPanel() {
+  const el = document.getElementById("error-panel");
+  if (!el) return;
+  if (workbench.lastError) {
+    el.style.display = "block";
+    el.textContent = workbench.lastError;
+  } else {
+    el.style.display = "none";
+    el.textContent = "";
+  }
+}
+
+function shortType(t) {
+  // UI-friendly model type names.
+  return t === "AssetAdministrationShell" ? "AAS" : (t || "");
+}
+
+function _flatten(r) {
+  // Build a flat key->scalar map from an AAS object for column display.
+  const flat = {
+    idShort:   r.idShort   || "",
+    id:        r.id        || "",
+    modelType: shortType(r.modelType),
+  };
+  if (r.assetInformation) {
+    flat.assetKind     = r.assetInformation.assetKind || "";
+    flat.globalAssetId = r.assetInformation.globalAssetId || "";
+  }
+  function walk(n, depth) {
+    if (depth > 4 || !n || typeof n !== "object") return;
+    const k = n.idShort;
+    const v = n.value;
+    const mt = n.modelType || "";
+    if (k && (typeof v === "string" || typeof v === "number" || typeof v === "boolean")) {
+      if (flat[k] === undefined) flat[k] = String(v);
+    }
+    if (mt === "SubmodelElementCollection" && Array.isArray(v)) {
+      v.forEach(c => walk(c, depth + 1));
+    }
+    if (mt === "MultiLanguageProperty" && Array.isArray(v)) {
+      const txts = v.map(x => x && x.text).filter(Boolean);
+      if (txts.length && k && flat[k] === undefined) flat[k] = txts.join("; ");
+    }
+  }
+  if (Array.isArray(r.submodelElements)) r.submodelElements.forEach(e => walk(e, 0));
+  return flat;
+}
+
+function _columnsFor(target, sampleResults) {
+  // Pick a sensible set of columns per target, plus any common interesting field present.
+  const base = target === "shells"
+    ? ["idShort", "id", "modelType", "assetKind"]
+    : ["idShort", "id", "modelType"];
+  const interesting = [
+    "ManufacturerProductDesignation", "ManufacturerName",
+    "CountryOfOrigin", "OrderCodeOfManufacturer", "ProductArticleNumberOfManufacturer",
+    "MaxOperatingTemperature", "MaxOperatingPressure", "NominalVoltage", "RatedPower",
+  ];
+  const flats = sampleResults.map(_flatten);
+  const present = interesting.filter(k => flats.some(f => f[k] !== undefined && f[k] !== ""));
+  // Cap extra columns to keep table readable
+  return [...base, ...present.slice(0, 4)];
+}
+
+function _basyxLink(id, target) {
+  if (!id) return "";
+  // BaSyx aas-web-ui /aasviewer deep-links: ?aas=<repo-shell-endpoint> for an
+  // AAS, ?sm=<repo-submodel-endpoint> for a standalone Submodel. The repo
+  // encodes the id as base64-url in its path.
+  const b64 = btoa(unescape(encodeURIComponent(id)))
+                .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const t = target || workbench.target;
+  return t === "shells"
+    ? `${BASYX_UI_URL}/aasviewer?aas=${REPO_PUBLIC_URL}/shells/${b64}`
+    : `${BASYX_UI_URL}/aasviewer?sm=${REPO_PUBLIC_URL}/submodels/${b64}`;
+}
+
+// Open BaSyx links explicitly so a left-click reliably opens a new tab and does
+// not bubble to the row/modal handlers (which would swallow the navigation).
+function openLink(ev, url) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  window.open(url, "_blank", "noopener");
+}
+
+function copyId(ev, el) {
+  ev.preventDefault();
+  ev.stopPropagation();  // don't trigger the row's JSON modal
+  const id = el.dataset.id || el.textContent;
+  navigator.clipboard.writeText(id).then(() => {
+    const prev = el.textContent;
+    el.classList.add("copied");
+    el.textContent = "copied ✓";
+    setTimeout(() => { el.textContent = prev; el.classList.remove("copied"); }, 900);
+  });
+}
+
+function _sortAndFilter(results, columns) {
+  const filter = (workbench.filter || "").toLowerCase();
+  const flats = results.map((r, idx) => ({_idx: idx, _flat: _flatten(r)}));
+  let rows = flats;
+  if (filter) {
+    rows = rows.filter(row => {
+      return columns.some(c => String(row._flat[c] || "").toLowerCase().includes(filter));
+    });
+  }
+  if (workbench.sortKey) {
+    const k = workbench.sortKey, dir = workbench.sortDir;
+    rows.sort((a, b) => {
+      const av = String(a._flat[k] || "").toLowerCase();
+      const bv = String(b._flat[k] || "").toLowerCase();
+      if (av < bv) return -1 * dir;
+      if (av > bv) return  1 * dir;
+      return 0;
+    });
+  }
+  return rows;
+}
+
+function renderWorkbenchResults() {
+  const host = document.getElementById("results-content");
+  const total = workbench.results.length;
+  if (total === 0) {
+    host.innerHTML = `<em style="font-size:0.85rem;color:#888">No results.</em>`;
+    return;
+  }
+  workbench.filter = document.getElementById("results-filter")?.value || "";
+  const columns = _columnsFor(workbench.target, workbench.results);
+  const rowsAll = _sortAndFilter(workbench.results, columns);
+  const visible = rowsAll.slice(0, workbench.shown);
+
+  const headers = columns.map(c => {
+    const arrow = workbench.sortKey === c ? (workbench.sortDir === 1 ? "▲" : "▼") : "";
+    return `<th class="sortable" onclick="toggleSort('${c}')">${escapeHtml(c)}<span class="sort-arrow">${arrow}</span></th>`;
+  }).join("");
+
+  const rows = visible.map(({_idx, _flat}) => {
+    const tds = columns.map(c => {
+      const raw = _flat[c] || "—";
+      let cell = escapeHtml(raw);
+      if (c === "idShort" && _flat.id) {
+        cell = `<a class="basyx-link" href="${_basyxLink(_flat.id)}" target="_blank" rel="noopener" title="Open in BaSyx UI" onclick="openLink(event, this.href)">${cell} ↗</a>`;
+      } else if (c === "id" && raw !== "—") {
+        // Long IRIs: ellipsis + full value tooltip + click to copy (don't open the row modal).
+        return `<td class="cell-id"><span class="cell-id-val" title="${escapeHtml(raw)} (click to copy)" onclick="copyId(event, this)" data-id="${escapeHtml(raw)}">${cell}</span></td>`;
+      }
+      return `<td>${cell}</td>`;
+    }).join("");
+    return `<tr class="result-row" data-idx="${_idx}">${tds}</tr>`;
+  }).join("");
+
+  const filtered = workbench.filter ? rowsAll.length : total;
+  let note = "";
+  if (workbench.shown < filtered) {
+    const next = Math.min(PAGE_SIZE, filtered - workbench.shown);
+    note = `<div class="truncated-note">
+              <span>Showing ${Math.min(workbench.shown, filtered)} of ${filtered}${workbench.filter ? ` filtered (of ${total})` : ""}.</span>
+              <button class="btn-loadmore" onclick="loadMoreWorkbench()">Load ${next} more</button>
+            </div>`;
+  } else if (filtered !== total || total > PAGE_SIZE) {
+    note = `<div class="truncated-note"><span>Showing ${filtered}${workbench.filter ? ` filtered (of ${total})` : ""}.</span></div>`;
+  }
+
+  host.innerHTML = `
+    <table>
+      <thead><tr>${headers}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${note}`;
+
+  host.querySelectorAll(".result-row").forEach(row => {
+    row.onclick = () => openDetail(parseInt(row.dataset.idx));
+  });
+}
+
+function toggleSort(key) {
+  if (workbench.sortKey === key) workbench.sortDir = -workbench.sortDir;
+  else { workbench.sortKey = key; workbench.sortDir = 1; }
+  renderWorkbenchResults();
+}
+
+function loadMoreWorkbench() {
+  const total = workbench.results.length;
+  workbench.shown = Math.min(workbench.shown + PAGE_SIZE, total);
+  renderWorkbenchResults();
+}
+
+function formatWorkbenchQuery() {
+  if (!workbench.cm) return;
+  try {
+    const parsed = JSON.parse(workbench.cm.getValue());
+    workbench.cm.setValue(JSON.stringify(parsed, null, 2));
+    setStatus("Formatted.", false);
+  } catch (e) {
+    setStatus("Invalid JSON: " + e.message, true);
+  }
+}
+
+function minifyWorkbenchQuery() {
+  if (!workbench.cm) return;
+  try {
+    const parsed = JSON.parse(workbench.cm.getValue());
+    workbench.cm.setValue(JSON.stringify(parsed));
+    setStatus("Minified.", false);
+  } catch (e) {
+    setStatus("Invalid JSON: " + e.message, true);
+  }
+}
+
+function copyAsCurl() {
+  if (!workbench.cm) return;
+  try {
+    const parsed = JSON.parse(workbench.cm.getValue());
+    const body = JSON.stringify(parsed);
+    const target = detectTargetFromText(JSON.stringify(parsed));
+    const cmd = `curl -X POST ${REPO_PUBLIC_URL}/query/${target} \\\n  -H 'Content-Type: application/json' \\\n  -d '${body.replace(/'/g, "'\\''")}'`;
+    navigator.clipboard.writeText(cmd).then(
+      () => setStatus("curl command copied to clipboard.", false),
+      () => setStatus("Clipboard blocked — see console.", true)
+    );
+    console.log(cmd);
+  } catch (e) {
+    setStatus("Invalid JSON: " + e.message, true);
+  }
+}
+
+function setStatus(text, isError) {
+  const s = document.getElementById("query-status");
+  s.textContent = text;
+  s.classList.toggle("error", !!isError);
+}
+
+async function runWorkbenchQuery() {
+  if (!workbench.cm) return;
+  let aasql;
+  try {
+    aasql = JSON.parse(workbench.cm.getValue());
+  } catch (e) {
+    setStatus("Invalid JSON: " + e.message, true);
+    return;
+  }
+  // Auto-redetect target from edited query
+  const txt = JSON.stringify(aasql);
+  const newTarget = (txt.includes('"$aas')) ? "shells" : "submodels";
+  workbench.target = newTarget;
+  const badge = document.getElementById("query-target-badge");
+  if (badge) badge.textContent = newTarget;
+
+  const btn = document.getElementById("btn-run");
+  btn.disabled = true;
+  setStatus("Running…", false);
+
+  try {
+    const resp = await fetch("/query", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({aasql, target: newTarget, message: workbench.lastUserMessage, explain: true}),
+    });
+    const data = await resp.json();
+    if (data.error && (!data.results || data.results.length === 0)) {
+      setStatus("Error — see panel below.", true);
+    } else {
+      setStatus(`Ran successfully — ${data.count} result(s).`, false);
+    }
+    setWorkbench(data, workbench.lastUserMessage);
+    if (data.explanation) {
+      const sid = saveSnapshot(data, workbench.lastUserMessage);
+      appendBotExplanation(data.explanation, sid);
+    }
+  } catch (err) {
+    setStatus("Network error: " + err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function appendBotExplanation(md, snapshotId) {
+  const msg = document.createElement("div");
+  msg.className = "msg bot";
+  const hint = snapshotId ? `<div class="restore-hint">▷ Click to restore this query</div>` : "";
+  msg.innerHTML = `<div class="bubble${snapshotId ? " restorable" : ""}" ${snapshotId ? `data-snapshot="${snapshotId}"` : ""}>
+                     <div class="explanation">${marked.parse(md || "")}</div>${hint}
+                   </div>`;
+  if (snapshotId) {
+    msg.querySelector(".bubble").onclick = () => restoreSnapshot(snapshotId);
+  }
+  messagesEl.appendChild(msg);
+  scroll();
+}
+
+function saveSnapshot(data, userMessage) {
+  const id = "snap" + (++snapshotCounter);
+  snapshots.set(id, {
+    aasql: data.aasql, target: data.target, results: data.results || [],
+    count: data.count || 0, error: data.error || null, timings: data.timings || null,
+    userMessage,
+  });
+  return id;
+}
+
+function restoreSnapshot(id) {
+  const s = snapshots.get(id);
+  if (!s) return;
+  setWorkbench({
+    aasql: s.aasql, target: s.target, results: s.results,
+    count: s.count, error: s.error, timings: s.timings,
+  }, s.userMessage);
+}
+
+function openDetail(idx) {
+  const obj = workbench.results[idx];
+  if (!obj) return;
+  document.getElementById("modal-title").textContent =
+    (obj.idShort || obj.id || "AAS Object") + (obj.modelType ? " — " + shortType(obj.modelType) : "");
+  const content = document.getElementById("modal-content");
+  const tag = content.tagName.toLowerCase();
+  // Switch the content host to a div so we can render a tree
+  let host = document.getElementById("detail-host");
+  if (!host) {
+    const body = document.getElementById("modal-body");
+    body.innerHTML = `
+      <div style="margin-bottom:8px; display:flex; gap:8px; align-items:center;">
+        <button class="btn-loadmore" onclick="toggleDetailMode()">Toggle tree / raw</button>
+        ${obj.id ? `<a class="basyx-link" href="${_basyxLink(obj.id)}" target="_blank" rel="noopener" onclick="openLink(event, this.href)">Open in BaSyx UI ↗</a>` : ""}
+      </div>
+      <div id="detail-host" class="json-tree"></div>
+      <pre id="detail-raw" style="display:none"></pre>`;
+    host = document.getElementById("detail-host");
+  } else {
+    // Refresh the basyx link / button bar for current obj
+    const bar = host.previousElementSibling;
+    if (bar) {
+      const linkHtml = obj.id ? `<a class="basyx-link" href="${_basyxLink(obj.id)}" target="_blank" rel="noopener" onclick="openLink(event, this.href)">Open in BaSyx UI ↗</a>` : "";
+      bar.innerHTML = `
+        <button class="btn-loadmore" onclick="toggleDetailMode()">Toggle tree / raw</button>
+        ${linkHtml}`;
+    }
+  }
+  host.innerHTML = "";
+  host.appendChild(_renderTree(obj, "(root)"));
+  document.getElementById("detail-raw").textContent = JSON.stringify(obj, null, 2);
+  document.getElementById("modal-overlay").classList.add("visible");
+}
+
+function toggleDetailMode() {
+  const tree = document.getElementById("detail-host");
+  const raw  = document.getElementById("detail-raw");
+  if (!tree || !raw) return;
+  if (tree.style.display === "none") {
+    tree.style.display = "";
+    raw.style.display = "none";
+  } else {
+    tree.style.display = "none";
+    raw.style.display = "";
+  }
+}
+
+function _renderTree(value, label) {
+  // Recursive collapsible JSON tree renderer.
+  const li = document.createElement("li");
+  if (Array.isArray(value)) {
+    const toggle = document.createElement("span");
+    toggle.className = "toggle";
+    toggle.textContent = "▾";
+    li.appendChild(toggle);
+    const keySpan = document.createElement("span");
+    keySpan.innerHTML = `<span class="key">${escapeHtml(label)}</span>: [`;
+    li.appendChild(keySpan);
+    const count = document.createElement("span");
+    count.className = "count";
+    count.textContent = `${value.length} item${value.length !== 1 ? "s" : ""}`;
+    li.appendChild(count);
+    const ul = document.createElement("ul");
+    value.forEach((v, i) => ul.appendChild(_renderTree(v, String(i))));
+    li.appendChild(ul);
+    const close = document.createElement("div");
+    close.textContent = "]";
+    close.style.paddingLeft = "14px";
+    li.appendChild(close);
+    toggle.onclick = () => {
+      li.classList.toggle("collapsed");
+      toggle.textContent = li.classList.contains("collapsed") ? "▸" : "▾";
+    };
+  } else if (value !== null && typeof value === "object") {
+    const toggle = document.createElement("span");
+    toggle.className = "toggle";
+    toggle.textContent = "▾";
+    li.appendChild(toggle);
+    const keys = Object.keys(value);
+    const keySpan = document.createElement("span");
+    const summary = value.idShort ? ` idShort=${value.idShort}` : "";
+    keySpan.innerHTML = `<span class="key">${escapeHtml(label)}</span>: {<span class="count">${keys.length} field${keys.length !== 1 ? "s" : ""}${escapeHtml(summary)}</span>`;
+    li.appendChild(keySpan);
+    const ul = document.createElement("ul");
+    keys.forEach(k => ul.appendChild(_renderTree(value[k], k)));
+    li.appendChild(ul);
+    const close = document.createElement("div");
+    close.textContent = "}";
+    close.style.paddingLeft = "14px";
+    li.appendChild(close);
+    toggle.onclick = () => {
+      li.classList.toggle("collapsed");
+      toggle.textContent = li.classList.contains("collapsed") ? "▸" : "▾";
+    };
+  } else {
+    const cls = value === null ? "null" :
+                typeof value === "boolean" ? "bool" :
+                typeof value === "number" ? "num" : "str";
+    const renderVal = value === null ? "null" :
+                      typeof value === "string" ? `"${value}"` : String(value);
+    li.innerHTML = `<span class="key">${escapeHtml(label)}</span>: <span class="${cls}">${escapeHtml(renderVal)}</span>`;
+  }
+  // Wrap in <ul> root if it's the top-level call
+  if (label === "(root)") {
+    const root = document.createElement("ul");
+    root.appendChild(li);
+    return root;
+  }
+  return li;
+}
+
+function closeModal(event) {
+  if (event && event.target !== event.currentTarget && event.type !== "click") return;
+  document.getElementById("modal-overlay").classList.remove("visible");
+}
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeModal();
+});
+
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  if (!text) return;
+
+  inputEl.value = "";
+  inputEl.style.height = "auto";
+  sendBtn.disabled = true;
+
+  appendUser(text);
+  const bubbleEl = appendTypingBubble();
+
+  try {
+    const resp = await fetch("/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message: text}),
+    });
+    const data = await resp.json();
+    if (data.error && data.results === undefined) {
+      bubbleEl.remove();
+      appendError("Error: " + data.error);
+    } else {
+      // Update left workbench (query + results)
+      setWorkbench(data, text);
+      // Save snapshot and replace typing bubble with restorable explanation bubble
+      const sid = saveSnapshot(data, text);
+      bubbleEl.innerHTML = `<div class="bubble restorable" data-snapshot="${sid}">
+                              <div class="explanation">${marked.parse(data.explanation || "")}</div>
+                              <div class="restore-hint">▷ Click to restore this query</div>
+                            </div>`;
+      bubbleEl.querySelector(".bubble").onclick = () => restoreSnapshot(sid);
+      scroll();
+    }
+  } catch (err) {
+    bubbleEl.remove();
+    appendError("Network error: " + err.message);
+  } finally {
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+}
+
+// Init workbench editor on load
+document.addEventListener("DOMContentLoaded", initWorkbenchEditor);
+
+function scroll() {
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+</script>
+</body>
+</html>
