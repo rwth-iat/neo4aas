@@ -5,3 +5,8 @@ aas_mapping/test/test_data/
 __pycache__/
 *.egg-info/
 .git/
+archive/
+aas_demonstrator/
+eclass/
+.env
+*.aasx
