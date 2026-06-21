@@ -88,6 +88,55 @@ def test_object_store_add_resolves_automatically(aas_client):
     assert _references_edge_count(aas_client, "urn:aas/1", "urn:sm/1") == 1
 
 
+def _concept_description(cd_id: str, id_short: str = "CD1") -> dict:
+    return {"modelType": "ConceptDescription", "id": cd_id, "idShort": id_short}
+
+
+def _submodel_with_semantic_id(sm_id: str, cd_id: str) -> dict:
+    return {
+        "modelType": "Submodel",
+        "id": sm_id,
+        "idShort": "SM1",
+        "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{"type": "GlobalReference", "value": cd_id}],
+        },
+    }
+
+
+def _external_ref_edge_count(client, src_id: str, cd_id: str) -> int:
+    clause = (
+        "MATCH (:Submodel {id: $src})-[:semanticId]->(:Reference)"
+        "-[:references]->(:ConceptDescription {id: $cd}) RETURN count(*) AS c"
+    )
+    with client.driver.session() as session:
+        return session.run(clause, src=src_id, cd=cd_id).single()["c"]
+
+
+def test_external_reference_resolves_to_identifiable(aas_client):
+    # An ExternalReference (semanticId) whose keys_value[0] equals a CD's id resolves
+    # to a :references edge to that ConceptDescription.
+    aas_client.add_identifiable(_concept_description("0173-1#02-AAH880#003"))
+    aas_client.add_identifiable(
+        _submodel_with_semantic_id("urn:sm/sem", "0173-1#02-AAH880#003")
+    )
+
+    aas_client.resolve_references()
+
+    assert _external_ref_edge_count(aas_client, "urn:sm/sem", "0173-1#02-AAH880#003") == 1
+
+
+def test_external_reference_dangles_when_target_absent(aas_client):
+    # No CD loaded -> external ref stays dangling (no edge), like a dangling ModelReference.
+    aas_client.add_identifiable(
+        _submodel_with_semantic_id("urn:sm/sem", "0173-1#02-MISSING#001")
+    )
+
+    aas_client.resolve_references()
+
+    assert _external_ref_edge_count(aas_client, "urn:sm/sem", "0173-1#02-MISSING#001") == 0
+
+
 def _resolved_target_idshort(client, keys_value: list[str]) -> list:
     clause = (
         "MATCH (r:Reference)-[:references]->(t) WHERE r.keys_value = $kv "

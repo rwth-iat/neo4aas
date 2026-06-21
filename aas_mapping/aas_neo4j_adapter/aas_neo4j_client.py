@@ -338,10 +338,22 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         keys = ("assetAdministrationShells", "submodels", "conceptDescriptions")
         return {k: (result[k] if result else 0) for k in keys}
 
-    # Shared fragments for the resolvers: a ModelReference `r` is resolvable when it has a
+    # Shared fragments for the resolvers: a Reference `r` is resolvable when it has a
     # non-empty keys_value chain; the resolvers consume (rid, kv) records.
-    _MODELREF_COND = "r.keys_value IS NOT NULL AND size(r.keys_value) > 0"
-    _MODELREF_RETURN = "RETURN elementId(r) AS rid, r.keys_value AS kv"
+    #
+    # Both reference types resolve. A ModelReference addresses an in-model Referable via its
+    # full key chain (keys_value[0] = Identifiable id, then a descent per key). An
+    # ExternalReference is a global identifier whose keys_value[0] *is* its target
+    # Identifiable's id (a semanticId / isCaseOf / unit_id pointing at a ConceptDescription),
+    # so only its first key is resolved (kv[..1]); trailing FragmentReference keys are
+    # sub-addressing we don't descend. An external target that simply isn't loaded yields no
+    # edge, exactly like a dangling ModelReference.
+    _REF_COND = "r.keys_value IS NOT NULL AND size(r.keys_value) > 0"
+    _REF_RETURN = (
+        "RETURN elementId(r) AS rid, "
+        "CASE r.type WHEN 'ExternalReference' THEN r.keys_value[..1] "
+        "ELSE r.keys_value END AS kv"
+    )
 
     def _resolve_refs(self, refs: list) -> int:
         """(Re)build the ``:references`` edge for each given reference.
@@ -385,14 +397,13 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     def resolve_references(self) -> int:
         """Rebuild every ``:references`` edge across the whole graph (idempotent).
 
-        Drops all ``:references`` edges, then resolves every ModelReference. Use after a
-        bulk import; single-object writes via :class:`Neo4jObjectStore` use the incremental
-        :meth:`resolve_references_for`. Returns the number of references resolved.
+        Drops all ``:references`` edges, then resolves every Reference (Model + External).
+        Use after a bulk import; single-object writes via :class:`Neo4jObjectStore` use the
+        incremental :meth:`resolve_references_for`. Returns the number of references resolved.
         """
         self.execute_clause("MATCH (:Reference)-[rel:references]->() DELETE rel")
         refs = self.execute_clause(
-            f"MATCH (r:Reference {{type: 'ModelReference'}}) "
-            f"WHERE {self._MODELREF_COND} {self._MODELREF_RETURN}"
+            f"MATCH (r:Reference) WHERE {self._REF_COND} {self._REF_RETURN}"
         ) or []
         return self._resolve_refs(refs)
 
@@ -411,13 +422,13 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
             "MATCH (root:Identifiable {id: $id}) "
             "CALL apoc.path.subgraphAll(root, {relationshipFilter: '>'}) YIELD nodes "
             "UNWIND nodes AS r "
-            f"WITH r WHERE r:Reference AND r.type = 'ModelReference' AND {self._MODELREF_COND} "
-            f"{self._MODELREF_RETURN}",
+            f"WITH r WHERE r:Reference AND {self._REF_COND} "
+            f"{self._REF_RETURN}",
             params={"id": identifier},
         ) or []
         targeting = self.execute_clause(
-            f"MATCH (r:Reference {{target_id: $id, type: 'ModelReference'}}) "
-            f"WHERE {self._MODELREF_COND} {self._MODELREF_RETURN}",
+            f"MATCH (r:Reference {{target_id: $id}}) "
+            f"WHERE {self._REF_COND} {self._REF_RETURN}",
             params={"id": identifier},
         ) or []
         by_rid = {rec["rid"]: rec for rec in (*in_subtree, *targeting)}
