@@ -72,15 +72,11 @@ def _client(ctx: Context) -> AASNeo4JClient:
 
 @mcp.tool()
 def count_stats(ctx: Context) -> dict[str, int]:
-    """Return graph health counts: number of Identifiable and Referable nodes.
+    """Return graph counts: AssetAdministrationShells, Submodels, ConceptDescriptions.
 
     Cheap sanity check that the graph is reachable and populated.
     """
-    client = _client(ctx)
-    return {
-        "identifiables": client.count_identifiables(),
-        "referables": client.count_referables(),
-    }
+    return _client(ctx).count_identifiables_by_type()
 
 
 @mcp.tool()

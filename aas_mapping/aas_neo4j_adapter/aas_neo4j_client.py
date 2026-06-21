@@ -289,6 +289,18 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     def count_identifiables(self) -> int:
         return self.count_nodes_with_label("Identifiable")
 
+    def count_identifiables_by_type(self) -> Dict[str, int]:
+        """Return the count of each top-level Identifiable type in one query."""
+        clause = (
+            "RETURN "
+            "COUNT { MATCH (n:AssetAdministrationShell) RETURN n } AS assetAdministrationShells, "
+            "COUNT { MATCH (n:Submodel) RETURN n } AS submodels, "
+            "COUNT { MATCH (n:ConceptDescription) RETURN n } AS conceptDescriptions"
+        )
+        result = self.execute_clause(clause, single=True)
+        keys = ("assetAdministrationShells", "submodels", "conceptDescriptions")
+        return {k: (result[k] if result else 0) for k in keys}
+
     # Shared fragments for the resolvers: a ModelReference `r` is resolvable when it has a
     # non-empty keys_value chain; the resolvers consume (rid, kv) records.
     _MODELREF_COND = "r.keys_value IS NOT NULL AND size(r.keys_value) > 0"

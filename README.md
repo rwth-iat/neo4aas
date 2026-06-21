@@ -352,7 +352,7 @@ Connection is configured via environment variables (defaults shown):
 
 | Tool | Description |
 |---|---|
-| `count_stats` | Count of Identifiable / Referable nodes (health check) |
+| `count_stats` | Count of AssetAdministrationShells / Submodels / ConceptDescriptions (health check) |
 | `get_identifiable` | Fetch an AAS / Submodel / ConceptDescription by `id` |
 | `get_referable` | Fetch a Referable by parent `id` + `idShortPath` |
 | `validate_constraints` | Run AAS spec constraint validation, returning a report |

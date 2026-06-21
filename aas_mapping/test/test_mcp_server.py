@@ -52,10 +52,17 @@ def test_call_tool_rejects_missing_required_arg():
 
 def test_count_stats_uses_client():
     client = MagicMock()
-    client.count_identifiables.return_value = 3
-    client.count_referables.return_value = 42
+    client.count_identifiables_by_type.return_value = {
+        "assetAdministrationShells": 2,
+        "submodels": 5,
+        "conceptDescriptions": 9,
+    }
     result = mcp_server.count_stats(_fake_ctx(client))
-    assert result == {"identifiables": 3, "referables": 42}
+    assert result == {
+        "assetAdministrationShells": 2,
+        "submodels": 5,
+        "conceptDescriptions": 9,
+    }
 
 
 def test_get_identifiable_not_found_raises_clean_error():
@@ -260,7 +267,25 @@ _EXAMPLE_SUBMODEL = os.path.join(
 @pytest.mark.integration
 def test_count_stats_integration(aas_client):
     result = mcp_server.count_stats(_fake_ctx(aas_client))
-    assert result == {"identifiables": 0, "referables": 0}
+    assert result == {
+        "assetAdministrationShells": 0,
+        "submodels": 0,
+        "conceptDescriptions": 0,
+    }
+
+
+@pytest.mark.integration
+def test_count_stats_populated_integration(aas_client):
+    import json as _json
+    env_path = os.path.join(_EXAMPLE_SUBMODEL, "IDTA 02002-1-0_Template_ContactInformation.json")
+    with open(env_path, encoding="utf-8") as f:
+        env = _json.load(f)
+    aas_client.upload_json(env)
+
+    result = mcp_server.count_stats(_fake_ctx(aas_client))
+    assert result["submodels"] == len(env.get("submodels", []))
+    assert result["assetAdministrationShells"] == len(env.get("assetAdministrationShells", []))
+    assert result["conceptDescriptions"] == len(env.get("conceptDescriptions", []))
 
 
 @pytest.mark.integration
