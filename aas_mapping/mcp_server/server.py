@@ -90,8 +90,18 @@ def get_identifiable(identifier: str, ctx: Context) -> dict[str, Any]:
 
     Args:
         identifier: The global `id` of the Identifiable (e.g. a URI/IRI).
+
+    Raises:
+        ValueError: if no Identifiable with that `id` exists in the graph.
     """
-    return _client(ctx).get_identifiable(identifier)
+    try:
+        return _client(ctx).get_identifiable(identifier)
+    except KeyError:
+        raise ValueError(
+            f"No Identifiable found with id '{identifier}'. "
+            "Use count_stats to check the graph is populated, or "
+            "list_submodel_types to browse what is loaded."
+        )
 
 
 @mcp.tool()
@@ -107,8 +117,18 @@ def get_referable(
         id_short_path: Dot/bracket path to the nested element, e.g.
             "MyCollection.MyList[0].MyProperty". Omit to fetch the Identifiable
             itself (same as get_identifiable).
+
+    Raises:
+        ValueError: if no Referable exists at the given id / idShort path.
     """
-    return _client(ctx).get_referable(parent_id, id_short_path)
+    try:
+        return _client(ctx).get_referable(parent_id, id_short_path)
+    except KeyError:
+        target = parent_id if not id_short_path else f"{parent_id} -> {id_short_path}"
+        raise ValueError(
+            f"No Referable found at '{target}'. Check the parent id and the "
+            "idShort path (dot/bracket syntax, e.g. 'Coll.List[0].Prop')."
+        )
 
 
 @mcp.tool()

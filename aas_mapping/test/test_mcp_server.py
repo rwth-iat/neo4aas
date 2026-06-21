@@ -57,6 +57,20 @@ def test_count_stats_uses_client():
     assert result == {"identifiables": 3, "referables": 42}
 
 
+def test_get_identifiable_not_found_raises_clean_error():
+    client = MagicMock()
+    client.get_identifiable.side_effect = KeyError("No Referable found with: id=missing")
+    with pytest.raises(ValueError, match="No Identifiable found with id 'missing'"):
+        mcp_server.get_identifiable("missing", _fake_ctx(client))
+
+
+def test_get_referable_not_found_raises_clean_error():
+    client = MagicMock()
+    client.get_referable.side_effect = KeyError("No Referable found")
+    with pytest.raises(ValueError, match=r"No Referable found at 'urn:sm -> Bad\.Path'"):
+        mcp_server.get_referable("urn:sm", _fake_ctx(client), id_short_path="Bad.Path")
+
+
 def test_get_referable_delegates():
     client = MagicMock()
     client.get_referable.return_value = {"idShort": "Color"}
@@ -190,6 +204,12 @@ def test_validate_constraints_empty_graph(aas_client):
     assert result["compliant"] is True
     assert result["violations"] == []
     assert len(result["checked_constraints"]) > 0
+
+
+@pytest.mark.integration
+def test_get_identifiable_missing_integration(aas_client):
+    with pytest.raises(ValueError, match="No Identifiable found"):
+        mcp_server.get_identifiable("urn:does-not-exist", _fake_ctx(aas_client))
 
 
 @pytest.mark.integration
