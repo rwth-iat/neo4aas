@@ -118,8 +118,9 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         nodes = []
         relationships = {}
 
-        # Repair non-conformant data (e.g. BCP 47 language tags) before it is stored.
-        apply_fixers(json_data)
+        # Opt-in: repair non-conformant data (e.g. BCP 47 language tags) before storing.
+        if self.fix_on_import:
+            apply_fixers(json_data)
 
         for key, label in IDENTIFIABLE_KEYS.items():
             try:
@@ -162,8 +163,9 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     def add_identifiable(self, obj: Dict):
         if self.identifiable_exists(obj['id']):
             raise KeyError(f"Identifiable with id {obj['id']} already exists in the database.")
-        # Repair non-conformant data (e.g. BCP 47 language tags) before it is stored.
-        apply_fixers(obj)
+        # Opt-in: repair non-conformant data (e.g. BCP 47 language tags) before storing.
+        if self.fix_on_import:
+            apply_fixers(obj)
         nodes, relationships = self._process_dict(obj)
         return self._upload_nodes_and_relationships(nodes, relationships)
 

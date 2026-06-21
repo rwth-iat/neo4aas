@@ -14,7 +14,13 @@ from aas_mapping.aas_neo4j_adapter.neo_aas_object_store import Neo4jObjectStore
 
 
 def build_neo4j_object_store(uri: str, user: str, password: str) -> Neo4jObjectStore:
-    client = AASNeo4JClient(uri=uri, user=user, password=password, model_config=AAS_NEO4J_MODEL_CONFIG)
+    # Repair non-conformant imported data (e.g. BCP 47 language tags) by default; set
+    # FIX_ON_IMPORT=false to disable.
+    fix_on_import = os.getenv("FIX_ON_IMPORT", "true").lower() not in ("0", "false", "no")
+    client = AASNeo4JClient(
+        uri=uri, user=user, password=password,
+        model_config=AAS_NEO4J_MODEL_CONFIG, fix_on_import=fix_on_import,
+    )
     return Neo4jObjectStore(client=client)
 
 

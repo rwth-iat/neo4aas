@@ -71,6 +71,7 @@ def test_default_fixers_includes_language_fixer():
 
 @pytest.mark.integration
 def test_language_tag_fixed_on_import(aas_client):
+    aas_client.fix_on_import = True  # opt in
     env = {
         "assetAdministrationShells": [],
         "submodels": [
@@ -97,3 +98,33 @@ def test_language_tag_fixed_on_import(aas_client):
     langs = [l for r in rows for l in (r["langs"] or [])]
     assert "en-US" in langs
     assert "en_US" not in langs
+
+
+@pytest.mark.integration
+def test_fixers_off_by_default(aas_client):
+    assert aas_client.fix_on_import is False  # opt-in: off unless requested
+    env = {
+        "assetAdministrationShells": [],
+        "submodels": [
+            {
+                "modelType": "Submodel",
+                "id": "urn:sm/nofix",
+                "idShort": "NoFix",
+                "submodelElements": [
+                    {
+                        "modelType": "MultiLanguageProperty",
+                        "idShort": "Name",
+                        "value": [{"language": "en_US", "text": "Hello"}],
+                    }
+                ],
+            }
+        ],
+        "conceptDescriptions": [],
+    }
+    aas_client.upload_json(env)
+
+    rows = aas_client.execute_clause(
+        "MATCH (n:MultiLanguageProperty {idShort:'Name'}) RETURN n.value_language AS langs"
+    )
+    langs = [l for r in rows for l in (r["langs"] or [])]
+    assert "en_US" in langs  # untouched when fixing is off

@@ -41,9 +41,13 @@ class BaseNeo4JClient:
     driver: Driver
     model_config: Neo4jModelConfig
 
-    def __init__(self, uri: str, user: str , password: Optional[str] = None, model_config: Neo4jModelConfig = None):
+    def __init__(self, uri: str, user: str , password: Optional[str] = None, model_config: Neo4jModelConfig = None,
+                 fix_on_import: bool = False):
         self.driver = neo4j.GraphDatabase.driver(uri, auth=(user, password)) if uri else None
         self.model_config = model_config or EMPTY_NEO4J_MODEL_CONFIG
+        # Opt-in: when True, registered fixers (fixers.py) repair imported AAS data
+        # (e.g. BCP 47 language tags) before it is stored. Off by default.
+        self.fix_on_import = fix_on_import
         # Ensure schema (indexes/constraints) exists for every client. Idempotent: the
         # clauses use IF NOT EXISTS / are guarded in optimize_database, so this is a cheap
         # no-op once the schema is present.
