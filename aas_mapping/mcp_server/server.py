@@ -125,9 +125,20 @@ def _validate_aasql(query: Any) -> None:
         raise ValueError("AASQL query must contain a top-level '$condition' key.")
 
 
+def _compile_aasql(query: dict[str, Any]) -> str:
+    """Compile an AASQL query (JSON object) to a Cypher string.
+
+    Calls parse + convert directly: convert_aasql_to_cypher() prints to stdout,
+    which would corrupt the stdio MCP protocol channel.
+    """
+    _validate_aasql(query)
+    ast = parse_aasql_query(query)
+    return converter(ast)
+
+
 @mcp.tool()
-def compile_aasql(query: dict[str, Any]) -> str:
-    """Compile an AASQL query (JSON object) to a Cypher string WITHOUT executing it.
+def query_aasql(query: dict[str, Any], ctx: Context) -> dict[str, Any]:
+    """Compile an AASQL query (JSON object) to Cypher and execute it against Neo4j.
 
     AASQL roots: $aas, $sm, $cd, $sme.<idShort>.
     Field syntax: {"$field": "$<root>#<attribute>[.<nested>]"}.
@@ -138,22 +149,10 @@ def compile_aasql(query: dict[str, Any]) -> str:
     Example query:
         {"$condition": {"$eq": [{"$field": "$aas#idShort"},
                                  {"$strVal": "MyShell"}]}}
+
+    Returns the generated Cypher plus the result rows.
     """
-    # Call parse + convert directly: convert_aasql_to_cypher() prints to stdout,
-    # which would corrupt the stdio MCP protocol channel.
-    _validate_aasql(query)
-    ast = parse_aasql_query(query)
-    return converter(ast)
-
-
-@mcp.tool()
-def query_aasql(query: dict[str, Any], ctx: Context) -> dict[str, Any]:
-    """Compile an AASQL query (JSON object) to Cypher and execute it against Neo4j.
-
-    Returns the generated Cypher plus the result rows. See compile_aasql for the
-    AASQL syntax reference.
-    """
-    cypher = compile_aasql(query)
+    cypher = _compile_aasql(query)
     rows = _client(ctx).execute_clause(cypher) or []
     results = [AASNeo4JClient._strip_internal_keys(row.data()) for row in rows]
     return {"cypher": cypher, "count": len(results), "results": results}
@@ -190,62 +189,12 @@ def validate_constraints(
     }
 
 
-_LIST_SUBMODELS_CYPHER = """
-MATCH (sm:Submodel)
-OPTIONAL MATCH (sm)-[:semanticId]->(sem:Reference)
-RETURN sm.id AS id, sm.idShort AS idShort, sm.kind AS kind,
-       sem.keys_value[0] AS semanticId
-ORDER BY sm.idShort
-SKIP $skip LIMIT $limit
-""".strip()
-
-_LIST_SUBMODELS_COUNT_CYPHER = "MATCH (sm:Submodel) RETURN COUNT(sm) AS total"
-
 _LIST_SUBMODEL_TYPES_CYPHER = """
 MATCH (sm:Submodel)
 OPTIONAL MATCH (sm)-[:semanticId]->(sem:Reference)
 RETURN sm.idShort AS idShort, sem.keys_value[0] AS semanticId, COUNT(sm) AS count
 ORDER BY count DESC, idShort
 """.strip()
-
-_DEFAULT_LIMIT = 100
-
-
-@mcp.tool()
-def list_submodels(
-    ctx: Context,
-    limit: int = _DEFAULT_LIMIT,
-    offset: int = 0,
-) -> dict[str, Any]:
-    """List Submodels in the graph with their id, idShort, kind, and semanticId.
-
-    Returns a paginated list — use offset to page through large graphs.
-
-    Args:
-        limit: Maximum number of submodels to return (default 100).
-        offset: Number of submodels to skip (default 0).
-    """
-    client = _client(ctx)
-    total_row = client.execute_clause(_LIST_SUBMODELS_COUNT_CYPHER, single=True)
-    total = total_row["total"] if total_row else 0
-    rows = client.execute_clause(
-        _LIST_SUBMODELS_CYPHER, params={"skip": offset, "limit": limit}
-    ) or []
-    submodels = [
-        {
-            "id": row["id"],
-            "idShort": row["idShort"],
-            "kind": row["kind"],
-            "semanticId": row["semanticId"],
-        }
-        for row in rows
-    ]
-    return {
-        "total": total,
-        "offset": offset,
-        "limit": limit,
-        "submodels": submodels,
-    }
 
 
 @mcp.tool()
@@ -303,7 +252,7 @@ def abstract_submodel(
     if not instances:
         raise ValueError(
             f"No Submodels found for type '{submodel_type}'. "
-            "Use list_submodels to browse available types."
+            "Use list_submodel_types to browse available types."
         )
 
     abstract = build_abstract_submodel(instances)

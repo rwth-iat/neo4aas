@@ -355,25 +355,12 @@ Connection is configured via environment variables (defaults shown):
 | `count_stats` | Count of Identifiable / Referable nodes (health check) |
 | `get_identifiable` | Fetch an AAS / Submodel / ConceptDescription by `id` |
 | `get_referable` | Fetch a Referable by parent `id` + `idShortPath` |
-| `compile_aasql` | Compile an AASQL query to Cypher (no execution) |
 | `query_aasql` | Compile an AASQL query and execute it, returning rows |
 | `validate_constraints` | Run AAS spec constraint validation, returning a report |
-| `list_submodels` | Paginated list of all Submodels with id, idShort, kind, semanticId |
 | `list_submodel_types` | Distinct Submodel types (idShort + semanticId) with instance count each |
 | `abstract_submodel` | Build a Template-kind structural union from all Submodels of a given type |
 
 All tools are read-only; none mutate the graph.
-
-#### `list_submodels` — pagination
-
-Large graphs can have hundreds of thousands of Submodels. Use `limit` and `offset` to page:
-
-```
-list_submodels(limit=50, offset=0)   # first 50
-list_submodels(limit=50, offset=50)  # next 50
-```
-
-The response includes `total` (full count), `limit`, `offset`, and `submodels`.
 
 #### `abstract_submodel` — type matching and output format
 

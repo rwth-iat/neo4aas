@@ -34,10 +34,8 @@ def test_expected_tools_registered():
         "count_stats",
         "get_identifiable",
         "get_referable",
-        "compile_aasql",
         "query_aasql",
         "validate_constraints",
-        "list_submodels",
         "list_submodel_types",
         "abstract_submodel",
     }
@@ -49,7 +47,7 @@ def test_compile_aasql_returns_cypher():
             "$eq": [{"$field": "$aas#idShort"}, {"$strVal": "MyShell"}]
         }
     }
-    cypher = mcp_server.compile_aasql(query)
+    cypher = mcp_server._compile_aasql(query)
     assert isinstance(cypher, str)
     assert "AssetAdministrationShell" in cypher
     assert "MyShell" in cypher
@@ -66,7 +64,7 @@ def test_compile_aasql_returns_cypher():
 )
 def test_compile_aasql_rejects_invalid_query(bad_query, expected):
     with pytest.raises(ValueError, match=expected):
-        mcp_server.compile_aasql(bad_query)
+        mcp_server._compile_aasql(bad_query)
 
 
 # --- schema-validation path exercised through FastMCP (pydantic + guard) ---
@@ -84,10 +82,11 @@ def test_call_tool_rejects_wrong_arg_type():
         anyio.run(mcp_server.mcp.call_tool, "query_aasql", {"query": "not-a-dict"})
 
 
-def test_call_tool_compile_aasql_missing_condition():
-    # Passes pydantic (is a dict) but fails the structural guard.
+def test_call_tool_query_aasql_missing_condition():
+    # Passes pydantic (is a dict) but fails the structural guard during compile,
+    # before the client is ever touched.
     with pytest.raises(ToolError, match="condition"):
-        anyio.run(mcp_server.mcp.call_tool, "compile_aasql", {"query": {"foo": "bar"}})
+        anyio.run(mcp_server.mcp.call_tool, "query_aasql", {"query": {"foo": "bar"}})
 
 
 def test_count_stats_uses_client():
@@ -129,35 +128,6 @@ def _mock_row(data: dict):
     row = MagicMock()
     row.__getitem__ = lambda self, key: data[key]
     return row
-
-
-def test_list_submodels_returns_shape():
-    client = MagicMock()
-    count_row = MagicMock()
-    count_row.__getitem__ = lambda self, key: 2 if key == "total" else None
-    client.execute_clause.side_effect = [
-        count_row,  # COUNT query (single=True)
-        [  # paginated rows
-            _mock_row({"id": "urn:sm1", "idShort": "Nameplate", "kind": "Instance", "semanticId": "urn:sem1"}),
-            _mock_row({"id": "urn:sm2", "idShort": "Nameplate", "kind": "Instance", "semanticId": "urn:sem1"}),
-        ],
-    ]
-    result = mcp_server.list_submodels(_fake_ctx(client))
-    assert result["total"] == 2
-    assert result["submodels"][0]["id"] == "urn:sm1"
-    assert result["submodels"][0]["idShort"] == "Nameplate"
-    assert result["offset"] == 0
-    assert result["limit"] == 100
-
-
-def test_list_submodels_empty_graph():
-    client = MagicMock()
-    count_row = MagicMock()
-    count_row.__getitem__ = lambda self, key: 0 if key == "total" else None
-    client.execute_clause.side_effect = [count_row, []]
-    result = mcp_server.list_submodels(_fake_ctx(client))
-    assert result["total"] == 0
-    assert result["submodels"] == []
 
 
 def test_list_submodel_types_returns_shape():
@@ -279,13 +249,6 @@ def test_validate_constraints_empty_graph(aas_client):
     assert result["compliant"] is True
     assert result["violations"] == []
     assert len(result["checked_constraints"]) > 0
-
-
-@pytest.mark.integration
-def test_list_submodels_integration(aas_client):
-    result = mcp_server.list_submodels(_fake_ctx(aas_client))
-    assert result["total"] == 0
-    assert result["submodels"] == []
 
 
 @pytest.mark.integration
