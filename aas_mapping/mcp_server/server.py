@@ -26,8 +26,7 @@ from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import (
     AAS_NEO4J_MODEL_CONFIG,
     AASNeo4JClient,
 )
-from aas_mapping.aas_neo4j_adapter.validation import AASConstraintChecker
-from aas_mapping.mcp_server.abstract import build_abstract_submodel
+from aas_mapping.aas_neo4j_adapter import agent_tools
 from aas_mapping.mcp_server.config import Neo4jConnectionConfig
 
 logger = logging.getLogger(__name__)
@@ -70,13 +69,17 @@ def _client(ctx: Context) -> AASNeo4JClient:
 # ---------------------------------------------------------------------------
 
 
+# Tools are thin wrappers over the shared, transport-agnostic agent_tools functions,
+# so the MCP server and the chatbot agent expose the same behaviour.
+
+
 @mcp.tool()
 def count_stats(ctx: Context) -> dict[str, int]:
     """Return graph counts: AssetAdministrationShells, Submodels, ConceptDescriptions.
 
     Cheap sanity check that the graph is reachable and populated.
     """
-    return _client(ctx).count_identifiables_by_type()
+    return agent_tools.count_stats(_client(ctx))
 
 
 @mcp.tool()
@@ -90,14 +93,7 @@ def get_identifiable(identifier: str, ctx: Context) -> dict[str, Any]:
     Raises:
         ValueError: if no Identifiable with that `id` exists in the graph.
     """
-    try:
-        return _client(ctx).get_identifiable(identifier)
-    except KeyError:
-        raise ValueError(
-            f"No Identifiable found with id '{identifier}'. "
-            "Use count_stats to check the graph is populated, or "
-            "list_submodel_types to browse what is loaded."
-        )
+    return agent_tools.get_identifiable(_client(ctx), identifier)
 
 
 @mcp.tool()
@@ -117,14 +113,7 @@ def get_referable(
     Raises:
         ValueError: if no Referable exists at the given id / idShort path.
     """
-    try:
-        return _client(ctx).get_referable(parent_id, id_short_path)
-    except KeyError:
-        target = parent_id if not id_short_path else f"{parent_id} -> {id_short_path}"
-        raise ValueError(
-            f"No Referable found at '{target}'. Check the parent id and the "
-            "idShort path (dot/bracket syntax, e.g. 'Coll.List[0].Prop')."
-        )
+    return agent_tools.get_referable(_client(ctx), parent_id, id_short_path)
 
 
 @mcp.tool()
@@ -141,21 +130,7 @@ def validate_constraints(
     Returns a compliance flag, a human-readable summary, the list of checked
     constraints, and structured violation records.
     """
-    checker = AASConstraintChecker(_client(ctx))
-    report = checker.check(constraint_ids) if constraint_ids else checker.check_all()
-    return {
-        "compliant": report.is_compliant(),
-        "summary": report.summary(),
-        "checked_constraints": report.checked_constraints,
-        "violations": [
-            {
-                "constraint_id": v.constraint_id,
-                "description": v.description,
-                "details": v.details,
-            }
-            for v in report.violations
-        ],
-    }
+    return agent_tools.validate_constraints(_client(ctx), constraint_ids)
 
 
 @mcp.tool()
@@ -165,22 +140,7 @@ def list_submodel_types(ctx: Context) -> dict[str, Any]:
     Groups by idShort and semanticId, sorted by count descending. Useful to
     discover which types exist before calling abstract_submodel.
     """
-    cypher = """
-    MATCH (sm:Submodel)
-    OPTIONAL MATCH (sm)-[:semanticId]->(sem:Reference)
-    RETURN sm.idShort AS idShort, sem.keys_value[0] AS semanticId, COUNT(sm) AS count
-    ORDER BY count DESC, idShort
-    """.strip()
-    rows = _client(ctx).execute_clause(cypher) or []
-    types = [
-        {
-            "idShort": row["idShort"],
-            "semanticId": row["semanticId"],
-            "count": row["count"],
-        }
-        for row in rows
-    ]
-    return {"total_types": len(types), "types": types}
+    return agent_tools.list_submodel_types(_client(ctx))
 
 
 @mcp.tool()
@@ -193,15 +153,7 @@ def list_submodel_types_by_semantic_id(ctx: Context) -> dict[str, Any]:
     when feeding abstract_submodel. Submodels without a semanticId are grouped under
     a null semanticId.
     """
-    cypher = """
-    MATCH (sm:Submodel)
-    OPTIONAL MATCH (sm)-[:semanticId]->(sem:Reference)
-    RETURN sem.keys_value[0] AS semanticId, COUNT(sm) AS count
-    ORDER BY count DESC, semanticId
-    """.strip()
-    rows = _client(ctx).execute_clause(cypher) or []
-    types = [{"semanticId": row["semanticId"], "count": row["count"]} for row in rows]
-    return {"total_types": len(types), "types": types}
+    return agent_tools.list_submodel_types_by_semantic_id(_client(ctx))
 
 
 @mcp.tool()
@@ -227,36 +179,28 @@ def abstract_submodel(
     Raises:
         ValueError: if no Submodels of the given type are found.
     """
-    client = _client(ctx)
+    return agent_tools.abstract_submodel(_client(ctx), submodel_type, output_format)
 
-    # semanticId is the real type discriminator; fall back to idShort if it matches
-    # nothing, instead of guessing from the string shape.
-    instances = client.get_submodels_by_type(submodel_type, by_semantic_id=True)
-    if not instances:
-        instances = client.get_submodels_by_type(submodel_type, by_semantic_id=False)
 
-    if not instances:
-        raise ValueError(
-            f"No Submodels found for type '{submodel_type}'. "
-            "Use list_submodel_types to browse available types."
-        )
+@mcp.tool()
+def cypher_read(cypher: str, ctx: Context) -> dict[str, Any]:
+    """Run a READ-ONLY Cypher query against the Neo4j (neo4aas) backend.
 
-    abstract = build_abstract_submodel(instances)
+    For aggregate/graph questions the other tools don't cover: counts, distinct
+    semanticIds, traversals, ECLASS/IRDI discovery. Useful labels: Identifiable,
+    AssetAdministrationShell, Submodel, ConceptDescription, Referable,
+    SubmodelElement, Property, MultiLanguageProperty, Reference. Relationships:
+    :submodels, :submodelElements, :value, :semanticId, :references. Reference nodes
+    carry keys_value[], target_id, target_id_base (IRDI without version). Always
+    RETURN explicit columns; writes are rejected.
 
-    if output_format == "yaml":
-        import yaml  # lazy import — optional dep
+    Args:
+        cypher: A read-only Cypher query.
 
-        return {
-            "instance_count": len(instances),
-            "submodel_type": submodel_type,
-            "yaml": yaml.dump(abstract, allow_unicode=True, sort_keys=False),
-        }
-
-    return {
-        "instance_count": len(instances),
-        "submodel_type": submodel_type,
-        "abstract_submodel": abstract,
-    }
+    Raises:
+        ValueError: if the query contains write operations.
+    """
+    return agent_tools.cypher_read(_client(ctx), cypher)
 
 
 def main() -> None:

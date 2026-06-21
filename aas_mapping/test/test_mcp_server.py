@@ -13,7 +13,7 @@ import pytest
 from mcp.server.fastmcp.exceptions import ToolError
 
 from aas_mapping.mcp_server import server as mcp_server
-from aas_mapping.mcp_server.abstract import build_abstract_submodel
+from aas_mapping.aas_neo4j_adapter.abstract import build_abstract_submodel
 
 
 def _fake_ctx(client):
@@ -39,6 +39,7 @@ def test_expected_tools_registered():
         "list_submodel_types",
         "list_submodel_types_by_semantic_id",
         "abstract_submodel",
+        "cypher_read",
     }
 
 
@@ -103,6 +104,12 @@ def test_list_submodel_types_returns_shape():
     result = mcp_server.list_submodel_types(_fake_ctx(client))
     assert result["total_types"] == 2
     assert result["types"][0] == {"idShort": "Nameplate", "semanticId": "urn:sem1", "count": 42}
+
+
+def test_cypher_read_rejects_writes():
+    client = MagicMock()
+    with pytest.raises(ValueError, match="read-only"):
+        mcp_server.cypher_read("MATCH (n) DETACH DELETE n", _fake_ctx(client))
 
 
 def test_list_submodel_types_by_semantic_id_returns_shape():

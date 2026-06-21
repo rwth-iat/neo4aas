@@ -42,7 +42,7 @@ class BaseNeo4JClient:
     model_config: Neo4jModelConfig
 
     def __init__(self, uri: str, user: str , password: Optional[str] = None, model_config: Neo4jModelConfig = None,
-                 fix_on_import: bool = False):
+                 fix_on_import: bool = False, auto_optimize: bool = True):
         self.driver = neo4j.GraphDatabase.driver(uri, auth=(user, password)) if uri else None
         self.model_config = model_config or EMPTY_NEO4J_MODEL_CONFIG
         # Opt-in: when True, registered fixers (fixers.py) repair imported AAS data
@@ -50,8 +50,9 @@ class BaseNeo4JClient:
         self.fix_on_import = fix_on_import
         # Ensure schema (indexes/constraints) exists for every client. Idempotent: the
         # clauses use IF NOT EXISTS / are guarded in optimize_database, so this is a cheap
-        # no-op once the schema is present.
-        if self.driver is not None:
+        # no-op once the schema is present. Read-only consumers (e.g. the chatbot) can pass
+        # auto_optimize=False to avoid writing schema on connect.
+        if self.driver is not None and auto_optimize:
             self.optimize_database()
 
     def execute_clause(self, clause: CypherClause, single: bool = False, params: dict | None = None):
