@@ -28,11 +28,54 @@ def aasql_v32_validator():
 
 @pytest.fixture(scope="session")
 def neo4j_params():
-    return {
-        "uri": os.environ.get("NEO4J_URI", "bolt://localhost:7687"),
-        "user": os.environ.get("NEO4J_USER", "neo4j"),
-        "password": os.environ.get("NEO4J_PASSWORD", "12345678"),
-    }
+    """Neo4j connection parameters for integration tests.
+
+    By default a fresh, disposable Neo4j container is started for the test
+    session (via testcontainers) and torn down afterwards — so integration
+    tests never touch a real database, and the destructive ``aas_client``
+    fixture can only ever wipe the throwaway container.
+
+    To run against an already-running Neo4j instead, set ``NEO4J_URI`` (and
+    optionally ``NEO4J_USER`` / ``NEO4J_PASSWORD``). WARNING: the ``aas_client``
+    fixture wipes that database — never point it at data you want to keep.
+    """
+    # Explicit override: use the provided instance, start no container.
+    if os.environ.get("NEO4J_URI"):
+        yield {
+            "uri": os.environ["NEO4J_URI"],
+            "user": os.environ.get("NEO4J_USER", "neo4j"),
+            "password": os.environ.get("NEO4J_PASSWORD", "12345678"),
+        }
+        return
+
+    # Default: spin up a disposable container for the whole session.
+    try:
+        from testcontainers.neo4j import Neo4jContainer
+    except ImportError:
+        pytest.skip(
+            "testcontainers not installed and NEO4J_URI not set; "
+            "run `pip install \".[test]\"` or set NEO4J_URI to a throwaway DB."
+        )
+
+    container = (
+        Neo4jContainer("neo4j:5", password="12345678")
+        .with_env("NEO4J_PLUGINS", '["apoc"]')
+        .with_env("NEO4J_server_memory_heap_max__size", "1G")
+        .with_env("NEO4J_server_memory_pagecache_size", "512m")
+    )
+    try:
+        container.start()
+    except Exception as exc:  # Docker unavailable, image pull failure, ...
+        pytest.skip(f"Could not start disposable Neo4j container: {exc}")
+
+    try:
+        yield {
+            "uri": container.get_connection_url(),
+            "user": container.username,
+            "password": container.password,
+        }
+    finally:
+        container.stop()
 
 
 @pytest.fixture(scope="session")

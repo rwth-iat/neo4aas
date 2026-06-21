@@ -22,6 +22,12 @@ aas_mapping/
 │       ├── ast_nodes.py         # AST node type definitions
 │       ├── ast_to_cypher.py     # AST → Cypher (compiler)
 │       └── aasql_to_cypher.py   # Entry point: convert_aasql_to_cypher()
+├── mcp_server/
+│   ├── server.py                # MCP tool definitions (FastMCP)
+│   ├── abstract.py              # Template-submodel merge logic
+│   ├── config.py                # Neo4j connection config (from env)
+│   ├── __init__.py
+│   └── __main__.py              # CLI entry point
 ├── examples/
 │   ├── queries/                 # Example AASQL queries (JSON)
 │   ├── ast/                     # Expected AST representations
@@ -30,7 +36,8 @@ aas_mapping/
 └── test/
     ├── test_aasql2ast.py        # Unit tests for AASQL → AST parsing
     ├── test_roundtrip.py        # Integration: JSON and XML ↔ Neo4j round-trip tests
-    └── test_constraint_checker.py  # Unit + integration tests for AASConstraintChecker
+    ├── test_constraint_checker.py  # Unit + integration tests for AASConstraintChecker
+    └── test_mcp_server.py       # Unit + integration tests for MCP server
 ```
 
 ---
@@ -314,6 +321,89 @@ print(report.summary())
 | AASd-131 | `AssetInformation` must have `globalAssetId` or at least one `specificAssetId` |
 | AASd-133 | `SpecificAssetId.externalSubjectId` must be an `ExternalReference` |
 | AASd-134 | Operation variable `idShort`s must be unique across in/out/inout |
+
+---
+
+## MCP Server
+
+A read-only [Model Context Protocol](https://modelcontextprotocol.io/) server exposes the Neo4j-backed graph to MCP clients (Claude Desktop, Claude Code, ...), so the data can be read, queried and validated in natural language.
+
+### Install
+
+```bash
+pip install ".[mcp]"
+```
+
+### Run
+
+```bash
+python -m aas_mapping.mcp_server      # or: aas4graph-mcp
+```
+
+Connection is configured via environment variables (defaults shown):
+
+| Variable | Default |
+|---|---|
+| `NEO4J_URI` | `bolt://localhost:7687` |
+| `NEO4J_USER` | `neo4j` |
+| `NEO4J_PASSWORD` | `12345678` |
+
+### Tools
+
+| Tool | Description |
+|---|---|
+| `count_stats` | Count of Identifiable / Referable nodes (health check) |
+| `get_identifiable` | Fetch an AAS / Submodel / ConceptDescription by `id` |
+| `get_referable` | Fetch a Referable by parent `id` + `idShortPath` |
+| `compile_aasql` | Compile an AASQL query to Cypher (no execution) |
+| `query_aasql` | Compile an AASQL query and execute it, returning rows |
+| `validate_constraints` | Run AAS spec constraint validation, returning a report |
+| `list_submodels` | Paginated list of all Submodels with id, idShort, kind, semanticId |
+| `list_submodel_types` | Distinct Submodel types (idShort + semanticId) with instance count each |
+| `abstract_submodel` | Build a Template-kind structural union from all Submodels of a given type |
+
+All tools are read-only; none mutate the graph.
+
+#### `list_submodels` — pagination
+
+Large graphs can have hundreds of thousands of Submodels. Use `limit` and `offset` to page:
+
+```
+list_submodels(limit=50, offset=0)   # first 50
+list_submodels(limit=50, offset=50)  # next 50
+```
+
+The response includes `total` (full count), `limit`, `offset`, and `submodels`.
+
+#### `abstract_submodel` — type matching and output format
+
+`submodel_type` is matched against `idShort` by default. If the value contains `://` or starts with `urn:`, it is matched against the Submodel's `semanticId` instead:
+
+```
+abstract_submodel("DigitalNameplate")
+abstract_submodel("https://admin-shell.io/zvei/nameplate/2/0/Nameplate")
+abstract_submodel("DigitalNameplate", output_format="yaml")
+```
+
+### Claude Desktop config
+
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "aas4graph": {
+      "command": "python",
+      "args": ["-m", "aas_mapping.mcp_server"],
+      "env": {
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USER": "neo4j",
+        "NEO4J_PASSWORD": "12345678"
+      }
+    }
+  }
+}
+```
 
 ---
 

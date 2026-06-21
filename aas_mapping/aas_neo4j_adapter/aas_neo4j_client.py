@@ -239,6 +239,40 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     def get_identifiable(self, identifier: str) -> Dict:
         return self.get_referable(identifier)
 
+    def get_identifiables_by_type(
+        self,
+        submodel_type: str,
+        by_semantic_id: bool = False,
+    ) -> list[Dict]:
+        """Fetch all Submodels of a given type in a single Neo4j query.
+
+        Uses one session and one APOC call per matched submodel (batched via
+        Cypher iteration) instead of N separate round-trips.
+        """
+        if by_semantic_id:
+            match_clause = (
+                "MATCH (sm:Submodel)-[:semanticId]->(sem:Reference) "
+                "WHERE sem.keys_value[0] = $type "
+            )
+        else:
+            match_clause = "MATCH (sm:Submodel {idShort: $type}) "
+
+        cypher = (
+            match_clause
+            + "CALL apoc.path.subgraphAll(sm, {relationshipFilter: '>'}) YIELD nodes, relationships "
+            "WITH sm, nodes "
+            "OPTIONAL MATCH (a)-[r]->(b) WHERE a IN nodes AND b IN nodes "
+            "WITH sm, nodes, collect(r) AS allRels "
+            "RETURN apoc.convert.toJson({nodes: nodes, relationships: allRels}) AS json"
+        )
+        rows = self.execute_clause(cypher, params={"type": submodel_type}) or []
+        return [
+            self._strip_internal_keys(
+                self.convert_subgraph_to_data_dict(json.loads(row["json"]))
+            )
+            for row in rows
+        ]
+
     def count_nodes_with_label(self, label: str) -> int:
         """Count the number of nodes with a specific label."""
         clause = f"MATCH (n:{label}) RETURN COUNT(n) AS count"
