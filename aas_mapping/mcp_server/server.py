@@ -26,8 +26,6 @@ from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import (
     AAS_NEO4J_MODEL_CONFIG,
     AASNeo4JClient,
 )
-from aas_mapping.aas_neo4j_adapter.querification.aasql_to_ast import parse_aasql_query
-from aas_mapping.aas_neo4j_adapter.querification.ast_to_cypher import converter
 from aas_mapping.aas_neo4j_adapter.validation import AASConstraintChecker
 from aas_mapping.mcp_server.abstract import build_abstract_submodel
 from aas_mapping.mcp_server.config import Neo4jConnectionConfig
@@ -111,51 +109,6 @@ def get_referable(
             itself (same as get_identifiable).
     """
     return _client(ctx).get_referable(parent_id, id_short_path)
-
-
-def _validate_aasql(query: Any) -> None:
-    """Cheap structural check so callers get a clear error instead of a cryptic
-    parser exception (KeyError / TypeError). Deep validation is left to the parser.
-    """
-    if not isinstance(query, dict):
-        raise ValueError(
-            f"AASQL query must be a JSON object, got {type(query).__name__}."
-        )
-    if "$condition" not in query:
-        raise ValueError("AASQL query must contain a top-level '$condition' key.")
-
-
-def _compile_aasql(query: dict[str, Any]) -> str:
-    """Compile an AASQL query (JSON object) to a Cypher string.
-
-    Calls parse + convert directly: convert_aasql_to_cypher() prints to stdout,
-    which would corrupt the stdio MCP protocol channel.
-    """
-    _validate_aasql(query)
-    ast = parse_aasql_query(query)
-    return converter(ast)
-
-
-@mcp.tool()
-def query_aasql(query: dict[str, Any], ctx: Context) -> dict[str, Any]:
-    """Compile an AASQL query (JSON object) to Cypher and execute it against Neo4j.
-
-    AASQL roots: $aas, $sm, $cd, $sme.<idShort>.
-    Field syntax: {"$field": "$<root>#<attribute>[.<nested>]"}.
-    Operators: comparison ($eq $ne $gt $ge $lt $le), string ($contains
-    $starts-with $ends-with $regex), logical ($and $or $not), list ($match),
-    casts ($strCast $numCast $hexCast $boolCast $dateTimeCast $timeCast).
-
-    Example query:
-        {"$condition": {"$eq": [{"$field": "$aas#idShort"},
-                                 {"$strVal": "MyShell"}]}}
-
-    Returns the generated Cypher plus the result rows.
-    """
-    cypher = _compile_aasql(query)
-    rows = _client(ctx).execute_clause(cypher) or []
-    results = [AASNeo4JClient._strip_internal_keys(row.data()) for row in rows]
-    return {"cypher": cypher, "count": len(results), "results": results}
 
 
 @mcp.tool()

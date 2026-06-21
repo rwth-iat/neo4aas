@@ -355,7 +355,6 @@ Connection is configured via environment variables (defaults shown):
 | `count_stats` | Count of Identifiable / Referable nodes (health check) |
 | `get_identifiable` | Fetch an AAS / Submodel / ConceptDescription by `id` |
 | `get_referable` | Fetch a Referable by parent `id` + `idShortPath` |
-| `query_aasql` | Compile an AASQL query and execute it, returning rows |
 | `validate_constraints` | Run AAS spec constraint validation, returning a report |
 | `list_submodel_types` | Distinct Submodel types (idShort + semanticId) with instance count each |
 | `abstract_submodel` | Build a Template-kind structural union from all Submodels of a given type |

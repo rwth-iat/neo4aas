@@ -34,37 +34,10 @@ def test_expected_tools_registered():
         "count_stats",
         "get_identifiable",
         "get_referable",
-        "query_aasql",
         "validate_constraints",
         "list_submodel_types",
         "abstract_submodel",
     }
-
-
-def test_compile_aasql_returns_cypher():
-    query = {
-        "$condition": {
-            "$eq": [{"$field": "$aas#idShort"}, {"$strVal": "MyShell"}]
-        }
-    }
-    cypher = mcp_server._compile_aasql(query)
-    assert isinstance(cypher, str)
-    assert "AssetAdministrationShell" in cypher
-    assert "MyShell" in cypher
-
-
-@pytest.mark.parametrize(
-    "bad_query, expected",
-    [
-        ({}, r"\$condition"),
-        ({"foo": "bar"}, r"\$condition"),
-        ("not-a-dict", "JSON object"),
-        (123, "JSON object"),
-    ],
-)
-def test_compile_aasql_rejects_invalid_query(bad_query, expected):
-    with pytest.raises(ValueError, match=expected):
-        mcp_server._compile_aasql(bad_query)
 
 
 # --- schema-validation path exercised through FastMCP (pydantic + guard) ---
@@ -76,44 +49,12 @@ def test_call_tool_rejects_missing_required_arg():
         anyio.run(mcp_server.mcp.call_tool, "get_identifiable", {})
 
 
-def test_call_tool_rejects_wrong_arg_type():
-    # `query` is typed dict[str, Any]; a string fails pydantic validation.
-    with pytest.raises(ToolError):
-        anyio.run(mcp_server.mcp.call_tool, "query_aasql", {"query": "not-a-dict"})
-
-
-def test_call_tool_query_aasql_missing_condition():
-    # Passes pydantic (is a dict) but fails the structural guard during compile,
-    # before the client is ever touched.
-    with pytest.raises(ToolError, match="condition"):
-        anyio.run(mcp_server.mcp.call_tool, "query_aasql", {"query": {"foo": "bar"}})
-
-
 def test_count_stats_uses_client():
     client = MagicMock()
     client.count_identifiables.return_value = 3
     client.count_referables.return_value = 42
     result = mcp_server.count_stats(_fake_ctx(client))
     assert result == {"identifiables": 3, "referables": 42}
-
-
-def test_query_aasql_strips_internal_keys():
-    client = MagicMock()
-    row = MagicMock()
-    row.data.return_value = {"aas": {"idShort": "X", "uid": 1, "hash": "abc"}}
-    client.execute_clause.return_value = [row]
-
-    query = {
-        "$condition": {
-            "$eq": [{"$field": "$aas#idShort"}, {"$strVal": "X"}]
-        }
-    }
-    result = mcp_server.query_aasql(query, _fake_ctx(client))
-
-    assert result["count"] == 1
-    assert result["results"] == [{"aas": {"idShort": "X"}}]
-    assert "uid" not in result["results"][0]["aas"]
-    client.execute_clause.assert_called_once_with(result["cypher"])
 
 
 def test_get_referable_delegates():
