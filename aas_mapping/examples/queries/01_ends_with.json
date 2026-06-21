@@ -1,0 +1,8 @@
+{
+    "$condition": {
+      "$ends-with": [
+        { "$field": "$sme.ProductCode#value" },
+        { "$strVal": "-XYZ" }
+      ]
+    }
+  }
