@@ -9,8 +9,10 @@ from aas_mapping.aas_neo4j_adapter.jsonification.neo4j_import import JsonToNeo4j
 from aas_mapping.aas_neo4j_adapter.utils import NEO4J_INTERNAL_NODE_KEYS
 from aas_mapping.aas_neo4j_adapter.xmlification.neo4j_import import XmlToNeo4jImporter
 
-# Configure logging
-logging.basicConfig(level=logging.WARNING)
+# A library must not configure the root logger (basicConfig mutates the host app's
+# logging). Attach a NullHandler to the package logger so module loggers stay silent
+# unless the application opts in; the application owns level/handler configuration.
+logging.getLogger("aas_mapping.aas_neo4j_adapter").addHandler(logging.NullHandler())
 logger = logging.getLogger(__name__)
 
 IDENTIFIABLE_KEYS = {
