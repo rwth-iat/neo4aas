@@ -7,6 +7,7 @@ from aas_mapping.aas_neo4j_adapter.base import Neo4jModelConfig
 from aas_mapping.aas_neo4j_adapter.jsonification.neo4j_export import JsonFromNeo4jExporter
 from aas_mapping.aas_neo4j_adapter.jsonification.neo4j_import import JsonToNeo4jImporter
 from aas_mapping.aas_neo4j_adapter.utils import NEO4J_INTERNAL_NODE_KEYS, irdi_base
+from aas_mapping.aas_neo4j_adapter.fixers import apply_fixers
 from aas_mapping.aas_neo4j_adapter.xmlification.neo4j_import import XmlToNeo4jImporter
 
 # A library must not configure the root logger (basicConfig mutates the host app's
@@ -117,6 +118,9 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         nodes = []
         relationships = {}
 
+        # Repair non-conformant data (e.g. BCP 47 language tags) before it is stored.
+        apply_fixers(json_data)
+
         for key, label in IDENTIFIABLE_KEYS.items():
             try:
                 for obj in json_data[key]:
@@ -158,6 +162,8 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     def add_identifiable(self, obj: Dict):
         if self.identifiable_exists(obj['id']):
             raise KeyError(f"Identifiable with id {obj['id']} already exists in the database.")
+        # Repair non-conformant data (e.g. BCP 47 language tags) before it is stored.
+        apply_fixers(obj)
         nodes, relationships = self._process_dict(obj)
         return self._upload_nodes_and_relationships(nodes, relationships)
 
