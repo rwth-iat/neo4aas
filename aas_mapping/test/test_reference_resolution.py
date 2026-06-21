@@ -185,3 +185,47 @@ def test_resolve_removes_stale_edge_on_retarget(aas_client):
 
     assert _references_edge_count(aas_client, "urn:aas/1", "urn:sm/1") == 0
     assert _references_edge_count(aas_client, "urn:aas/1", "urn:sm/2") == 1
+
+
+def _property_with_semantic_id(id_short: str, semantic_value: str) -> dict:
+    return {
+        "modelType": "Property",
+        "idShort": id_short,
+        "valueType": "xs:string",
+        "value": "x",
+        "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{"type": "GlobalReference", "value": semantic_value}],
+        },
+    }
+
+
+def _semantic_id_edge_count(client, sm_id: str) -> int:
+    clause = (
+        "MATCH (:Submodel {id: $sm})-[:submodelElements]->(:Property)"
+        "-[:semanticId]->(:Reference) RETURN count(*) AS c"
+    )
+    with client.driver.session() as session:
+        return session.run(clause, sm=sm_id).single()["c"]
+
+
+def test_readd_after_delete_keeps_reference_edges(aas_client):
+    """Re-adding an Identifiable on the same client after deleting it must not drop its
+    deduplicated Reference (semanticId) edges (the in-memory dedup/uid caches must not
+    survive the delete and skip re-creating the Reference)."""
+    sm_id = "urn:sm/c1"
+    sm = {
+        "modelType": "Submodel", "id": sm_id, "idShort": "SM1",
+        "submodelElements": [_property_with_semantic_id("P1", "0173-C1")],
+    }
+
+    aas_client.add_identifiable(sm)
+    assert _semantic_id_edge_count(aas_client, sm_id) == 1
+
+    # Simulate Neo4jObjectStore.commit(): delete then re-add on the SAME client.
+    aas_client.remove_identifiable(sm_id)
+    aas_client.add_identifiable(sm)
+
+    assert _semantic_id_edge_count(aas_client, sm_id) == 1, "semanticId edge lost after re-add"
+    data = aas_client.get_identifiable(sm_id)
+    assert "semanticId" in data["submodelElements"][0], "semanticId missing from re-added property"

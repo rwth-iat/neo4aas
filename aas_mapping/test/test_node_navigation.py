@@ -117,3 +117,66 @@ def test_get_referable_with_path(aas_client):
     data = aas_client.get_referable("urn:sm/coll", "Specs")
     assert data["idShort"] == "Specs"
     assert any(v.get("idShort") == "Color" for v in data.get("value", []))
+
+
+def test_add_element_into_list_stays_a_list_member(aas_client):
+    """An element added into a SubmodelElementList via add_referable must round-trip as an
+    ordered list member, not collapse the list to a scalar (the new edge must carry
+    is_list/list_index)."""
+    sm_id = "urn:sm/c4"
+    sm = {
+        "modelType": "Submodel",
+        "id": sm_id,
+        "idShort": "SM1",
+        "submodelElements": [
+            {
+                "modelType": "SubmodelElementList",
+                "idShort": "Items",
+                "typeValueListElement": "Property",
+                "valueTypeListElement": "xs:string",
+                "value": [
+                    {"modelType": "Property", "valueType": "xs:string", "value": "a"},
+                    {"modelType": "Property", "valueType": "xs:string", "value": "b"},
+                ],
+            }
+        ],
+    }
+    aas_client.add_identifiable(sm)
+
+    aas_client.add_referable(
+        {"modelType": "Property", "valueType": "xs:string", "value": "c"},
+        parent_id=sm_id,
+        id_short_path="Items",
+    )
+
+    data = aas_client.get_identifiable(sm_id)
+    items = next(e for e in data["submodelElements"] if e["idShort"] == "Items")
+    value = items["value"]
+    assert isinstance(value, list), f"list collapsed to scalar: {value!r}"
+    assert len(value) == 3, f"expected 3 list members, got {len(value)}"
+    assert {v["value"] for v in value} == {"a", "b", "c"}
+
+
+def test_remove_referable_refuses_non_unique_path(aas_client):
+    """remove_referable must reject (not silently over-delete) a path that matches more than
+    one node — e.g. a spec-violating duplicate idShort under one collection."""
+    sm_id = "urn:sm/c5"
+    sm = {
+        "modelType": "Submodel",
+        "id": sm_id,
+        "idShort": "SM1",
+        "submodelElements": [
+            {
+                "modelType": "SubmodelElementCollection",
+                "idShort": "Coll",
+                "value": [
+                    {"modelType": "Property", "idShort": "Dup", "valueType": "xs:string", "value": "1"},
+                    {"modelType": "Property", "idShort": "Dup", "valueType": "xs:string", "value": "2"},
+                ],
+            }
+        ],
+    }
+    aas_client.add_identifiable(sm)
+
+    with pytest.raises(ValueError):
+        aas_client.remove_referable(sm_id, "Coll.Dup")

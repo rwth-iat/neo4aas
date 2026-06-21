@@ -12,6 +12,7 @@ from aas_mapping.aas_neo4j_adapter.querification.ast_to_cypher import (
     converter,
     converter_full,
 )
+from aas_mapping.aas_neo4j_adapter.querification.aasql_to_cypher import convert_aasql_to_cypher
 
 
 _QUERY_DIR = Path(__file__).resolve().parents[1] / "examples" / "queries"
@@ -95,3 +96,26 @@ def test_compile_to_cypher(stem):
     else:
         actual = _normalize_cypher(converter(parse_aasql_query(data)))
     assert actual == expected
+
+
+def _quote_is_escaped(cypher: str, raw: str) -> bool:
+    """True if `raw` (containing a single quote) appears in a Cypher-safe escaped form.
+
+    Valid single-quote escapes inside a single-quoted Cypher string literal are ``\\'``
+    or ``''``. The raw, unescaped form (e.g. ``'O'Brien'``) is an injection / syntax bug.
+    """
+    return raw.replace("'", "\\'") in cypher or raw.replace("'", "''") in cypher
+
+
+def test_string_literal_with_quote_is_escaped():
+    """A $strVal containing a single quote must be emitted escaped, not raw (no injection)."""
+    query = {"$condition": {"$eq": [{"$field": "$sm#idShort"}, {"$strVal": "O'Brien"}]}}
+    cypher = convert_aasql_to_cypher(query)
+    assert _quote_is_escaped(cypher, "O'Brien"), f"unescaped quote injected: {cypher!r}"
+
+
+def test_idshort_path_with_quote_is_escaped():
+    """An idShort path segment containing a single quote must be emitted escaped."""
+    query = {"$condition": {"$eq": [{"$field": "$sme.Va'lue#idShort"}, {"$strVal": "x"}]}}
+    cypher = convert_aasql_to_cypher(query)
+    assert _quote_is_escaped(cypher, "Va'lue"), f"unescaped quote injected into idShort: {cypher!r}"
