@@ -7,7 +7,7 @@ from os.path import join, isfile
 from typing import Optional, List, Dict, Tuple, Any
 
 from neo4j import Session
-from neo4j.exceptions import TransientError, ClientError
+from neo4j.exceptions import ClientError
 
 from aas_mapping.aas_neo4j_adapter.base import BaseNeo4JClient, Neo4jModelConfig
 from aas_mapping.aas_neo4j_adapter.utils import UploadStats
@@ -141,11 +141,12 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         created_rels = 0
         for i in range(0, len(all_rels), db_batch_size):
             batch = all_rels[i:i + db_batch_size]
-            try:
-                result = session.run(create_rels_query, relationships=batch)
-                created_rels += result.single()['created']
-            except TransientError as e:
-                logger.error(f"Transient error during relationship creation batch: {e}")
+            # Do not swallow a TransientError here: it would drop the whole batch of edges
+            # while reporting success, silently corrupting the graph. Let it propagate so the
+            # caller's transaction/retry handling surfaces the failure (node creation behaves
+            # the same way).
+            result = session.run(create_rels_query, relationships=batch)
+            created_rels += result.single()['created']
 
         return created_rels
 
@@ -205,6 +206,16 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         """Upload nodes and relationships to Neo4j in a single transaction."""
         if stats is None:
             stats = UploadStats()
+
+        # Reset the in-memory dedup/uid caches for this logical write. They must NOT outlive a
+        # single upload: after a delete + re-add on the same client they would still map a
+        # Reference hash to a now-deleted uid/elementId, so the Reference would not be
+        # recreated and its edge would dangle. Cross-process dedup is guaranteed at the DB
+        # level by apoc.merge.node on `hash`; this map is only a within-write optimization.
+        self.deduplicated_nodes.clear()
+        self.deduplicated_to_existing_uid_map.clear()
+        self.deduplicated_rels.clear()
+        self.uid_to_internal_id.clear()
 
         # Group nodes and filter relationships for this batch
         grouped_nodes = self._group_nodes_by_label(nodes)

@@ -5,6 +5,16 @@ import re
 # path) requests a recursive search over all SubmodelElements at any depth, per the spec.
 _RECURSIVE_CONTAINMENT = ":submodelElements|value|statements|annotations*1.."
 
+
+def _escape(value: str) -> str:
+    """Escape a string for safe embedding inside a single-quoted Cypher literal.
+
+    The compiler emits Cypher as text (not a parameterized query), so caller-supplied
+    AASQL strings — `$strVal` literals and idShort path segments — must have backslashes
+    and single quotes escaped to avoid breaking or injecting into the query.
+    """
+    return value.replace("\\", "\\\\").replace("'", "\\'")
+
 from aas_mapping.aas_neo4j_adapter.querification.ast_nodes import *  # noqa: F401,F403
 
 
@@ -62,9 +72,9 @@ def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
             for p in part.split("["):
                 if "]" not in p:
                     if local_depth == 0:
-                        match_part += f"(sme{depth}:SubmodelElement {{idShort: '{p}'}})"
+                        match_part += f"(sme{depth}:SubmodelElement {{idShort: '{_escape(p)}'}})"
                     else:
-                        match_part += f"-[:value]->(sme{depth}:SubmodelElement {{idShort: '{p}'}})"
+                        match_part += f"-[:value]->(sme{depth}:SubmodelElement {{idShort: '{_escape(p)}'}})"
                 elif len(p) > 1:
                     match_part += f"-[:value {{list_index: {p.rstrip(']')}}}]->(sme{depth}:SubmodelElement)"
                 else:
@@ -74,9 +84,9 @@ def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
                 local_depth += 1
         else:
             if local_depth == 0:
-                match_part += f"(sme{depth}:SubmodelElement {{idShort: '{part}'}})"
+                match_part += f"(sme{depth}:SubmodelElement {{idShort: '{_escape(part)}'}})"
             else:
-                match_part += f"-[:value]->(sme{depth}:SubmodelElement {{idShort: '{part}'}})"
+                match_part += f"-[:value]->(sme{depth}:SubmodelElement {{idShort: '{_escape(part)}'}})"
             last_root = f"sme{depth}"
             depth += 1
             local_depth += 1
@@ -295,7 +305,7 @@ def _convert_value(value: Value, mapping: dict[str, int]) -> Tuple[str, str, boo
             inner = _convert_value(value.inner, mapping)
             return f"{inner[0]}.{value.get_operator()}", inner[1], False
         case StringValue() | NumberValue() | BooleanValue():
-            return value.value if isinstance(value.value, (int, float, bool)) else f"'{value.value}'", "", False
+            return value.value if isinstance(value.value, (int, float, bool)) else f"'{_escape(value.value)}'", "", False
         case HexLiteral():
             return f"'{value.value}'", "", False
         case DateTimeLiteral():

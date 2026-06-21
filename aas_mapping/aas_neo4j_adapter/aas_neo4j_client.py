@@ -169,10 +169,27 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         parent_node_internal_id = self._find_node(parent_id, id_short_path)
         nodes, relationships = self._process_dict(obj)
 
-        self._add_relationship(relationships, "value", parent_node_internal_id, nodes[-1]['uid'])
+        # The new element is a list member of the parent's `value`, so the edge must carry
+        # `is_list` (and, for a SubmodelElementList parent, the positional `list_index`) — the
+        # same tagging the bulk import applies. Without it, export reconstructs the element as
+        # a scalar `value` and loses list membership/order.
+        parent_info = self.execute_clause(
+            "MATCH (p) WHERE elementId(p) = $pid "
+            "OPTIONAL MATCH (p)-[:value]->(c) "
+            "RETURN 'SubmodelElementList' IN labels(p) AS is_list, count(c) AS n",
+            single=True,
+            params={"pid": parent_node_internal_id},
+        )
+        rel_props = {"is_list": True}
+        if parent_info and parent_info["is_list"]:
+            rel_props["list_index"] = parent_info["n"]
+        self._add_relationship(relationships, "value", parent_node_internal_id, nodes[-1]['uid'],
+                               rel_props=rel_props)
         stats = self._upload_nodes_and_relationships(nodes, relationships,
                                                      exist_uid_to_internal_id={
                                                          parent_node_internal_id: parent_node_internal_id})
+        # A newly added SME may contain a ModelReference; resolve edges for the owning shell/submodel.
+        self.resolve_references_for(parent_id)
         return stats
 
     def identifiable_exists(self, identifier: str) -> bool:
@@ -182,20 +199,24 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         return result[0]
 
     def remove_referable(self, parent_id: str, id_short_path: str = None):
-        clauses, referable_node = self._find_node_clause(parent_id, id_short_path)
+        # Resolve to exactly one node via _find_node, which raises if the path matches zero
+        # (KeyError) or more than one (ValueError). This prevents an unbounded DETACH DELETE
+        # of several subtrees when a path is malformed or hits a spec-violating duplicate idShort.
+        root_internal_id = self._find_node(parent_id, id_short_path)
         # Delete the target referable and every node in its owned subtree, but keep nodes
         # that are still referenced from outside the subtree (e.g. deduplicated References /
         # ConceptDescriptions shared by other elements). The target root itself is always
         # deleted even though its container points at it from outside the subtree.
         delete_clause = (
-            f"CALL apoc.path.subgraphAll({referable_node}, {{relationshipFilter: '>'}}) YIELD nodes "
+            "MATCH (root) WHERE elementId(root) = $rid "
+            "CALL apoc.path.subgraphAll(root, {relationshipFilter: '>'}) YIELD nodes "
             "UNWIND nodes AS node "
-            f"WITH {referable_node} AS root, node, nodes "
+            "WITH root, node, nodes "
             "WHERE node = root OR NOT EXISTS { MATCH (other)-[]->(node) WHERE NOT other IN nodes } "
             "DETACH DELETE node "
             "RETURN count(node) AS deletedNodes; "
         )
-        return self.execute_clause(clauses + delete_clause)
+        return self.execute_clause(delete_clause, params={"rid": root_internal_id})
 
     def remove_identifiable(self, identifier: str):
         return self.remove_referable(identifier)
