@@ -184,6 +184,27 @@ def list_submodel_types(ctx: Context) -> dict[str, Any]:
 
 
 @mcp.tool()
+def list_submodel_types_by_semantic_id(ctx: Context) -> dict[str, Any]:
+    """List distinct Submodel semanticIds with an instance count each.
+
+    Groups Submodels by semanticId only (ignoring idShort), so all instances of
+    the same semantic type are collapsed into one row, sorted by count descending.
+    semanticId is the real type discriminator — prefer this over list_submodel_types
+    when feeding abstract_submodel. Submodels without a semanticId are grouped under
+    a null semanticId.
+    """
+    cypher = """
+    MATCH (sm:Submodel)
+    OPTIONAL MATCH (sm)-[:semanticId]->(sem:Reference)
+    RETURN sem.keys_value[0] AS semanticId, COUNT(sm) AS count
+    ORDER BY count DESC, semanticId
+    """.strip()
+    rows = _client(ctx).execute_clause(cypher) or []
+    types = [{"semanticId": row["semanticId"], "count": row["count"]} for row in rows]
+    return {"total_types": len(types), "types": types}
+
+
+@mcp.tool()
 def abstract_submodel(
     submodel_type: str,
     ctx: Context,

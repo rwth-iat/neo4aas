@@ -37,6 +37,7 @@ def test_expected_tools_registered():
         "get_referable",
         "validate_constraints",
         "list_submodel_types",
+        "list_submodel_types_by_semantic_id",
         "abstract_submodel",
     }
 
@@ -102,6 +103,18 @@ def test_list_submodel_types_returns_shape():
     result = mcp_server.list_submodel_types(_fake_ctx(client))
     assert result["total_types"] == 2
     assert result["types"][0] == {"idShort": "Nameplate", "semanticId": "urn:sem1", "count": 42}
+
+
+def test_list_submodel_types_by_semantic_id_returns_shape():
+    client = MagicMock()
+    client.execute_clause.return_value = [
+        _mock_row({"semanticId": "urn:sem1", "count": 49}),
+        _mock_row({"semanticId": "urn:sem2", "count": 7}),
+    ]
+    result = mcp_server.list_submodel_types_by_semantic_id(_fake_ctx(client))
+    assert result["total_types"] == 2
+    assert result["types"][0] == {"semanticId": "urn:sem1", "count": 49}
+    assert "idShort" not in result["types"][0]
 
 
 def test_abstract_submodel_no_match_raises():
@@ -286,6 +299,20 @@ def test_count_stats_populated_integration(aas_client):
     assert result["submodels"] == len(env.get("submodels", []))
     assert result["assetAdministrationShells"] == len(env.get("assetAdministrationShells", []))
     assert result["conceptDescriptions"] == len(env.get("conceptDescriptions", []))
+
+
+@pytest.mark.integration
+def test_list_submodel_types_by_semantic_id_integration(aas_client):
+    import json as _json
+    env_path = os.path.join(_EXAMPLE_SUBMODEL, "IDTA 02002-1-0_Template_ContactInformation.json")
+    with open(env_path, encoding="utf-8") as f:
+        env = _json.load(f)
+    aas_client.upload_json(env)
+
+    result = mcp_server.list_submodel_types_by_semantic_id(_fake_ctx(aas_client))
+    total = sum(t["count"] for t in result["types"])
+    assert total == len(env.get("submodels", []))
+    assert all(set(t) == {"semanticId", "count"} for t in result["types"])
 
 
 @pytest.mark.integration
