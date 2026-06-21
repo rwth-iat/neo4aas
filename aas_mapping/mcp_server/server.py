@@ -189,10 +189,6 @@ def list_submodel_types(ctx: Context) -> dict[str, Any]:
     return {"total_types": len(types), "types": types}
 
 
-def _is_semantic_id(value: str) -> bool:
-    return "://" in value or value.startswith("urn:")
-
-
 @mcp.tool()
 def abstract_submodel(
     submodel_type: str,
@@ -205,9 +201,10 @@ def abstract_submodel(
     the structural union as a Template-kind AAS JSON object.
 
     Args:
-        submodel_type: The type to abstract. Matched against ``idShort`` by
-            default. If the value contains ``://`` or starts with ``urn:``, it is
-            matched against the Submodel's semanticId instead.
+        submodel_type: The type to abstract. Matched against the Submodel's
+            semanticId first (the real type discriminator); if nothing matches, it
+            falls back to matching against ``idShort``. See list_submodel_types for
+            the available semanticId / idShort values.
         output_format: ``"json"`` (default) returns the template as a nested dict
             under the ``"abstract_submodel"`` key. ``"yaml"`` serialises only the
             template to a YAML string under the ``"yaml"`` key.
@@ -217,10 +214,11 @@ def abstract_submodel(
     """
     client = _client(ctx)
 
-    instances = client.get_identifiables_by_type(
-        submodel_type,
-        by_semantic_id=_is_semantic_id(submodel_type),
-    )
+    # semanticId is the real type discriminator; fall back to idShort if it matches
+    # nothing, instead of guessing from the string shape.
+    instances = client.get_submodels_by_type(submodel_type, by_semantic_id=True)
+    if not instances:
+        instances = client.get_submodels_by_type(submodel_type, by_semantic_id=False)
 
     if not instances:
         raise ValueError(

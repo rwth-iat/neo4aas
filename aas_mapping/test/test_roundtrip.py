@@ -102,8 +102,8 @@ def test_json_roundtrip(json_file: Path, aas_client: AASNeo4JClient):
 
 
 @pytest.mark.integration
-def test_get_identifiables_by_type_matches_get_identifiable(aas_client: AASNeo4JClient):
-    """get_identifiables_by_type must reconstruct the same submodel as get_identifiable.
+def test_get_submodels_by_type_matches_get_identifiable(aas_client: AASNeo4JClient):
+    """get_submodels_by_type must reconstruct the same submodel as get_identifiable.
 
     Guards the perf optimization that uses the relationships yielded by
     apoc.path.subgraphAll directly (instead of recomputing them with an
@@ -117,7 +117,7 @@ def test_get_identifiables_by_type_matches_get_identifiable(aas_client: AASNeo4J
 
     sm = env["submodels"][0]
     by_id = aas_client.get_identifiable(sm["id"])
-    by_type = aas_client.get_identifiables_by_type(sm["idShort"])
+    by_type = aas_client.get_submodels_by_type(sm["idShort"], by_semantic_id=False)
 
     assert len(by_type) == 1
     assert _normalize(by_type[0]) == _normalize(by_id)

@@ -99,14 +99,14 @@ def test_list_submodel_types_returns_shape():
 
 def test_abstract_submodel_no_match_raises():
     client = MagicMock()
-    client.get_identifiables_by_type.return_value = []
+    client.get_submodels_by_type.return_value = []
     with pytest.raises(ValueError, match="No Submodels found"):
         mcp_server.abstract_submodel("NonExistent", _fake_ctx(client))
 
 
 def test_abstract_submodel_strips_values():
     client = MagicMock()
-    client.get_identifiables_by_type.return_value = [
+    client.get_submodels_by_type.return_value = [
         {
             "modelType": "Submodel",
             "id": "urn:sm1",
@@ -127,7 +127,7 @@ def test_abstract_submodel_strips_values():
 
 def test_abstract_submodel_merges_structure():
     client = MagicMock()
-    client.get_identifiables_by_type.return_value = [
+    client.get_submodels_by_type.return_value = [
         {
             "modelType": "Submodel",
             "id": "urn:sm1",
@@ -206,7 +206,7 @@ def test_abstract_smlist_representative_is_union_of_items():
 
 def test_abstract_submodel_yaml_format():
     client = MagicMock()
-    client.get_identifiables_by_type.return_value = [
+    client.get_submodels_by_type.return_value = [
         {
             "modelType": "Submodel",
             "id": "urn:sm1",
@@ -221,14 +221,29 @@ def test_abstract_submodel_yaml_format():
     assert "modelType: Submodel" in result["yaml"]
 
 
-def test_abstract_submodel_uses_semantic_id_when_uri():
+def test_abstract_submodel_tries_semantic_id_then_idshort():
+    """semanticId is tried first (the real type); idShort is the fallback."""
+    from unittest.mock import call
+
     client = MagicMock()
-    client.get_identifiables_by_type.return_value = []
-    with pytest.raises(ValueError):
-        mcp_server.abstract_submodel("https://example.com/mytype", _fake_ctx(client))
-    client.get_identifiables_by_type.assert_called_once_with(
-        "https://example.com/mytype", by_semantic_id=True
-    )
+    client.get_submodels_by_type.return_value = []  # both lookups miss
+    with pytest.raises(ValueError, match="No Submodels found"):
+        mcp_server.abstract_submodel("Doc", _fake_ctx(client))
+    assert client.get_submodels_by_type.call_args_list == [
+        call("Doc", by_semantic_id=True),
+        call("Doc", by_semantic_id=False),
+    ]
+
+
+def test_abstract_submodel_semantic_id_match_skips_idshort_fallback():
+    client = MagicMock()
+    client.get_submodels_by_type.return_value = [
+        {"modelType": "Submodel", "id": "urn:sm1", "idShort": "Doc",
+         "kind": "Instance", "submodelElements": []}
+    ]
+    mcp_server.abstract_submodel("urn:type", _fake_ctx(client))
+    # semanticId lookup hit -> idShort fallback not attempted
+    client.get_submodels_by_type.assert_called_once_with("urn:type", by_semantic_id=True)
 
 
 # ---------------------------------------------------------------------------

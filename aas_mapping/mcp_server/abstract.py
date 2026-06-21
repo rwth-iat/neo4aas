@@ -43,7 +43,7 @@ def to_template(element: dict[str, Any]) -> dict[str, Any]:
     """Return a deep-copied, value-stripped Template version of *element*.
 
     Instances reaching here are normally already stripped of Neo4j-internal keys
-    (``get_identifiables_by_type`` strips before calling), but we filter again with
+    (``get_submodels_by_type`` strips before calling), but we filter again with
     the canonical ``NEO4J_INTERNAL_NODE_KEYS`` so the helper is also correct for any
     caller that passes raw exported dicts.
     """

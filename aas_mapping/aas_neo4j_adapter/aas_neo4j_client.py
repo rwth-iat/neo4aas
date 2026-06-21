@@ -239,12 +239,16 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     def get_identifiable(self, identifier: str) -> Dict:
         return self.get_referable(identifier)
 
-    def get_identifiables_by_type(
+    def get_submodels_by_type(
         self,
         submodel_type: str,
-        by_semantic_id: bool = False,
+        by_semantic_id: bool = True,
     ) -> list[Dict]:
         """Fetch all Submodels of a given type in a single Neo4j query.
+
+        A Submodel's *type* is its semanticId — the real type discriminator. idShort
+        is an instance name and only a weak fallback, so ``by_semantic_id`` defaults
+        to True (match the semanticId key); pass False to match idShort instead.
 
         Uses one session and one APOC call per matched submodel (batched via
         Cypher iteration) instead of N separate round-trips.
