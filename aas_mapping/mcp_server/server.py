@@ -158,14 +158,6 @@ def validate_constraints(
     }
 
 
-_LIST_SUBMODEL_TYPES_CYPHER = """
-MATCH (sm:Submodel)
-OPTIONAL MATCH (sm)-[:semanticId]->(sem:Reference)
-RETURN sm.idShort AS idShort, sem.keys_value[0] AS semanticId, COUNT(sm) AS count
-ORDER BY count DESC, idShort
-""".strip()
-
-
 @mcp.tool()
 def list_submodel_types(ctx: Context) -> dict[str, Any]:
     """List distinct Submodel types in the graph with an instance count each.
@@ -173,7 +165,13 @@ def list_submodel_types(ctx: Context) -> dict[str, Any]:
     Groups by idShort and semanticId, sorted by count descending. Useful to
     discover which types exist before calling abstract_submodel.
     """
-    rows = _client(ctx).execute_clause(_LIST_SUBMODEL_TYPES_CYPHER) or []
+    cypher = """
+    MATCH (sm:Submodel)
+    OPTIONAL MATCH (sm)-[:semanticId]->(sem:Reference)
+    RETURN sm.idShort AS idShort, sem.keys_value[0] AS semanticId, COUNT(sm) AS count
+    ORDER BY count DESC, idShort
+    """.strip()
+    rows = _client(ctx).execute_clause(cypher) or []
     types = [
         {
             "idShort": row["idShort"],
