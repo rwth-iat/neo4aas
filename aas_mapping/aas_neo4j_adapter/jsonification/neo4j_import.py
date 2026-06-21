@@ -15,8 +15,10 @@ from aas_mapping.aas_neo4j_adapter.utils import UploadStats, irdi_base
 logger = logging.getLogger(__name__)
 
 class JsonToNeo4jImporter(BaseNeo4JClient):
-    def __init__(self, uri: str, user: str , password: Optional[str] = None, model_config: Neo4jModelConfig = None):
-        super().__init__(uri, user, password, model_config)
+    def __init__(self, uri: str, user: str , password: Optional[str] = None, model_config: Neo4jModelConfig = None,
+                 **kwargs):
+        # Forward any extra BaseNeo4JClient args (e.g. fix_on_import) down the MRO.
+        super().__init__(uri, user, password, model_config, **kwargs)
         self.uid_counter = 0
 
         # e.g. {HASH: uid}

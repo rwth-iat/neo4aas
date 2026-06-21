@@ -64,6 +64,19 @@ def test_default_fixers_includes_language_fixer():
     assert any(isinstance(f, LangStringFixer) for f in DEFAULT_FIXERS)
 
 
+def test_client_accepts_fix_on_import_kwarg():
+    """fix_on_import must be accepted through the full inheritance chain (no Neo4j)."""
+    from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import (
+        AASNeo4JClient,
+        AAS_NEO4J_MODEL_CONFIG,
+    )
+
+    c = AASNeo4JClient(uri=None, user="x", password="y",
+                       model_config=AAS_NEO4J_MODEL_CONFIG, fix_on_import=True)
+    assert c.fix_on_import is True
+    assert AASNeo4JClient(uri=None, user="x").fix_on_import is False
+
+
 # ---------------------------------------------------------------------------
 # Integration test (requires live Neo4j)
 # ---------------------------------------------------------------------------
