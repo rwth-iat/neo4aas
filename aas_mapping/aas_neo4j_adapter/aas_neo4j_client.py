@@ -194,8 +194,8 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
 
     def identifiable_exists(self, identifier: str) -> bool:
         """Check if an Identifiable node with the given ID exists in the Neo4j database."""
-        clause = f"MATCH (n:Identifiable {{id: '{identifier}'}} ) RETURN count(n)>0"
-        result = self.execute_clause(clause, single=True)
+        clause = "MATCH (n:Identifiable {id: $id}) RETURN count(n)>0"
+        result = self.execute_clause(clause, single=True, params={"id": identifier})
         return result[0]
 
     def remove_referable(self, parent_id: str, id_short_path: str = None):
@@ -344,10 +344,10 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         Returns the node's ``elementId`` (matching what the import path uses to wire
         relationships).
         """
-        clause, found_node = self._find_node_clause(parent_id, id_short_path)
+        clause, found_node, params = self._find_node_clause(parent_id, id_short_path)
         clause += f"RETURN collect(DISTINCT elementId({found_node})) AS node_ids"
         with self.driver.session() as session:
-            result = session.run(clause).single()
+            result = session.run(clause, **params).single()
         node_ids = result["node_ids"] if result else []
         if not node_ids:
             raise KeyError(f"No node found with parent_id={parent_id} and id_short_path={id_short_path}")
@@ -355,30 +355,39 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
             raise ValueError(f"Multiple nodes found with parent_id={parent_id} and id_short_path={id_short_path}")
         return node_ids[0]
 
-    def _find_node_clause(self, parent_id: str, id_short_path: Optional[str] = None) -> (str, str):
+    def _find_node_clause(self, parent_id: str, id_short_path: Optional[str] = None) -> (str, str, dict):
+        """Build a MATCH clause locating a node by id (+ optional idShort path).
+
+        Returns ``(clause, found_node_var, params)``. All caller-supplied values (the
+        Identifier and each idShort/index segment) are emitted as ``$`` parameters, so the
+        clause is injection-safe; callers must pass ``params`` to ``execute_clause`` /
+        ``session.run``.
+        """
         found_node = "the_node"
 
         if not id_short_path:
-            return f"MATCH ({found_node}:Identifiable {{id: '{parent_id}'}})\n", found_node
+            return f"MATCH ({found_node}:Identifiable {{id: $parent_id}})\n", found_node, {"parent_id": parent_id}
 
         # Traverse containment by following the semantic edges (no :child edge). Each step
         # descends to a Referable child matched either by idShort (Collection / Submodel
         # member) or, for a SubmodelElementList member, by the edge's list_index.
-        clause = f"MATCH (parent:Identifiable {{id: '{parent_id}'}})\n"
+        clause = "MATCH (parent:Identifiable {id: $parent_id})\n"
+        params: dict = {"parent_id": parent_id}
         segments = self.itemize_id_short_path(id_short_path)
         prev = "parent"
         wheres = []
         for i, seg in enumerate(segments):
             var = found_node if i == len(segments) - 1 else f"child_{i}"
             clause += f"MATCH ({prev})-[e_{i}]->({var}:Referable)\n"
+            params[f"seg_{i}"] = seg
             if isinstance(seg, int):
-                wheres.append(f"e_{i}.list_index = {seg}")
+                wheres.append(f"e_{i}.list_index = $seg_{i}")
             else:
-                wheres.append(f"{var}.idShort = '{seg}'")
+                wheres.append(f"{var}.idShort = $seg_{i}")
             prev = var
         if wheres:
             clause += "WHERE " + " AND ".join(wheres) + "\n"
-        return clause, found_node
+        return clause, found_node, params
 
     def _get_subgraph_of_referable(self, parent_id: str, id_short_path: Optional[str] = None):
         """
@@ -386,7 +395,7 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
 
         It includes the object node itself and all its children being attributes of the object.
         """
-        find_node_clause, found_parent_node = self._find_node_clause(parent_id, id_short_path)
+        find_node_clause, found_parent_node, params = self._find_node_clause(parent_id, id_short_path)
         get_subgraph_clause = (
             f"CALL apoc.path.subgraphAll({found_parent_node}, {{relationshipFilter: '>'}}) YIELD nodes, relationships "
             "WITH nodes "
@@ -394,7 +403,7 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
             "WITH nodes, collect(r) AS allRels "
             "RETURN apoc.convert.toJson({nodes: nodes, relationships: allRels}) AS json;"
         )
-        result = self.execute_clause(find_node_clause + get_subgraph_clause, single=True)
+        result = self.execute_clause(find_node_clause + get_subgraph_clause, single=True, params=params)
         if result is None:
             raise KeyError(f"No Referable found with: id={parent_id}, id_short_path={id_short_path}")
         subgraph_json = json.loads(result["json"])

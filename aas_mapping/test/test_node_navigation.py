@@ -180,3 +180,28 @@ def test_remove_referable_refuses_non_unique_path(aas_client):
 
     with pytest.raises(ValueError):
         aas_client.remove_referable(sm_id, "Coll.Dup")
+
+
+def test_quoted_id_is_handled_safely(aas_client):
+    """An Identifier containing a single quote must not break/inject CRUD Cypher.
+
+    Identifiers are IRIs and may legally contain quotes; identifiable_exists,
+    get_identifiable and _find_node build their queries with parameters.
+    """
+    sm_id = "urn:sm/O'Brien"
+    sm = {
+        "modelType": "Submodel",
+        "id": sm_id,
+        "idShort": "SM1",
+        "submodelElements": [
+            {"modelType": "Property", "idShort": "P", "valueType": "xs:string", "value": "v"}
+        ],
+    }
+    aas_client.add_identifiable(sm)
+
+    assert aas_client.identifiable_exists(sm_id) is True
+    assert aas_client.get_identifiable(sm_id)["id"] == sm_id
+    assert aas_client._find_node(sm_id, "P")  # path lookup under a quoted id
+
+    aas_client.remove_identifiable(sm_id)
+    assert aas_client.identifiable_exists(sm_id) is False
