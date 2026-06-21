@@ -15,6 +15,36 @@ def _escape(value: str) -> str:
     """
     return value.replace("\\", "\\\\").replace("'", "\\'")
 
+
+def _flat(prop: str, subfield: str) -> str:
+    """Flattened sub-property name, matching the import convention `{prop}_{subfield}`.
+
+    `JsonToNeo4jImporter` writes flattened list-of-dicts properties as
+    `node_properties[f"{key}_{dict_key}"]`. Centralizing the convention here keeps the
+    compiler's flat accessors (e.g. `keys_value`, `value_text`) in sync with import/export.
+    """
+    return f"{prop}_{subfield}"
+
+
+def _flattened_list_prop(mapping: dict, label: str) -> str:
+    """Base name of the list-of-dicts property flattened for `label`, read from config.
+
+    The threaded `Neo4jModelConfig` (mapping["_config"]) records which property each type
+    flattens to parallel lists (MultiLanguageProperty -> "value", Reference -> "keys"); AAS
+    flattens exactly one per relevant type. The compiler resolves the concrete flat names
+    (value_text/value_language, keys_value/keys_type) from this base via `_flat`, so they
+    follow config rather than being hard-coded. The sub-field names (text/language/value/type)
+    are intrinsic to the AAS data shapes and not config-driven.
+    """
+    props = mapping["_config"].list_of_dicts_prop_as_multiple_list_props.get(label, [])
+    if not props:
+        raise ValueError(
+            f"No flattened list property configured for {label}; the AASQL compiler "
+            f"cannot resolve its flattened sub-fields"
+        )
+    return props[0]
+
+
 from aas_mapping.aas_neo4j_adapter.querification.ast_nodes import *  # noqa: F401,F403
 
 
@@ -186,14 +216,16 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
             case "value":
                 # If value follows a keys[..] segment, dereference the flattened keys_value list.
                 if index is not None:
-                    where_part += f"{last_root}.keys_value[{index}]"
+                    where_part += f"{last_root}.{_flat(_flattened_list_prop(mapping, 'Reference'), 'value')}[{index}]"
                     index = None
                 else:
                     # SME #value is type-polymorphic and not known at compile time: a Property
                     # stores a scalar `.value`, a MultiLanguageProperty stores its text in the
-                    # `value_text[]` list. coalesce handles both (MLP -> text list; Property ->
-                    # single value wrapped in a list); isList makes comparisons wrap in any().
-                    where_part += f"coalesce({last_root}.value_text, [{last_root}.value])"
+                    # `value_text[]` list (flattened sub-field of MLP's configured value prop).
+                    # coalesce handles both (MLP -> text list; Property -> single scalar `.value`
+                    # wrapped in a list); isList makes comparisons wrap in any().
+                    mlp_value = _flattened_list_prop(mapping, "MultiLanguageProperty")
+                    where_part += f"coalesce({last_root}.{_flat(mlp_value, 'text')}, [{last_root}.value])"
                     isList = True
             case "externalSubjectId":
                 if "externalSubjectId" not in mapping:
@@ -204,7 +236,7 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
             case "type":
                 # If type follows a keys[..] segment, dereference the flattened keys_type list.
                 if index is not None:
-                    where_part += f"{last_root}.keys_type[{index}]"
+                    where_part += f"{last_root}.{_flat(_flattened_list_prop(mapping, 'Reference'), 'type')}[{index}]"
                     index = None
                 else:
                     where_part += f"{last_root}.type"
@@ -226,14 +258,14 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
                 mapping["semanticId"] += 1
                 # if semanticId is used as attribute, we need to access keys_value[0]
                 if attribute.endswith("semanticId"):
-                    where_part += f"{last_root}.keys_value[0]"
+                    where_part += f"{last_root}.{_flat(_flattened_list_prop(mapping, 'Reference'), 'value')}[0]"
             case "valueType":
                 where_part += f"{last_root}.valueType"
             case "language":
-                # Hardcoded for AAS: MultiLanguageProperty.value is flattened to value_language[]
-                # per list_of_dicts_prop_as_multiple_list_props config. Decoupling requires
-                # passing Neo4jModelConfig into the converter.
-                where_part += f"{last_root}.value_language"
+                # MultiLanguageProperty.value is flattened to value_language[] (the `language`
+                # sub-field of MLP's configured value prop), per the threaded Neo4jModelConfig.
+                mlp_value = _flattened_list_prop(mapping, "MultiLanguageProperty")
+                where_part += f"{last_root}.{_flat(mlp_value, 'language')}"
                 isList = True
             case _ if part.startswith("keys"):
                 if part.index("[") + 1 != len(part) - 1:
@@ -409,7 +441,7 @@ def _select_return_var(combined_matches: list[str], target: Optional[str]) -> st
     return match_var[0] if match_var else "sm"
 
 
-def converter(ast: Condition, target: Optional[str] = None) -> str:
+def converter(ast: Condition, target: Optional[str] = None, model_config=None) -> str:
     """
     Convert an AST Condition node to a full Cypher query string.
 
@@ -436,7 +468,13 @@ def converter(ast: Condition, target: Optional[str] = None) -> str:
     if not isinstance(ast, Condition):
         raise ValueError(f"Expected Condition node, got {type(ast)}")
 
-    mapping: dict[str, int] = {}
+    if model_config is None:
+        # Default to the AAS config; imported lazily to keep querification import-light
+        # and avoid a module-load dependency on the AAS-specific client.
+        from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import AAS_NEO4J_MODEL_CONFIG
+        model_config = AAS_NEO4J_MODEL_CONFIG
+
+    mapping: dict = {"_config": model_config}
     where_parts, match_parts = _convert_expression(ast.expr, mapping)
 
     combined_where, combined_matches = [where_parts], _remove_duplicate_matches(match_parts)
@@ -455,7 +493,7 @@ def converter(ast: Condition, target: Optional[str] = None) -> str:
     return cypher
 
 
-def converter_full(query: Query, target: Optional[str] = None) -> str:
+def converter_full(query: Query, target: Optional[str] = None, model_config=None) -> str:
     """
     Convert a full AASQL Query (with optional $select) to Cypher.
 
@@ -471,7 +509,7 @@ def converter_full(query: Query, target: Optional[str] = None) -> str:
     Descriptor roots ($aasdesc / $smdesc) compile correctly but will return
     empty results until descriptor ingestion is implemented in neo4j_import.py.
     """
-    cypher = converter(query.condition, target=target)
+    cypher = converter(query.condition, target=target, model_config=model_config)
     if query.select == "id":
         prefix, var = cypher.rsplit("\nRETURN ", 1)
         cypher = prefix + "\nRETURN " + var.strip() + ".id"
