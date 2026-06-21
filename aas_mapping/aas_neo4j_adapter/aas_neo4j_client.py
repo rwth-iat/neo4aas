@@ -257,13 +257,13 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         else:
             match_clause = "MATCH (sm:Submodel {idShort: $type}) "
 
+        # subgraphAll with relationshipFilter '>' already yields exactly the directed
+        # edges among the subgraph's nodes, so use them directly instead of recomputing
+        # the same set with an O(|nodes|^2) OPTIONAL MATCH over every node pair.
         cypher = (
             match_clause
             + "CALL apoc.path.subgraphAll(sm, {relationshipFilter: '>'}) YIELD nodes, relationships "
-            "WITH sm, nodes "
-            "OPTIONAL MATCH (a)-[r]->(b) WHERE a IN nodes AND b IN nodes "
-            "WITH sm, nodes, collect(r) AS allRels "
-            "RETURN apoc.convert.toJson({nodes: nodes, relationships: allRels}) AS json"
+            "RETURN apoc.convert.toJson({nodes: nodes, relationships: relationships}) AS json"
         )
         rows = self.execute_clause(cypher, params={"type": submodel_type}) or []
         return [

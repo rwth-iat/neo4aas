@@ -101,6 +101,28 @@ def test_json_roundtrip(json_file: Path, aas_client: AASNeo4JClient):
             )
 
 
+@pytest.mark.integration
+def test_get_identifiables_by_type_matches_get_identifiable(aas_client: AASNeo4JClient):
+    """get_identifiables_by_type must reconstruct the same submodel as get_identifiable.
+
+    Guards the perf optimization that uses the relationships yielded by
+    apoc.path.subgraphAll directly (instead of recomputing them with an
+    OPTIONAL MATCH over every node pair): both paths must produce the identical
+    AAS JSON for a real submodel.
+    """
+    json_file = _EXAMPLES_DIR / "IDTA 02002-1-0_Template_ContactInformation.json"
+    with open(json_file, encoding="utf-8") as f:
+        env = json.load(f)
+    aas_client.upload_json(env)
+
+    sm = env["submodels"][0]
+    by_id = aas_client.get_identifiable(sm["id"])
+    by_type = aas_client.get_identifiables_by_type(sm["idShort"])
+
+    assert len(by_type) == 1
+    assert _normalize(by_type[0]) == _normalize(by_id)
+
+
 @pytest.mark.parametrize(
     "xml_file,json_file",
     _collect_xml_json_pairs(),
