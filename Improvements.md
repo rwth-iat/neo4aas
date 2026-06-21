@@ -15,6 +15,7 @@ Ideas for optimizing the AAS → Neo4j mapping. Grounded in the current schema.
 | 6 | Typed value shadow prop for range queries | query perf | med | low |
 | 7 | Incremental `resolve_references()` (+ `target_id` index) | write perf | med | low | ✅ done |
 | 8 | Fix dedup self-loop (`referredSemanticId`) | correctness | med | low |
+| 9 | Bottom-up plan for recursive `$sme` search | query perf | med | low |
 
 ---
 
@@ -95,6 +96,21 @@ The second case needs an **indexed lookup from the Reference side** by target id
 `referredSemanticId` is stored as a relationship, invisible to the SHA256 hash, so two References differing only in `referredSemanticId` collapse into one node → self-loops, breaking round-trip (`IDTA 02056` xfail). Fold the `referredSemanticId` target into the hash, or exclude such References from dedup.
 
 - Files: [jsonification/neo4j_import.py](aas_mapping/aas_neo4j_adapter/jsonification/neo4j_import.py), [aas_neo4j_client.py](aas_mapping/aas_neo4j_adapter/aas_neo4j_client.py)
+
+### 9. Bottom-up plan for recursive `$sme` search
+The no-path recursive `$sme` query compiles to `(sm:Submodel)-[:...*1..]->(sme)` then filters the attribute — the planner starts at every Submodel and **expands each full subtree before filtering** (expand-then-filter), visiting every SME regardless of selectivity.
+
+When the predicate is selective, it is faster to **start from the SME, filter, then walk up** to the Submodel (filter-then-expand):
+```cypher
+MATCH (sme:SubmodelElement) WHERE <attr predicate>
+MATCH (sm:Submodel)-[:submodelElements|value|statements|annotations*1..]->(sme)
+RETURN DISTINCT sm
+```
+Pairs with **#6**: an index on the queried value turns the initial SME scan into a seek. Only worth doing for the recursive case (explicit-path queries are already anchored).
+
+**Do first:** `PROFILE` both forms on the `real_aas` dataset — the Neo4j planner may already reorder given good stats; the tiny test DB won't reveal it. Compiler change: emit the SME-first / `RETURN DISTINCT` ordering for no-path `$sme` queries. See `ast_to_cypher.py` `_convert_sme` / `converter`.
+
+- File: [ast_to_cypher.py](aas_mapping/aas_neo4j_adapter/querification/ast_to_cypher.py)
 
 ---
 
