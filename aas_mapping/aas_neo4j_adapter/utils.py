@@ -16,14 +16,28 @@ logger = logging.getLogger(__name__)
 _IRDI_PREFIX_RE = re.compile(r"^\d{4}-")
 _IRDI_VERSION_RE = re.compile(r"#\d+$")
 
+# ECLASS-CDP serves the same IRDIs as URLs with the two '#' separators replaced by
+# '-', e.g. "https://api.eclass-cdp.com/0173-1-01-AHX837-002" is the IRDI
+# "0173-1#01-AHX837#002". Normalizing the URL back to canonical IRDI form lets the
+# CDP-URL and plain-IRDI references of the same property share one base.
+_ECLASS_CDP_RE = re.compile(
+    r"^https?://api\.eclass-cdp\.com/(\d{4}-\d)-(\d{2}-[0-9A-Za-z]+)-(\d+)$"
+)
+
 
 def irdi_base(value: str) -> str:
     """Return the version-agnostic IRDI base: the IRDI minus its trailing '#<version>'.
+
+    ECLASS-CDP URLs (dash-encoded IRDIs) are first normalized to canonical IRDI
+    form, so they collapse to the same base as the plain IRDI of that property.
 
     Non-IRDI values (no 4-digit ICD prefix, or no trailing numeric version) are
     returned unchanged, so callers can store the base unconditionally — for a
     non-IRDI id the base simply equals the id and equality behaves as before.
     """
+    cdp = _ECLASS_CDP_RE.match(value) if value else None
+    if cdp:
+        value = f"{cdp.group(1)}#{cdp.group(2)}#{cdp.group(3)}"
     if value and _IRDI_PREFIX_RE.match(value) and _IRDI_VERSION_RE.search(value):
         return _IRDI_VERSION_RE.sub("", value)
     return value

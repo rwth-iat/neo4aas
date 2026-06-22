@@ -22,6 +22,9 @@ from aas_mapping.aas_neo4j_adapter.utils import irdi_base
         ("0173-1#02-AAO677#001", "0173-1#02-AAO677"),  # same base, different version
         ("0173-1#02-AAO677#12", "0173-1#02-AAO677"),    # multi/var-length version
         ("0173-1#02-AAO677", "0173-1#02-AAO677"),        # no version -> unchanged
+        # ECLASS CDP URL: dash-encoded IRDI -> canonical base (matches plain IRDI)
+        ("https://api.eclass-cdp.com/0173-1-01-AHX837-002", "0173-1#01-AHX837"),
+        ("http://api.eclass-cdp.com/0173-1-02-AAO677-002", "0173-1#02-AAO677"),
         ("https://example.com/foo#bar", "https://example.com/foo#bar"),  # not IRDI
         ("https://admin-shell.io/x#123", "https://admin-shell.io/x#123"),  # no ICD prefix
         ("", ""),
@@ -33,6 +36,12 @@ def test_irdi_base(value, expected):
 
 def test_irdi_base_collapses_versions():
     assert irdi_base("0173-1#02-AAO677#001") == irdi_base("0173-1#02-AAO677#007")
+
+
+def test_irdi_base_cdp_url_matches_plain_irdi():
+    assert irdi_base("https://api.eclass-cdp.com/0173-1-01-AHX837-002") == irdi_base(
+        "0173-1#01-AHX837#002"
+    )
 
 
 # ---------------------------------------------------------------------------
