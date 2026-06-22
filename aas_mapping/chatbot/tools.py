@@ -43,29 +43,40 @@ class AasqlQueryTool(Tool):
         "request; an AASQL query is generated and executed. Use for content searches over "
         "shells/submodels (by idShort, property values, semanticId, etc.)."
     )
-    args = '{"question": "<natural language>", "target": "shells|submodels|auto"}'
+    args = '{"question": "<the user\'s question, verbatim>"}'
+
+    def _post(self, aasql: dict, target: str) -> dict:
+        url = f"{REPOSITORY_URL}/query/{target}"
+        try:
+            resp = requests.post(url, json=aasql, timeout=30)
+        except Exception as exc:
+            return {"error": f"Repository unreachable: {exc}"}
+        if resp.status_code >= 400:
+            return {"error": f"HTTP {resp.status_code}: {resp.text[:400]}"}
+        return {"results": resp.json().get("result", [])}
 
     def run(self, args: dict) -> dict:
         question = args.get("question", "")
-        target = args.get("target", "auto")
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": question},
         ]
         content, _ = llm_call(MODEL_LARGE, messages)
         aasql = extract_json(content)
-        if target == "auto":
-            target = _detect_target(aasql)
-        url = f"{REPOSITORY_URL}/query/{target}"
-        try:
-            resp = requests.post(url, json=aasql, timeout=30)
-        except Exception as exc:
-            return {"aasql": aasql, "target": target, "error": f"Repository unreachable: {exc}"}
-        if resp.status_code >= 400:
-            return {"aasql": aasql, "target": target,
-                    "error": f"HTTP {resp.status_code}: {resp.text[:400]}"}
-        results = resp.json().get("result", [])
-        shown, total = _truncate(results)
+        # The valid endpoint is determined by the generated query's root ($aas → shells,
+        # else submodels), NOT by any caller hint — a mismatched endpoint returns nothing.
+        target = _detect_target(aasql)
+        out = self._post(aasql, target)
+        # Self-correct: a cross-root query can be valid on the other endpoint, so if the
+        # primary returned 0 (and didn't error), retry the opposite target once.
+        if "error" not in out and not out["results"]:
+            other = "submodels" if target == "shells" else "shells"
+            retry = self._post(aasql, other)
+            if "error" not in retry and retry["results"]:
+                out, target = retry, other
+        if "error" in out:
+            return {"aasql": aasql, "target": target, "error": out["error"]}
+        shown, total = _truncate(out["results"])
         return {"aasql": aasql, "target": target, "count": total, "results": shown}
 
 
@@ -151,6 +162,12 @@ def _agent_tools() -> list:
         AgentTool("count_stats",
                   "Counts of AssetAdministrationShells, Submodels and ConceptDescriptions.",
                   "{}", at.count_stats, []),
+        AgentTool("repo_overview",
+                  "Factual snapshot of the repository for grounding: total counts, the "
+                  "submodel types, the exact list of manufacturers present, and all asset "
+                  "(AAS) idShort tags. Call this for open-ended 'what is in the repo' "
+                  "questions, or to learn the real spellings before searching.",
+                  "{}", at.repo_overview, []),
         AgentTool("list_submodel_types",
                   "Distinct Submodel types (idShort + semanticId) with an instance count each.",
                   "{}", at.list_submodel_types, []),
@@ -174,6 +191,45 @@ def _agent_tools() -> list:
                   "Validate the AAS data against the AAS spec constraints; returns a report.",
                   '{"constraint_ids": ["AASd-002"]}', at.validate_constraints, ["constraint_ids"]),
     ]
+
+
+_repo_context_cache: str | None = None
+
+
+def repo_context_text() -> str:
+    """A compact, factual repository profile injected into the orchestrator prompt so it
+    grounds tool calls in real values. Built once from `repo_overview` and cached;
+    empty string when no Neo4j backend is configured."""
+    global _repo_context_cache
+    if _repo_context_cache is not None:
+        return _repo_context_cache
+    client = get_aas_client()
+    if client is None:
+        _repo_context_cache = ""
+        return _repo_context_cache
+    try:
+        from aas_mapping.aas_neo4j_adapter import agent_tools as at
+        ov = at.repo_overview(client)
+    except Exception as exc:
+        log.warning("repo_overview failed, no repo context: %s", exc)
+        _repo_context_cache = ""
+        return _repo_context_cache
+    c = ov["counts"]
+    types = ", ".join(f"{t['idShort']} ({t['count']})" for t in ov["submodel_types"])
+    mans = ", ".join(ov["manufacturers"][:40])
+    assets = ", ".join(ov["asset_names"][:80])
+    _repo_context_cache = (
+        "REPOSITORY FACTS (live snapshot — use these exact spellings; do not invent):\n"
+        f"- Totals: {c.get('assetAdministrationShells')} AAS, {c.get('submodels')} submodels, "
+        f"{c.get('conceptDescriptions')} concept descriptions.\n"
+        f"- Submodel types (instances): {types}.\n"
+        f"- Manufacturers present: {mans}.\n"
+        f"- Asset (AAS) idShort tags: {assets}.\n"
+        "Manufacturer/value spellings often differ from how a user phrases them "
+        "(e.g. 'Endress+Hauser', 'Samson AG', 'Krohne Messtechnik GmbH'); search with a "
+        "single distinctive token and a substring match, not the full phrase."
+    )
+    return _repo_context_cache
 
 
 def build_registry() -> dict:

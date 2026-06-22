@@ -572,6 +572,25 @@
       transition: background 0.15s;
     }
     .suggestion:hover { background: var(--rwth-blau-10); }
+
+    /* Tool trace (agent steps) */
+    .tool-trace { margin-top: 8px; font-size: 0.78rem; }
+    .tool-trace summary {
+      cursor: pointer;
+      color: #666;
+      font-weight: 600;
+      user-select: none;
+    }
+    .tool-trace summary:hover { color: var(--rwth-blau); }
+    .tool-trace ol { margin: 6px 0 0 18px; padding: 0; }
+    .tool-trace li { margin: 2px 0; }
+    .tool-trace code {
+      background: var(--rwth-blau-10);
+      color: var(--rwth-blau-dk);
+      border-radius: 3px;
+      padding: 0 4px;
+      font-family: "SF Mono", Monaco, "Consolas", monospace;
+    }
   </style>
 </head>
 <body>
@@ -591,7 +610,7 @@
   <div id="workbench">
     <div id="query-pane" class="pane">
       <div class="pane-header">
-        <span>Current AASQL Query</span>
+        <span id="query-pane-label">Current AASQL Query</span>
         <span class="header-meta">
           <span id="endpoint-preview" class="meta-line"></span>
           <span id="timings-line" class="meta-line"></span>
@@ -753,6 +772,9 @@ function appendError(text) {
 const workbench = {
   cm: null,
   target: "submodels",
+  queryKind: null,      // aasql | cypher_read | repo_read | count_stats | ... (drives pane + table)
+  queryText: null,      // executed cypher / REST path when not AASQL
+  lastAasql: null,
   results: [],
   count: 0,
   shown: PAGE_SIZE,
@@ -762,6 +784,28 @@ const workbench = {
   sortDir: 1,
   lastError: null,
   lastTimings: null,
+};
+
+// Result kinds whose rows are AAS objects (rendered with the AAS-aware table);
+// everything else is rendered with the generic key/value table.
+const AAS_KINDS = new Set(
+  ["aasql", "repo_read", "get_identifiable", "get_referable", "abstract_submodel"]);
+function isAasKind() {
+  return !workbench.queryKind || AAS_KINDS.has(workbench.queryKind);
+}
+
+const QUERY_PANE_LABELS = {
+  aasql: "Current AASQL Query",
+  cypher_read: "Cypher Query (read-only)",
+  repo_read: "AAS Repository REST request",
+  count_stats: "Repository statistics",
+  repo_overview: "Repository overview",
+  list_submodel_types: "Submodel types",
+  list_submodel_types_by_semantic_id: "Submodel types by semanticId",
+  abstract_submodel: "Abstract submodel (template)",
+  validate_constraints: "Constraint validation",
+  get_identifiable: "Fetched Identifiable",
+  get_referable: "Fetched Referable",
 };
 
 function initWorkbenchEditor() {
@@ -791,6 +835,9 @@ function detectTargetFromText(txt) {
 }
 
 function updateTargetPreview() {
+  // Only AASQL edits drive the POST /query/<target> preview; for cypher/REST/other
+  // kinds the endpoint preview is set by renderQueryPane and must not be clobbered.
+  if (workbench.queryKind && workbench.queryKind !== "aasql") return;
   const target = detectTargetFromText(workbench.cm.getValue());
   workbench.target = target;
   const badge = document.getElementById("query-target-badge");
@@ -804,6 +851,11 @@ function updateTargetPreview() {
 
 function setWorkbench(data, userMessage) {
   workbench.target = data.target || "submodels";
+  // Fall back to "aasql" when the payload carries an AASQL query but no explicit kind
+  // (e.g. the manual /query path), else null.
+  workbench.queryKind = data.query_kind || (data.aasql ? "aasql" : null);
+  workbench.queryText = data.query_text || null;
+  workbench.lastAasql = data.aasql || null;
   workbench.results = data.results || [];
   workbench.count = data.count || 0;
   workbench.shown = Math.min(PAGE_SIZE, workbench.results.length);
@@ -817,28 +869,63 @@ function setWorkbench(data, userMessage) {
 
   if (userMessage !== undefined) workbench.lastUserMessage = userMessage;
 
-  if (workbench.cm) {
-    workbench.cm.setValue(JSON.stringify(data.aasql, null, 2));
-  }
-
-  const targetBadge = document.getElementById("query-target-badge");
-  if (targetBadge) {
-    targetBadge.textContent = workbench.target;
-    targetBadge.style.display = "inline-block";
-  }
-
   const countBadge = document.getElementById("results-count-badge");
   countBadge.textContent = workbench.count;
   countBadge.style.display = "inline-block";
 
-  const status = document.getElementById("query-status");
-  status.classList.remove("error");
-  status.textContent = data.error ? "Repository error — see panel below" : "";
-
   renderTimings();
   renderErrorPanel();
-  updateTargetPreview();
+  renderQueryPane();
   renderWorkbenchResults();
+}
+
+// Render the query pane (label, editor content/mode, action gating) for the active
+// result kind. Only AASQL is editable/re-runnable (the /query endpoint speaks AASQL);
+// other kinds show a read-only view of what was executed.
+function renderQueryPane() {
+  if (!workbench.cm) return;
+  const cm = workbench.cm;
+  const kind = workbench.queryKind;
+  const editable = (kind === "aasql" || (kind == null && workbench.lastAasql));
+  const label = document.getElementById("query-pane-label");
+  const preview = document.getElementById("endpoint-preview");
+
+  let value = "", mode = "text/plain", lint = false, endpoint = "";
+  if (editable) {
+    value = JSON.stringify(workbench.lastAasql, null, 2);
+    mode = {name: "javascript", json: true};
+    lint = typeof jsonlint !== "undefined";
+    endpoint = `→ POST /query/${workbench.target}`;
+  } else if (kind === "cypher_read") {
+    value = workbench.queryText || "";
+    endpoint = "→ Neo4j read transaction";
+  } else if (kind === "repo_read") {
+    value = "GET " + (workbench.queryText || "");
+    endpoint = "→ AAS Repository REST API";
+  }
+  if (label) label.textContent = QUERY_PANE_LABELS[kind] || "Query";
+  if (preview) preview.textContent = endpoint;
+
+  cm.setOption("lint", lint);
+  cm.setOption("mode", mode);
+  cm.setOption("readOnly", !editable);
+  cm.setValue(value);
+
+  ["btn-run", "btn-format", "btn-minify", "btn-curl"].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.disabled = !editable;
+  });
+
+  const status = document.getElementById("query-status");
+  if (status && !workbench.lastError) {
+    status.classList.remove("error");
+    status.textContent = editable ? ""
+      : (value ? "Read-only view — re-run is available for AASQL queries only."
+               : "No editable query for this result.");
+  } else if (status && workbench.lastError) {
+    status.classList.remove("error");
+    status.textContent = "Repository error — see panel below";
+  }
 }
 
 function renderTimings() {
@@ -847,6 +934,11 @@ function renderTimings() {
   const t = workbench.lastTimings;
   if (!t) { el.textContent = ""; return; }
   const parts = [];
+  // Agent (/chat) timings
+  if (t.llm_ms)         parts.push(`LLM ${t.llm_ms}ms`);
+  if (t.tool_ms)        parts.push(`tools ${t.tool_ms}ms`);
+  if (t.steps)          parts.push(`${t.steps} step${t.steps !== 1 ? "s" : ""}`);
+  // Manual (/query) timings
   if (t.llm_gen_ms)     parts.push(`LLM gen ${t.llm_gen_ms}ms`);
   if (t.repo_ms)        parts.push(`repo ${t.repo_ms}ms`);
   if (t.llm_explain_ms) parts.push(`explain ${t.llm_explain_ms}ms`);
@@ -975,12 +1067,17 @@ function _sortAndFilter(results, columns) {
 
 function renderWorkbenchResults() {
   const host = document.getElementById("results-content");
-  const total = workbench.results.length;
-  if (total === 0) {
+  workbench.filter = document.getElementById("results-filter")?.value || "";
+  if (workbench.results.length === 0) {
     host.innerHTML = `<em style="font-size:0.85rem;color:#888">No results.</em>`;
     return;
   }
-  workbench.filter = document.getElementById("results-filter")?.value || "";
+  if (isAasKind()) renderAasResults(host);
+  else renderGenericResults(host);
+}
+
+function renderAasResults(host) {
+  const total = workbench.results.length;
   const columns = _columnsFor(workbench.target, workbench.results);
   const rowsAll = _sortAndFilter(workbench.results, columns);
   const visible = rowsAll.slice(0, workbench.shown);
@@ -1024,6 +1121,75 @@ function renderWorkbenchResults() {
     </table>
     ${note}`;
 
+  host.querySelectorAll(".result-row").forEach(row => {
+    row.onclick = () => openDetail(parseInt(row.dataset.idx));
+  });
+}
+
+// Generic key/value table for non-AAS result kinds (cypher_read rows, count_stats,
+// list_submodel_types, validate_constraints). Columns = union of row keys.
+function _genericCell(row, k) {
+  const v = (row && typeof row === "object" && !Array.isArray(row)) ? row[k] : row;
+  if (v === null || v === undefined) return "";
+  return (typeof v === "object") ? JSON.stringify(v) : String(v);
+}
+
+function _genericColumns() {
+  const cols = [];
+  workbench.results.forEach(r => {
+    if (r && typeof r === "object" && !Array.isArray(r)) {
+      Object.keys(r).forEach(k => { if (!cols.includes(k)) cols.push(k); });
+    }
+  });
+  return cols.length ? cols : ["value"];  // scalar rows fall back to a single column
+}
+
+function renderGenericResults(host) {
+  const total = workbench.results.length;
+  const columns = _genericColumns();
+  const filter = (workbench.filter || "").toLowerCase();
+
+  let rows = workbench.results.map((r, idx) => ({_idx: idx, _row: r}));
+  if (filter) {
+    rows = rows.filter(({_row}) =>
+      columns.some(c => _genericCell(_row, c).toLowerCase().includes(filter)));
+  }
+  if (workbench.sortKey) {
+    const k = workbench.sortKey, dir = workbench.sortDir;
+    rows.sort((a, b) => {
+      const av = _genericCell(a._row, k).toLowerCase();
+      const bv = _genericCell(b._row, k).toLowerCase();
+      return av < bv ? -1 * dir : av > bv ? 1 * dir : 0;
+    });
+  }
+  const filtered = rows.length;
+  const visible = rows.slice(0, workbench.shown);
+
+  const headers = columns.map(c => {
+    const arrow = workbench.sortKey === c ? (workbench.sortDir === 1 ? "▲" : "▼") : "";
+    return `<th class="sortable" onclick="toggleSort('${c}')">${escapeHtml(c)}<span class="sort-arrow">${arrow}</span></th>`;
+  }).join("");
+
+  const body = visible.map(({_idx, _row}) => {
+    const tds = columns.map(c => {
+      const raw = _genericCell(_row, c) || "—";
+      return `<td>${escapeHtml(raw)}</td>`;
+    }).join("");
+    return `<tr class="result-row" data-idx="${_idx}">${tds}</tr>`;
+  }).join("");
+
+  let note = "";
+  if (workbench.shown < filtered) {
+    const next = Math.min(PAGE_SIZE, filtered - workbench.shown);
+    note = `<div class="truncated-note">
+              <span>Showing ${Math.min(workbench.shown, filtered)} of ${filtered}${workbench.filter ? ` filtered (of ${total})` : ""}.</span>
+              <button class="btn-loadmore" onclick="loadMoreWorkbench()">Load ${next} more</button>
+            </div>`;
+  } else if (filtered !== total) {
+    note = `<div class="truncated-note"><span>Showing ${filtered} filtered (of ${total}).</span></div>`;
+  }
+
+  host.innerHTML = `<table><thead><tr>${headers}</tr></thead><tbody>${body}</tbody></table>${note}`;
   host.querySelectorAll(".result-row").forEach(row => {
     row.onclick = () => openDetail(parseInt(row.dataset.idx));
   });
@@ -1130,6 +1296,17 @@ async function runWorkbenchQuery() {
   }
 }
 
+function traceHtml(trace) {
+  // Collapsible list of the agent's tool calls (action + args) for transparency.
+  if (!trace || !trace.length) return "";
+  const items = trace.map(t => {
+    const action = escapeHtml(t.action || "?");
+    const args = escapeHtml(JSON.stringify(t.args || {}));
+    return `<li><code>${action}</code> <span style="color:#888">${args}</span></li>`;
+  }).join("");
+  return `<details class="tool-trace"><summary>Tool steps (${trace.length})</summary><ol>${items}</ol></details>`;
+}
+
 function appendBotExplanation(md, snapshotId) {
   const msg = document.createElement("div");
   msg.className = "msg bot";
@@ -1149,6 +1326,7 @@ function saveSnapshot(data, userMessage) {
   snapshots.set(id, {
     aasql: data.aasql, target: data.target, results: data.results || [],
     count: data.count || 0, error: data.error || null, timings: data.timings || null,
+    query_kind: data.query_kind || null, query_text: data.query_text || null,
     userMessage,
   });
   return id;
@@ -1160,6 +1338,7 @@ function restoreSnapshot(id) {
   setWorkbench({
     aasql: s.aasql, target: s.target, results: s.results,
     count: s.count, error: s.error, timings: s.timings,
+    query_kind: s.query_kind, query_text: s.query_text,
   }, s.userMessage);
 }
 
@@ -1311,9 +1490,14 @@ async function sendMessage() {
       const sid = saveSnapshot(data, text);
       bubbleEl.innerHTML = `<div class="bubble restorable" data-snapshot="${sid}">
                               <div class="explanation">${marked.parse(data.explanation || "")}</div>
+                              ${traceHtml(data.tool_trace)}
                               <div class="restore-hint">▷ Click to restore this query</div>
                             </div>`;
-      bubbleEl.querySelector(".bubble").onclick = () => restoreSnapshot(sid);
+      // Restore only when clicking the bubble itself — not the trace <details>.
+      bubbleEl.querySelector(".bubble").onclick = (ev) => {
+        if (ev.target.closest(".tool-trace")) return;
+        restoreSnapshot(sid);
+      };
       scroll();
     }
   } catch (err) {

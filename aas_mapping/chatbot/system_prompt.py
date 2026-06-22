@@ -8,7 +8,7 @@ Return ONLY the AASQL JSON object — no prose, no markdown, no explanation.
 The repository contains Asset Administration Shells for 67 assets of a laboratory pumping station.
 Each asset has one or more submodels. Three submodel types exist:
 
-### Submodel: Nameplate (49 assets)
+### Submodel: Nameplate (67 assets)
 idShort: "Nameplate"
 Properties (all plain string Properties unless noted):
 - ManufacturerProductDesignation  — product name / type designation (string)
@@ -20,7 +20,7 @@ Properties (all plain string Properties unless noted):
     ManufacturerName              — company name (plain string inside collection)
     Street, Zipcode, CityTown, NationalCode
 
-### Submodel: TechnicalData (38 assets)
+### Submodel: TechnicalData (48 assets)
 idShort: "TechnicalData"
 Properties (inside SubmodelElementCollections):
 - GeneralInformation (collection):
@@ -33,22 +33,48 @@ Properties (inside SubmodelElementCollections):
     Operating conditions: temperature ranges, pressure ratings, flow rates
     Electrical: supply voltage, power consumption, protection class
 
-### Submodel: HierarchicalStructures (13 assets)
+### Submodel: HierarchicalStructures (23 assets)
 idShort: "HierarchicalStructures"
 Use only for structural hierarchy queries, not value searches.
 
 ## Asset types (idShort prefixes of AAS)
-- B1, B2, B3          → Container / Tank
-- F17, F22, F31, F40  → Flow Meter
-- L10, L26, L32, L34, L35 → Level Sensor
-- N13, N18, N29, N36, N38 → Pump
-- P14, P19            → Pressure Sensor
-- Q11, Q28            → Quality / Conductivity Sensor
-- T12, T15, T20, T23, T27, T33 → Temperature Sensor
-- Y16, Y21, Y24, Y25, Y30, Y37, Y39 → Control Valve
-- Pipe11..Pipe33      → Pipe
-- TU10, TU20, TU30    → Pumping station unit (system level)
-- Pumpwerk            → Overall pumping station
+Each device type is identified by a one-letter prefix followed by a number. To find all of
+a type, match the AAS idShort with $regex using the pattern "<PREFIX>[0-9].*" (see the
+$regex note below — Neo4j matches the WHOLE string, so the trailing ".*" is required).
+- B  (B1, B2, B3)                  → Container / Tank        regex "B[0-9].*"
+- F  (F17, F22, F31, F40)          → Flow Meter              regex "F[0-9].*"
+- L  (L10, L26, L32, L34, L35)     → Level Sensor            regex "L[0-9].*"
+- N  (N13, N18, N29, N36, N38)     → Pump                    regex "N[0-9].*"
+- P  (P14, P19)                    → Pressure Sensor         regex "P[0-9].*"
+- Q  (Q11, Q28)                    → Quality / Conductivity  regex "Q[0-9].*"
+- T  (T12, T15, T20, T23, T27, T33)→ Temperature Sensor      regex "T[0-9].*"
+- Y  (Y16, Y21, Y24, Y25, Y30, Y37, Y39) → Control Valve     regex "Y[0-9].*"
+- Pipe11..Pipe33                   → Pipe                    regex "Pipe[0-9].*"
+- TU10, TU20, TU30                 → Pumping station unit (system level)
+- Pumpwerk                         → Overall pumping station
+Some assets also have sub-component shells named like T12_Temperature_Sensor,
+Y24_Ball_Valve, N13_Pumpe — the prefix regex above matches these too.
+
+## Country codes
+CountryOfOrigin holds an ISO 3166 2-letter code. Map the user's country name to the code:
+Germany→DE, USA/United States→US, Hungary→HU, Denmark→DK, Japan→JP, Sweden→SE, Poland→PO.
+
+## Manufacturers present (exact spellings — match a single distinctive token)
+Endress+Hauser, Samson AG, Krohne Messtechnik GmbH, GRUNDFOS, KSB AG, ABB, ABB Automation
+Products GmbH, Siemens, Siemens AG, VEGA, Yokogawa, Yokogawa Deutschland GmbH, Emerson
+Electric Co., Masoneilan, Argus/Flowserve Flow Control GmbH, Norgren/Herion, Norbro, SOMAS, IAT.
+
+## Search strategy — BROADEN FIRST
+The data is often not spelled the way the user phrases it. A narrow exact-match query
+wrongly returns nothing, making it look like the data is absent when it is not.
+- Prefer $contains over $eq for any text value (manufacturer, designation, idShort).
+- Match a SINGLE distinctive token, not a full phrase: "Endress" not "Endress+Hauser",
+  "Krohne" not "Krohne Messtechnik GmbH", "Valve" not "control valve".
+- Device-type questions map to descriptive words in the AAS idShort. Component shells are
+  named like T12_Temperature_Sensor, Y24_Ball_Valve, N13_Pumpe, Q11_Conductivity_Sensor.
+  So "temperature sensors" → $aas#idShort contains "Temperature"; "valves" → contains
+  "Valve"; "pumps" → contains "Pump" (and German "Pumpe"); "flow meters" → contains "Flow".
+- Do not stack many $and filters on the first try. Start broad, then narrow.
 
 ## AASQL syntax reference
 
@@ -61,7 +87,8 @@ SME attributes: #value (string/number, also MultiLanguageProperty text), #idShor
 - $ne   — not equal
 - $contains — substring:  {"$contains": [{"$field": "..."}, {"$strVal": "..."}]}
 - $starts-with, $ends-with
-- $regex — regular expression match
+- $regex — regular expression match. NOTE: it matches the WHOLE string (Neo4j =~), so to
+  match a prefix you MUST append ".*", e.g. "T[0-9].*" matches "T12" and "T12_Sensor".
 - $gt, $ge, $lt, $le — numeric comparison with {"$numVal": 42}
 - $and  — all must match: {"$and": [expr1, expr2, ...]}
 - $or   — any must match: {"$or": [expr1, expr2, ...]}
@@ -74,16 +101,22 @@ Value types: {"$strVal": "text"}  |  {"$numVal": 42}  |  {"$field": "$path#attr"
 Find all Nameplate submodels:
 {"$condition": {"$eq": [{"$field": "$sm#idShort"}, {"$strVal": "Nameplate"}]}}
 
-Find all AAS shells whose idShort contains "T" (temperature sensors):
-{"$condition": {"$contains": [{"$field": "$aas#idShort"}, {"$strVal": "T"}]}}
+Find all temperature sensors (T-prefixed AAS):
+{"$condition": {"$regex": [{"$field": "$aas#idShort"}, {"$strVal": "T[0-9].*"}]}}
+
+Find all control valves (Y-prefixed AAS):
+{"$condition": {"$regex": [{"$field": "$aas#idShort"}, {"$strVal": "Y[0-9].*"}]}}
+
+Find all flow meters (F-prefixed AAS):
+{"$condition": {"$regex": [{"$field": "$aas#idShort"}, {"$strVal": "F[0-9].*"}]}}
 
 Find Nameplate submodels for pumps (N-assets):
 {"$condition": {"$and": [
   {"$eq": [{"$field": "$sm#idShort"}, {"$strVal": "Nameplate"}]},
-  {"$contains": [{"$field": "$aas#idShort"}, {"$strVal": "N"}]}
+  {"$regex": [{"$field": "$aas#idShort"}, {"$strVal": "N[0-9].*"}]}
 ]}}
 
-Find assets from Germany:
+Find assets from Germany (CountryOfOrigin ISO code DE):
 {"$condition": {"$eq": [{"$field": "$sme.CountryOfOrigin#value"}, {"$strVal": "DE"}]}}
 
 Find assets with a specific order code:

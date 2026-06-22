@@ -33,9 +33,39 @@ _LIST_TYPES_BY_SEM = (
 )
 
 
+_DISTINCT_MANUFACTURERS = (
+    "MATCH (n:Referable) WHERE n.idShort = 'ManufacturerName' "
+    "WITH trim(coalesce(n.value_text[0], n.value)) AS m "
+    "WHERE m IS NOT NULL AND m <> '' AND toLower(m) <> 'unknown' "
+    "RETURN DISTINCT m AS manufacturer ORDER BY manufacturer"
+)
+_DISTINCT_ASSET_NAMES = (
+    "MATCH (a:AssetAdministrationShell) RETURN a.idShort AS idShort ORDER BY idShort"
+)
+
+
 def count_stats(client) -> Dict[str, int]:
     """Counts of AssetAdministrationShells, Submodels and ConceptDescriptions."""
     return client.count_identifiables_by_type()
+
+
+def repo_overview(client) -> Dict[str, Any]:
+    """A factual snapshot of the repository: counts, submodel types, manufacturers, assets.
+
+    Grounds an agent so it queries with real values (manufacturer names, asset tags,
+    submodel idShorts/semanticIds) instead of guessing, and answers "what is in here?".
+    """
+    counts = count_stats(client)
+    types = list_submodel_types(client)["types"]
+    manufacturers = [r["manufacturer"] for r in (client.execute_clause(_DISTINCT_MANUFACTURERS) or [])]
+    asset_names = [r["idShort"] for r in (client.execute_clause(_DISTINCT_ASSET_NAMES) or [])
+                   if r.get("idShort")]
+    return {
+        "counts": counts,
+        "submodel_types": types,
+        "manufacturers": manufacturers,
+        "asset_names": asset_names,
+    }
 
 
 def get_identifiable(client, identifier: str) -> Dict[str, Any]:

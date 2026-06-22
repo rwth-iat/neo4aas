@@ -7,16 +7,25 @@ import time
 from config import llm_client
 
 
-def llm_call(model: str, messages: list, max_tokens: int = 1024) -> tuple[str, int]:
-    """Single LLM call. Returns (content, elapsed_ms)."""
+def llm_call(model: str, messages: list, max_tokens: int = 1024, retries: int = 2) -> tuple[str, int]:
+    """Single LLM call. Returns (content, elapsed_ms).
+
+    The KIConnect provider intermittently returns ``finish_reason=stop`` with a null
+    content for the same request; retry a few times until we get non-empty content.
+    """
     t0 = time.perf_counter()
-    response = llm_client.chat.completions.create(
-        model=model,
-        max_tokens=max_tokens,
-        messages=messages,
-    )
-    elapsed_ms = int((time.perf_counter() - t0) * 1000)
-    return response.choices[0].message.content, elapsed_ms
+    content = ""
+    for _ in range(retries + 1):
+        response = llm_client.chat.completions.create(
+            model=model,
+            max_tokens=max_tokens,
+            temperature=0,  # deterministic tool decisions and AASQL generation
+            messages=messages,
+        )
+        content = response.choices[0].message.content or ""
+        if content.strip():
+            break
+    return content, int((time.perf_counter() - t0) * 1000)
 
 
 def extract_json(text: str) -> dict:

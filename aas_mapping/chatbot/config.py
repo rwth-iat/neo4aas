@@ -14,7 +14,7 @@ REPOSITORY_URL = os.getenv("REPOSITORY_URL", "http://localhost:8081/api/v3.1")
 KICONNECT_BASE_URL = os.getenv("KICONNECT_BASE_URL", "https://chat.kiconnect.nrw/api/v1")
 KICONNECT_API_KEY = os.getenv("KICONNECT_API_KEY", "").strip()
 
-MODEL_LARGE = os.getenv("MODEL_LARGE", "gpt-oss-120b")
+MODEL_LARGE = os.getenv("MODEL_LARGE", "mistralai-mistral-small-4-119b")
 MODEL_SMALL = os.getenv("MODEL_SMALL", "mistralai-mistral-small-4-119b")
 
 # Neo4j is optional: when NEO4J_URI is set, the backend is our neo4aas store and the
