@@ -74,6 +74,18 @@ class Neo4jObjectStore(AbstractObjectStore[Identifier, Identifiable]):
         for record in result:
             yield self.get_identifiable(record["id"])
 
+    def iter_by_label(self, label: str) -> Iterator[Identifiable]:
+        """Lazily yield Identifiables carrying a given Neo4j label (e.g. ``"Submodel"``).
+
+        Only the ids are fetched up front; each full object is built per-yield, so a
+        paginated consumer (``itertools.islice``) materializes just one page. Used by
+        ``Neo4jWSGIApp`` to list a single type without iterating the whole store.
+        ``label`` is an internal constant (a model type name), never user input.
+        """
+        clause = f"MATCH (r:`{label}`) RETURN r.id AS id"
+        for record in self._client.execute_clause(clause):
+            yield self.get_identifiable(record["id"])
+
     def query(self, aasql_body: str, return_var: str) -> list[dict]:
         """Execute an AASQL query and return matching serialized AAS objects.
 

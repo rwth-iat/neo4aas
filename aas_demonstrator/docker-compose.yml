@@ -54,7 +54,10 @@ services:
     volumes:
       - ../archive/AAS:/input:ro
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; urllib.request.urlopen('http://localhost:80/api/v3.1/shells'); \" || exit 1"]
+      # Use the cheap /description endpoint, NOT /shells: listing shells iterates the whole
+      # object store (and with ECLASS ConceptDescriptions loaded that materializes 100k+
+      # objects, OOM-killing the worker on every poll).
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; urllib.request.urlopen('http://localhost:80/api/v3.1/description'); \" || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 12
