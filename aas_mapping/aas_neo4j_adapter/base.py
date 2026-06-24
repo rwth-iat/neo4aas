@@ -25,6 +25,14 @@ class Neo4jModelConfig:
     all_list_item_relationships_have_index: bool
     list_item_relationships_with_index: Dict[str, List[str]]
 
+    # Deduplicated types that are MERGEd on their Identifiable `id` instead of their content
+    # `hash` (first-content-wins). Use for a globally-identified Identifiable that some sources
+    # re-emit with differing content under the same id — e.g. a ConceptDescription whose IRDI
+    # recurs across files with varying definitions: hash-merge would create a second node with a
+    # duplicate id and violate the id-uniqueness constraint. Must be a subset of
+    # `deduplicated_object_types`.
+    deduplicated_by_id: Iterable[str] = ()
+
 EMPTY_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
     default_optimization_clauses=[],
     deduplicated_object_types=[],

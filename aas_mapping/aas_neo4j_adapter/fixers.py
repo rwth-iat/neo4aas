@@ -15,6 +15,7 @@ underscore locale form, which basyx's strict reader rejects, breaking read-back.
 """
 
 import logging
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Callable
@@ -70,8 +71,122 @@ class LangStringFixer(AASFixer):
         return count
 
 
+class NumericValueTypeFixer(AASFixer):
+    """Relax a numeric ``valueType`` whose ``value`` is not actually a number.
+
+    Some source data (e.g. Phoenix Contact JSON) declares ``valueType: xs:float``
+    but stores a stringified JSON array such as
+    ``"[{\"level\":\"max\",\"value\":0.2},{\"level\":\"min\",\"value\":1.5}]"`` — a
+    min/max range smuggled into a scalar Property. basyx then fails to coerce the
+    string to a float and the whole file is rejected. Switching such a Property's
+    ``valueType`` to ``xs:string`` keeps the value (as text) and lets the file parse.
+    """
+
+    name = "numeric-value-type-coerce"
+
+    #: xs numeric primitives whose lexical form must parse as a Python float.
+    _NUMERIC = {
+        "xs:float", "xs:double", "xs:decimal", "xs:integer", "xs:int", "xs:long",
+        "xs:short", "xs:byte", "xs:unsignedInt", "xs:unsignedLong", "xs:unsignedShort",
+        "xs:unsignedByte", "xs:nonNegativeInteger", "xs:positiveInteger",
+        "xs:nonPositiveInteger", "xs:negativeInteger",
+    }
+
+    def fix(self, data: dict) -> int:
+        count = 0
+
+        def visit(node: dict) -> None:
+            nonlocal count
+            value = node.get("value")
+            if node.get("valueType") not in self._NUMERIC or not isinstance(value, str) or value == "":
+                return
+            try:
+                float(value)
+            except ValueError:
+                node["valueType"] = "xs:string"
+                count += 1
+
+        _walk(data, visit)
+        return count
+
+
+class IdShortFixer(AASFixer):
+    """Sanitize ``idShort`` to the characters AAS allows (Constraint AASd-002).
+
+    Some source data (e.g. ABB nameplates) uses spaces or symbols in an idShort like
+    ``"ABB_PMGA11* Control Unit_310320262206"``. basyx's strict reader rejects these on
+    read-back (``AASd-002``), which breaks reconstruction of the whole object — and, in a
+    Repository, the entire shells/submodels listing. Illegal characters are replaced with
+    ``_`` (the allowed set is letters, digits, ``_`` and ``-``).
+
+    Note: an idShort referenced by a ModelReference *idShort path* (a key ``value``) is not
+    rewritten in lockstep, so such a reference could desync. The supplier data here references
+    submodels by id and semantics by external IRDI, not by idShort path, so this is safe in
+    practice; revisit if idShort-path references appear.
+    """
+
+    name = "idshort-aasd002"
+
+    _ILLEGAL = re.compile(r"[^A-Za-z0-9_-]")
+
+    def fix(self, data: dict) -> int:
+        count = 0
+
+        def visit(node: dict) -> None:
+            nonlocal count
+            value = node.get("idShort")
+            if isinstance(value, str):
+                fixed = self._ILLEGAL.sub("_", value)
+                if fixed != value:
+                    node["idShort"] = fixed
+                    count += 1
+
+        _walk(data, visit)
+        return count
+
+
+class EmptyLangStringFixer(AASFixer):
+    """Drop LangString entries whose ``text`` is empty (or missing).
+
+    A LangString (``{"language": "..", "text": ".."}`` in description / displayName /
+    MultiLanguageProperty value) must carry non-empty text: basyx's ``MultiLanguageTextType``
+    enforces a minimum length of 1, so an empty-text entry makes read-back raise and breaks
+    reconstruction of the whole object (e.g. a Repository ``/submodels`` page 500s). Such an
+    entry conveys nothing, so it is removed from its containing list; a list left empty is
+    valid (the field is optional).
+    """
+
+    name = "empty-langstring"
+
+    def fix(self, data: dict) -> int:
+        count = 0
+
+        def is_empty_langstring(item: Any) -> bool:
+            return isinstance(item, dict) and "language" in item and not item.get("text")
+
+        def clean(node: Any) -> None:
+            nonlocal count
+            if isinstance(node, dict):
+                for value in node.values():
+                    clean(value)
+            elif isinstance(node, list):
+                kept = []
+                for item in node:
+                    if is_empty_langstring(item):
+                        count += 1
+                        continue
+                    clean(item)
+                    kept.append(item)
+                node[:] = kept
+
+        clean(data)
+        return count
+
+
 # Registry applied by apply_fixers(). Append new fixers here.
-DEFAULT_FIXERS: list[AASFixer] = [LangStringFixer()]
+DEFAULT_FIXERS: list[AASFixer] = [
+    LangStringFixer(), NumericValueTypeFixer(), IdShortFixer(), EmptyLangStringFixer(),
+]
 
 
 @dataclass

@@ -303,6 +303,26 @@ def _convert_field(field: Field, mapping: dict[str, int]) -> Tuple[str, str, boo
     return where_part, match_part, isList
 
 
+def _apply_cast(cast_fn, inner: Tuple[str, str, bool], mapping: dict[str, int]) -> Tuple[str, str, bool]:
+    """Apply a cast/extractor (``cast_fn(operand_expr) -> cypher``) to a value.
+
+    A scalar inner is cast directly. A **list-valued** inner (e.g. ``#value``, which always
+    compiles to ``coalesce(value_text, [value])`` because the element type is unknown at
+    compile time — a Property's scalar shows up as a 1-element list) must be cast *per element*
+    via a list comprehension, keeping the result list-valued so ``_convert_expression`` still
+    wraps the comparison in ``any(...)``. Casting the list as a whole (``toFloat(<list>)``)
+    yields null and never matches — the bug this fixes for numeric/temporal thresholds on a
+    Property ``#value``.
+    """
+    inner_expr, inner_match, inner_is_list = inner
+    if inner_is_list:
+        idx = mapping.get("_castvar", 0)
+        mapping["_castvar"] = idx + 1
+        x = f"c{idx}"
+        return f"[{x} IN {inner_expr} | {cast_fn(x)}]", inner_match, True
+    return cast_fn(inner_expr), inner_match, False
+
+
 def _convert_value(value: Value, mapping: dict[str, int]) -> Tuple[str, str, bool]:
     """
     Convert an AST Value node to a Cypher query string and associated fields.
@@ -329,13 +349,17 @@ def _convert_value(value: Value, mapping: dict[str, int]) -> Tuple[str, str, boo
             return _convert_field(value, mapping)
         case HexCast():
             inner = _convert_value(value.inner, mapping)
-            return f"'16#' + apoc.text.format('%X', [toInteger({inner[0]})])", inner[1], False
+            return _apply_cast(
+                lambda x: f"'16#' + apoc.text.format('%X', [toInteger({x})])", inner, mapping
+            )
         case StrCast() | NumCast() | BoolCast() | DateTimeCast() | TimeCast():
             inner = _convert_value(value.inner, mapping)
-            return f"{value.get_operator()}({inner[0]})", inner[1], False
+            op = value.get_operator()
+            return _apply_cast(lambda x: f"{op}({x})", inner, mapping)
         case Year() | Month() | DayOfMonth() | DayOfWeek():
             inner = _convert_value(value.inner, mapping)
-            return f"{inner[0]}.{value.get_operator()}", inner[1], False
+            op = value.get_operator()
+            return _apply_cast(lambda x: f"{x}.{op}", inner, mapping)
         case StringValue() | NumberValue() | BooleanValue():
             return value.value if isinstance(value.value, (int, float, bool)) else f"'{_escape(value.value)}'", "", False
         case HexLiteral():
@@ -489,7 +513,13 @@ def converter(ast: Condition, target: Optional[str] = None, model_config=None) -
 
     cypher = "MATCH " + "\nMATCH ".join(combined_matches)
     cypher += "\nWHERE " + " AND ".join(combined_where)
-    cypher += f"\nRETURN {return_var}"
+    # DISTINCT: an AASQL find-query returns a *set* of matching objects. A traversal can
+    # bind the same returned node more than once — the cross-root :references bridge
+    # multiplies an AAS by each of its matching submodels, and a recursive $sme match
+    # binds a submodel once per matching descendant element — so without DISTINCT the same
+    # shell/submodel is emitted several times (e.g. a manufacturer present in both the
+    # Nameplate and TechnicalData submodels would return its AAS twice).
+    cypher += f"\nRETURN DISTINCT {return_var}"
     return cypher
 
 

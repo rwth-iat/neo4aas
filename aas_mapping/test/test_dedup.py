@@ -104,3 +104,54 @@ def test_distinct_references_not_merged(aas_client, neo4j_params):
 
     assert _count_reference(aas_client, ["0173-A"]) == 1
     assert _count_reference(aas_client, ["0173-B"]) == 1
+
+
+def _count_cd(client, cd_id: str) -> int:
+    clause = "MATCH (c:ConceptDescription) WHERE c.id = $id RETURN count(c) AS c"
+    with client.driver.session() as session:
+        return session.run(clause, id=cd_id).single()["c"]
+
+
+def _cd_displayname(client, cd_id: str):
+    clause = "MATCH (c:ConceptDescription) WHERE c.id = $id RETURN c.displayName_text AS dn"
+    with client.driver.session() as session:
+        return session.run(clause, id=cd_id).single()["dn"]
+
+
+def _concept_description(cd_id: str, name: str) -> dict:
+    return {
+        "modelType": "ConceptDescription",
+        "id": cd_id,
+        "displayName": [{"language": "en", "text": name}],
+    }
+
+
+def test_concept_description_deduplicated_by_id_not_hash(aas_client):
+    """Same IRDI with *different* content must collapse to one node (first wins), not
+    create a second node that violates the Identifiable id-uniqueness constraint."""
+    cd_id = "0173-1#02-AAO134#002"
+    env1 = {"assetAdministrationShells": [], "submodels": [],
+            "conceptDescriptions": [_concept_description(cd_id, "First")]}
+    env2 = {"assetAdministrationShells": [], "submodels": [],
+            "conceptDescriptions": [_concept_description(cd_id, "Second")]}
+
+    aas_client.upload_json(env1)
+    aas_client.upload_json(env2)  # must not raise IndexEntryConflict on the unique id
+
+    assert _count_cd(aas_client, cd_id) == 1
+    assert _cd_displayname(aas_client, cd_id) == ["First"]  # first-content-wins
+
+
+def test_concept_description_dedup_by_id_across_clients(aas_client, neo4j_params):
+    """Cross-client (empty in-memory map): the DB-level MERGE-on-id must still collapse.
+    Uses upload_json (the bulk path, no existence guard), as the repository loader does."""
+    cd_id = "0173-1#02-ZZZ999#001"
+    aas_client.upload_json({"assetAdministrationShells": [], "submodels": [],
+                            "conceptDescriptions": [_concept_description(cd_id, "First")]})
+    client2 = _second_client(neo4j_params)
+    try:
+        client2.upload_json({"assetAdministrationShells": [], "submodels": [],
+                             "conceptDescriptions": [_concept_description(cd_id, "Second")]})
+    finally:
+        client2.driver.close()
+    assert _count_cd(aas_client, cd_id) == 1

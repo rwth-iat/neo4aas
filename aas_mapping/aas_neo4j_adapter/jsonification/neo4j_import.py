@@ -93,16 +93,37 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
 
         RETURN elementId(n) AS internal_id, nodeProperties.uid AS uid
         """
+        # MERGE on `id` (not hash) for types in deduplicated_by_id: a globally-identified
+        # Identifiable (e.g. ConceptDescription) re-emitted with differing content under the
+        # same id collapses to one node (first-content-wins via empty onMatch), instead of
+        # producing a second node that violates the id-uniqueness constraint.
+        merge_by_id_query = """
+        UNWIND keys($data) AS labelsString
 
-        # Split into MERGE-by-hash (deduplicated, have a `hash`) and plain CREATE.
+        WITH split(labelsString, ",") AS labels, $data[labelsString] AS nodesProperties
+
+        UNWIND nodesProperties AS nodeProperties
+        CALL apoc.merge.node(labels, {id: nodeProperties.id}, nodeProperties, {}) YIELD node AS n
+
+        RETURN elementId(n) AS internal_id, nodeProperties.uid AS uid
+        """
+
+        dedup_by_id = set(self.model_config.deduplicated_by_id)
+
+        # Split into MERGE-by-id (dedup-by-id types), MERGE-by-hash (other dedup types, have a
+        # `hash`) and plain CREATE.
         merge_data: Dict[str, List[Dict]] = {}
+        merge_by_id_data: Dict[str, List[Dict]] = {}
         create_data: Dict[str, List[Dict]] = {}
         for label_tuple, node_list in grouped_nodes.items():
             key = ",".join(label_tuple)
             dedup = [n for n in node_list if "hash" in n]
             plain = [n for n in node_list if "hash" not in n]
             if dedup:
-                merge_data[key] = dedup
+                if dedup_by_id.intersection(label_tuple):
+                    merge_by_id_data[key] = dedup
+                else:
+                    merge_data[key] = dedup
             if plain:
                 create_data[key] = plain
 
@@ -112,6 +133,9 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
                 uid_to_internal_id[record['uid']] = record['internal_id']
         if merge_data:
             for record in session.run(merge_nodes_query, data=merge_data):
+                uid_to_internal_id[record['uid']] = record['internal_id']
+        if merge_by_id_data:
+            for record in session.run(merge_by_id_query, data=merge_by_id_data):
                 uid_to_internal_id[record['uid']] = record['internal_id']
 
         return uid_to_internal_id
@@ -158,25 +182,31 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         return created_rels
 
     def _deduplicate_nodes(self, grouped_nodes: dict[tuple[str], list[dict]]):
+        dedup_by_id = set(self.model_config.deduplicated_by_id)
         for label_tuple, nodes in grouped_nodes.items():
             # Check if any of the labels in this tuple should be deduplicated
             if not any(lbl in self.model_config.deduplicated_object_types for lbl in label_tuple):
                 continue
 
+            # Dedup-by-id types collapse on their Identifiable id (first-content-wins) so two
+            # nodes that share an id but differ in content don't both survive to creation; the
+            # rest dedup on content hash. The hash is still assigned (backs the hash index).
+            by_id = bool(dedup_by_id.intersection(label_tuple))
             filtered_nodes = []
             for node in nodes:
                 # Deterministic JSON hash from properties
                 node_copy = {k: v for k, v in node.items() if k != "uid"}
                 hash_value = hashlib.sha256(json.dumps(node_copy, sort_keys=True).encode()).hexdigest()
+                dedup_key = node["id"] if by_id else hash_value
 
-                if hash_value in self.deduplicated_nodes:
+                if dedup_key in self.deduplicated_nodes:
                     # This node already exists (deduplicate)
-                    existing_uid = self.deduplicated_nodes[hash_value]
+                    existing_uid = self.deduplicated_nodes[dedup_key]
                     self.deduplicated_to_existing_uid_map[node["uid"]] = existing_uid
                 else:
                     node["hash"] = hash_value
                     # First time we see this node -> keep it
-                    self.deduplicated_nodes[hash_value] = node["uid"]
+                    self.deduplicated_nodes[dedup_key] = node["uid"]
                     filtered_nodes.append(node)
 
             # Replace node list with deduplicated version

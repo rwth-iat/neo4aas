@@ -8,6 +8,9 @@ import pytest
 
 from aas_mapping.aas_neo4j_adapter.fixers import (
     LangStringFixer,
+    NumericValueTypeFixer,
+    IdShortFixer,
+    EmptyLangStringFixer,
     apply_fixers,
     DEFAULT_FIXERS,
 )
@@ -62,6 +65,91 @@ def test_apply_fixers_reports_counts():
 
 def test_default_fixers_includes_language_fixer():
     assert any(isinstance(f, LangStringFixer) for f in DEFAULT_FIXERS)
+
+
+def test_numeric_value_type_fixer_relaxes_non_numeric_string():
+    # A float Property whose value is a stringified range (Phoenix Contact shape).
+    data = {
+        "submodelElements": [
+            {
+                "modelType": "Property",
+                "idShort": "CrossSection",
+                "valueType": "xs:float",
+                "value": '[{"level":"max","value":0.2},{"level":"min","value":1.5}]',
+            },
+            {"modelType": "Property", "valueType": "xs:float", "value": "0.2"},  # valid
+            {"modelType": "Property", "valueType": "xs:int", "value": "12"},  # valid
+            {"modelType": "Property", "valueType": "xs:string", "value": "[{...}]"},  # not numeric
+        ]
+    }
+    n = NumericValueTypeFixer().fix(data)
+    assert n == 1
+    smes = data["submodelElements"]
+    assert smes[0]["valueType"] == "xs:string"  # coerced
+    assert smes[0]["value"] == '[{"level":"max","value":0.2},{"level":"min","value":1.5}]'  # preserved
+    assert smes[1]["valueType"] == "xs:float"  # untouched, parses
+    assert smes[2]["valueType"] == "xs:int"  # untouched, parses
+    assert smes[3]["valueType"] == "xs:string"  # untouched, already string
+
+
+def test_numeric_value_type_fixer_in_default_fixers():
+    assert any(isinstance(f, NumericValueTypeFixer) for f in DEFAULT_FIXERS)
+
+
+def test_idshort_fixer_sanitizes_illegal_chars():
+    data = {
+        "assetAdministrationShells": [
+            {"modelType": "AssetAdministrationShell", "idShort": "ABB_PMGA11* Control Unit_3103"},
+        ],
+        "submodels": [
+            {"modelType": "Submodel", "idShort": "Already_Valid-1"},  # untouched
+            {"modelType": "Submodel"},  # no idShort — skipped
+        ],
+    }
+    n = IdShortFixer().fix(data)
+    assert n == 1
+    assert data["assetAdministrationShells"][0]["idShort"] == "ABB_PMGA11__Control_Unit_3103"
+    assert data["submodels"][0]["idShort"] == "Already_Valid-1"  # legal chars kept
+
+
+def test_idshort_fixer_in_default_fixers():
+    assert any(isinstance(f, IdShortFixer) for f in DEFAULT_FIXERS)
+
+
+def test_empty_langstring_fixer_drops_empty_text():
+    data = {
+        "submodels": [
+            {
+                "modelType": "Submodel",
+                "description": [
+                    {"language": "en", "text": ""},      # dropped
+                    {"language": "de", "text": "Hallo"},  # kept
+                ],
+                "submodelElements": [
+                    {
+                        "modelType": "MultiLanguageProperty",
+                        "idShort": "Name",
+                        "value": [{"language": "en", "text": "x"}],  # kept
+                    },
+                    {
+                        "modelType": "MultiLanguageProperty",
+                        "idShort": "Empty",
+                        "value": [{"language": "en"}],  # missing text → dropped, list left []
+                    },
+                ],
+            }
+        ]
+    }
+    n = EmptyLangStringFixer().fix(data)
+    assert n == 2
+    sm = data["submodels"][0]
+    assert sm["description"] == [{"language": "de", "text": "Hallo"}]
+    assert sm["submodelElements"][0]["value"] == [{"language": "en", "text": "x"}]
+    assert sm["submodelElements"][1]["value"] == []  # emptied but valid
+
+
+def test_empty_langstring_fixer_in_default_fixers():
+    assert any(isinstance(f, EmptyLangStringFixer) for f in DEFAULT_FIXERS)
 
 
 def test_client_accepts_fix_on_import_kwarg():

@@ -1,4 +1,4 @@
-"""Convert AAS XML (v3.0) to the equivalent AAS JSON dict structure.
+"""Convert AAS XML (v3.x) to the equivalent AAS JSON dict structure.
 
 AAS XML and AAS JSON are isomorphic representations of the same data model.
 This module converts an AAS XML <environment> document into a Python dict that
@@ -11,7 +11,6 @@ import xml.etree.ElementTree as ET
 from typing import Any
 
 AAS_NS = "https://admin-shell.io/aas/3/0"
-_AAS_NS_PREFIX = f"{{{AAS_NS}}}"
 
 # Elements whose direct children form a list value.
 LIST_CONTAINER_TAGS: frozenset[str] = frozenset({
@@ -92,10 +91,14 @@ _SINGLE_ITEM_LIST_UNWRAP: dict[str, str] = {
 
 
 def _strip_ns(tag: str) -> str:
-    """Strip the AAS XML namespace prefix from a tag string."""
-    if tag.startswith(_AAS_NS_PREFIX):
-        return tag[len(_AAS_NS_PREFIX):]
-    # Non-AAS namespace tags are returned as-is; they won't match known sets.
+    """Strip any XML namespace prefix from a tag, leaving the local name.
+
+    AAS elements are matched by local name, so this is version-agnostic across AAS
+    metamodel namespaces (``3/0``, ``3/1``, …) and any non-AAS namespace — e.g.
+    ``{https://admin-shell.io/aas/3/1}submodels`` → ``submodels``.
+    """
+    if tag.startswith("{"):
+        return tag.split("}", 1)[1]
     return tag
 
 

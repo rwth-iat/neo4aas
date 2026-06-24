@@ -45,7 +45,12 @@ AAS_CLS_PARENTS: dict[str, tuple[str]] = {
 
 AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
     keys_to_ignore=(),
-    virtual_relationships=("child", "references"),
+    # Derived/non-containment edges: excluded from export reconstruction and from the subgraph
+    # traversal filter (_containment_rel_filter). `references` is materialized by
+    # resolve_references(); `HAS_PROPERTY`/`HAS_UNIT` are the ECLASS-derived class→property /
+    # property→unit edges. (`child` was removed — containment is carried by the semantic edges,
+    # no `:child` edge is created.)
+    virtual_relationships=("references", "HAS_PROPERTY", "HAS_UNIT"),
 
     default_optimization_clauses=[
         # Uniqueness constraint enforces a single node per Identifiable id (per the AAS spec)
@@ -73,6 +78,11 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
         # "Extension",           # same reasoning as Qualifier
         # "EmbeddedDataSpecification"
     },
+    # A ConceptDescription is globally identified by its IRDI: dedup it on `id` (first wins),
+    # not on content hash, since some sources (e.g. SICK) re-emit the same IRDI with differing
+    # definitions across files — hash-merge would create a duplicate id and violate the
+    # uniqueness constraint. References stay hash-deduped (they are content-addressed).
+    deduplicated_by_id={"ConceptDescription"},
     # Node properties that are lists of dicts with only scalar values are stored as parallel
     # flat lists instead, since Neo4j does not support list-of-dict properties.
     # BEFORE: description = [{"language": "en", "text": "Foo"}, {"language": "de", "text": "Bar"}]
@@ -224,7 +234,7 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         # deleted even though its container points at it from outside the subtree.
         delete_clause = (
             "MATCH (root) WHERE elementId(root) = $rid "
-            "CALL apoc.path.subgraphAll(root, {relationshipFilter: '>'}) YIELD nodes "
+            f"CALL apoc.path.subgraphAll(root, {{relationshipFilter: '{self._containment_rel_filter()}'}}) YIELD nodes "
             "UNWIND nodes AS node "
             "WITH root, node, nodes "
             "WHERE node = root OR NOT EXISTS { MATCH (other)-[]->(node) WHERE NOT other IN nodes } "
@@ -279,7 +289,7 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         # the same set with an O(|nodes|^2) OPTIONAL MATCH over every node pair.
         cypher = (
             match_clause
-            + "CALL apoc.path.subgraphAll(sm, {relationshipFilter: '>'}) YIELD nodes, relationships "
+            + f"CALL apoc.path.subgraphAll(sm, {{relationshipFilter: '{self._containment_rel_filter()}'}}) YIELD nodes, relationships "
             "RETURN apoc.convert.toJson({nodes: nodes, relationships: relationships}) AS json"
         )
         rows = self.execute_clause(cypher, params={"type": submodel_type}) or []
@@ -420,7 +430,7 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         """
         in_subtree = self.execute_clause(
             "MATCH (root:Identifiable {id: $id}) "
-            "CALL apoc.path.subgraphAll(root, {relationshipFilter: '>'}) YIELD nodes "
+            f"CALL apoc.path.subgraphAll(root, {{relationshipFilter: '{self._containment_rel_filter()}'}}) YIELD nodes "
             "UNWIND nodes AS r "
             f"WITH r WHERE r:Reference AND {self._REF_COND} "
             f"{self._REF_RETURN}",
@@ -489,6 +499,28 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
             clause += "WHERE " + " AND ".join(wheres) + "\n"
         return clause, found_node, params
 
+    def _containment_rel_filter(self) -> str:
+        """apoc ``relationshipFilter`` of every relationship type EXCEPT the virtual/derived
+        ones (``model_config.virtual_relationships`` — ``references``/``HAS_PROPERTY``/``HAS_UNIT``).
+
+        Subgraph fetches must traverse only AAS containment/attribute edges; following the
+        resolved ``:references`` edge (or the ECLASS-derived ``:HAS_PROPERTY``/``:HAS_UNIT``)
+        wanders into the whole semantic graph, so a single object reconstruction would pull in
+        a large slice of the database (a shell took ~13s before this filter). Computed fresh
+        each call from ``db.relationshipTypes()`` (a cheap metadata lookup) — NOT cached, since
+        new relationship types appear as objects are added incrementally (e.g. ``submodels``
+        only exists once a shell is stored), and a stale filter would skip them. Falls back to
+        ``'>'`` (all) when the DB has no relationships yet.
+        """
+        virtual = set(self.model_config.virtual_relationships)
+        rows = self.execute_clause(
+            "CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType AS t"
+        ) or []
+        allowed = [r["t"] for r in rows if r["t"] not in virtual]
+        if not allowed:
+            return ">"
+        return "|".join(f"{t}>" for t in allowed)
+
     def _get_subgraph_of_referable(self, parent_id: str, id_short_path: Optional[str] = None):
         """
         Fetches a subgraph of Referable object from Neo4j.
@@ -497,7 +529,7 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         """
         find_node_clause, found_parent_node, params = self._find_node_clause(parent_id, id_short_path)
         get_subgraph_clause = (
-            f"CALL apoc.path.subgraphAll({found_parent_node}, {{relationshipFilter: '>'}}) YIELD nodes, relationships "
+            f"CALL apoc.path.subgraphAll({found_parent_node}, {{relationshipFilter: '{self._containment_rel_filter()}'}}) YIELD nodes, relationships "
             "WITH nodes "
             "OPTIONAL MATCH (a)-[r]->(b) WHERE a IN nodes AND b IN nodes "
             "WITH nodes, collect(r) AS allRels "
