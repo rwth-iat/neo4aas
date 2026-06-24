@@ -1,3 +1,3 @@
 MATCH (aasdesc:AssetAdministrationShellDescriptor)
 WHERE aasdesc.idShort = 'MyAASDescriptor'
-RETURN aasdesc
+RETURN DISTINCT aasdesc

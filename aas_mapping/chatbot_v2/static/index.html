@@ -11,6 +11,10 @@
   <header class="topbar">
     <span class="logo">▣ AAS Assistant</span>
     <span class="sub">LangGraph · gpt-oss-120b · read-only</span>
+    <label class="repo-select" title="Choose which AAS repository to query">
+      <span class="repo-label">Repo</span>
+      <select id="repo"></select>
+    </label>
     <span id="chatid" class="chatid" title="Copy this id and send it for debugging" hidden>
       <span class="chatid-label">chat</span>
       <code id="chatid-val"></code>
@@ -33,7 +37,7 @@
 
       <div class="chip-group-label">Search (natural language → AASQL)</div>
       <div class="chips">
-        <button class="chip">Find all shells made by Festo.</button>
+        <button class="chip">Find all shells made by Krohne.</button>
         <button class="chip">Which devices have a nameplate submodel?</button>
         <button class="chip">Show properties whose value contains 'IP65'.</button>
       </div>

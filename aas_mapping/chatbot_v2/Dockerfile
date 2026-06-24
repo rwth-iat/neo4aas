@@ -16,7 +16,8 @@ RUN pip install --no-cache-dir /src/neo4aas
 # chatbot_v2 app modules (flat imports) + static assets.
 COPY aas_mapping/chatbot_v2/app.py aas_mapping/chatbot_v2/config.py \
      aas_mapping/chatbot_v2/llm.py aas_mapping/chatbot_v2/tools.py \
-     aas_mapping/chatbot_v2/graph.py aas_mapping/chatbot_v2/system_prompt.py ./
+     aas_mapping/chatbot_v2/graph.py aas_mapping/chatbot_v2/system_prompt.py \
+     aas_mapping/chatbot_v2/retrieval.py ./
 COPY aas_mapping/chatbot_v2/static/ static/
 
 ENV KICONNECT_API_KEY=""

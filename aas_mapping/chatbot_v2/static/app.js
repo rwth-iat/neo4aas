@@ -5,8 +5,10 @@ const form = document.getElementById("composer");
 const input = document.getElementById("input");
 const sendBtn = document.getElementById("send");
 const resetBtn = document.getElementById("reset");
+const repoSelect = document.getElementById("repo");
 
 let threadId = null;       // persists across turns → multi-turn memory
+let currentRepo = null;    // selected repository id (sent with each turn)
 let busy = false;
 
 const el = (tag, cls, html) => {
@@ -164,7 +166,7 @@ async function send(text) {
   const resp = await fetch("/chat/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text, thread_id: threadId }),
+    body: JSON.stringify({ message: text, thread_id: threadId, repo: currentRepo }),
   });
 
   const reader = resp.body.getReader();
@@ -223,3 +225,26 @@ transcript.addEventListener("click", (e) => {
   if (e.target.classList.contains("chip")) send(e.target.textContent);
 });
 resetBtn.addEventListener("click", () => { threadId = null; transcript.innerHTML = ""; location.reload(); });
+
+// --- repository selector ---------------------------------------------------
+// Switching repos starts a fresh conversation (each repo has its own agent/memory).
+repoSelect.addEventListener("change", () => {
+  currentRepo = repoSelect.value;
+  threadId = null;
+  chatIdBox.hidden = true;
+  transcript.innerHTML = "";
+});
+
+(async function loadRepos() {
+  try {
+    const r = await fetch("/repos");
+    const d = await r.json();
+    for (const repo of d.repos) {
+      const opt = document.createElement("option");
+      opt.value = repo.id; opt.textContent = repo.label;
+      repoSelect.appendChild(opt);
+    }
+    currentRepo = d.default;
+    repoSelect.value = d.default;
+  } catch (err) { console.error("failed to load repos", err); }
+})();

@@ -22,6 +22,16 @@ mcp = [
     "mcp[cli]>=1.2",
     "pyyaml>=6.0",
 ]
+chatbot_v2 = [
+    "langgraph>=0.2",
+    "langchain-openai>=0.2",
+    "langchain-core>=0.3",
+    "langchain-community>=0.3",
+    "faiss-cpu>=1.8",
+    "langfuse>=2.0",
+    "flask>=3.0",
+    "requests>=2.31",
+]
 
 [project.scripts]
 aas4graph-mcp = "aas_mapping.mcp_server.server:main"

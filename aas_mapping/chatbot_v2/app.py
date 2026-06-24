@@ -15,7 +15,7 @@ from flask import Flask, Response, jsonify, request, send_from_directory
 from langchain_core.messages import AIMessage, AIMessageChunk, ToolMessage
 from langgraph.errors import GraphRecursionError
 
-from config import log, get_callbacks
+from config import log, get_callbacks, get_repo, REPOSITORIES, DEFAULT_REPO_ID
 from graph import build_agent
 from tools import build_tools
 
@@ -86,6 +86,13 @@ def index():
     return send_from_directory(app.static_folder, "index.html")
 
 
+@app.route("/repos")
+def repos():
+    """Repositories the UI can switch between (id + label), and the default selection."""
+    return jsonify({"repos": [{"id": r.id, "label": r.label} for r in REPOSITORIES.values()],
+                    "default": DEFAULT_REPO_ID})
+
+
 @app.route("/static/<path:path>")
 def static_files(path):
     return send_from_directory(app.static_folder, path)
@@ -98,8 +105,9 @@ def chat():
     if not message:
         return jsonify({"error": "empty message"}), 400
     thread_id = body.get("thread_id") or str(uuid.uuid4())
+    repo_id = get_repo(body.get("repo")).id
 
-    agent = build_agent()
+    agent = build_agent(repo_id)
     try:
         out = agent.invoke(
             {"messages": [{"role": "user", "content": message}]},
@@ -165,11 +173,12 @@ def chat_stream():
     thread_id = body.get("thread_id") or str(uuid.uuid4())
     if not message:
         return jsonify({"error": "empty message"}), 400
+    repo_id = get_repo(body.get("repo")).id
 
-    agent = build_agent()
+    agent = build_agent(repo_id)
 
     def generate():
-        yield _sse("start", {"thread_id": thread_id})
+        yield _sse("start", {"thread_id": thread_id, "repo": repo_id})
         # tool_call_id -> name, so a ToolMessage can be tied back to its call.
         names: dict[str, str] = {}
         trace: list[dict] = []          # accumulated for the durable turn log
@@ -252,9 +261,11 @@ def debug(thread_id):
             out["turns"] = [r for line in fh if (r := json.loads(line)).get("thread_id") == thread_id]
     except FileNotFoundError:
         pass
-    # 2) Live checkpointer state (full message history) when still in this process.
+    # 2) Live checkpointer state (full message history) when still in this process. The thread
+    # lives in one repo's agent; default repo unless ?repo= is given.
     try:
-        state = build_agent().get_state({"configurable": {"thread_id": thread_id}})
+        repo_id = get_repo(request.args.get("repo")).id
+        state = build_agent(repo_id).get_state({"configurable": {"thread_id": thread_id}})
         for m in state.values.get("messages", []):
             out["messages"].append({
                 "type": m.__class__.__name__,

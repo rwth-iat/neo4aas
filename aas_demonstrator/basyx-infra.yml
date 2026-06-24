@@ -3,6 +3,8 @@ infrastructures:
 
   basyx-python-stack:
     name: AAS Demonstrator Environment
+    security:
+      type: none
     components:
       aasDiscovery:
         baseUrl: "http://localhost:8083/api/v3.1"

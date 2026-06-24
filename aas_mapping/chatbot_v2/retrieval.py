@@ -34,8 +34,8 @@ _FIELDS_CYPHER = (
 )
 
 
-def _corpus() -> list[Document]:
-    client = get_aas_client()
+def _corpus(repo_id: str) -> list[Document]:
+    client = get_aas_client(repo_id)
     if client is None:
         return []
     rows = client.execute_clause(_FIELDS_CYPHER) or []
@@ -50,9 +50,9 @@ def _corpus() -> list[Document]:
     return docs
 
 
-def _concept_names(concepts: list[str]) -> dict:
+def _concept_names(repo_id: str, concepts: list[str]) -> dict:
     """Map ECLASS concept IRDIs (id_base) → official preferred name, for the grouping."""
-    client = get_aas_client()
+    client = get_aas_client(repo_id)
     if client is None or not concepts:
         return {}
     rows = client.execute_clause(
@@ -63,12 +63,12 @@ def _concept_names(concepts: list[str]) -> dict:
     return {r["concept"]: r["name"] for r in rows}
 
 
-@lru_cache(maxsize=1)
-def _index():
-    docs = _corpus()
+@lru_cache(maxsize=8)
+def _index(repo_id: str):
+    docs = _corpus(repo_id)
     if not docs:
         return None
-    log.info("field-discovery: indexing %d distinct fields", len(docs))
+    log.info("field-discovery [%s]: indexing %d distinct fields", repo_id, len(docs))
     return FAISS.from_documents(docs, embeddings())
 
 
@@ -97,8 +97,8 @@ def _hyde_queries(question: str) -> tuple[str, ...]:
         return ()
 
 
-def find_relevant_fields(question: str, k: int = 8) -> dict:
-    """Find AAS fields whose names/semantics match the user's wording.
+def find_relevant_fields(question: str, repo_id: str, k: int = 8) -> dict:
+    """Find AAS fields whose names/semantics match the user's wording (for one repo).
 
     Pass the user's ORIGINAL question verbatim (do not reword it). With HyDE enabled the
     tool itself generates hypothetical field names from the full question and multi-query
@@ -106,7 +106,7 @@ def find_relevant_fields(question: str, k: int = 8) -> dict:
     is far from the real idShorts. Returns the closest distinct SubmodelElement fields
     (idShort, the Submodel type they live in, and semanticId).
     """
-    index = _index()
+    index = _index(repo_id)
     if index is None:
         return {"error": "No Neo4j backend / no fields to index.", "fields": []}
     question = (question or "").strip()
@@ -138,7 +138,7 @@ def find_relevant_fields(question: str, k: int = 8) -> dict:
             by_concept.setdefault(f["concept"], [])
             if f["field"] not in by_concept[f["concept"]]:
                 by_concept[f["concept"]].append(f["field"])
-    names = _concept_names(list(by_concept))
+    names = _concept_names(repo_id, list(by_concept))
     concepts = [{"concept": c, "eclass_name": names.get(c), "fields": fs}
                 for c, fs in by_concept.items()]
     return {"count": len(fields), "fields": fields, "hyde_used": list(hyde),

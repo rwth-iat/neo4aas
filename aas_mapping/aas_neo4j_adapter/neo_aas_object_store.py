@@ -47,8 +47,9 @@ class Neo4jObjectStore(AbstractObjectStore[Identifier, Identifiable]):
 
     def discard(self, x: Identifiable) -> None:
         # DETACH DELETE drops every :references edge pointing into the removed subtree,
-        # so no re-resolution is needed.
-        self._client.remove_identifiable(x.id)
+        # so no re-resolution is needed. Silent when the object is absent (set.discard semantics).
+        if self._client.identifiable_exists(x.id):
+            self._client.remove_identifiable(x.id)
 
     def remove(self, x: Identifiable) -> None:
         if not self._client.identifiable_exists(x.id):

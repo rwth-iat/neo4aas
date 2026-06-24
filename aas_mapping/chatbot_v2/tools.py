@@ -14,7 +14,7 @@ from typing import Optional
 import requests
 from langchain_core.tools import tool
 
-from config import REPOSITORY_URL, neo4j_enabled, get_aas_client, log
+from config import neo4j_enabled, get_aas_client, get_repo, log
 from llm import util_model
 from system_prompt import SYSTEM_PROMPT
 
@@ -43,8 +43,8 @@ def _detect_target(aasql: dict) -> str:
     return "shells" if ('"$aas' in text or "'$aas" in text) else "submodels"
 
 
-def _post_aasql(aasql: dict, target: str) -> dict:
-    url = f"{REPOSITORY_URL}/query/{target}"
+def _post_aasql(aasql: dict, target: str, base_url: str) -> dict:
+    url = f"{base_url}/query/{target}"
     try:
         resp = requests.post(url, json=aasql, timeout=30)
     except Exception as exc:  # noqa: BLE001 — surfaced to the agent as an observation
@@ -83,14 +83,7 @@ def _generate_aasql(question: str, repair: Optional[str] = None) -> Optional[dic
         return None
 
 
-@tool
-def aasql_query(question: str) -> dict:
-    """Search the AAS Repository with the AAS Query Language.
-
-    Give a natural-language request (the user's question, verbatim — do not reword or
-    narrow it). An AASQL query is generated and executed against shells/submodels. Use
-    for content searches by idShort, property value, manufacturer, country, semanticId.
-    """
+def _run_aasql_query(question: str, base_url: str) -> dict:
     aasql = _generate_aasql(question)
     if aasql is None:
         return {"error": "Failed to generate valid AASQL JSON."}
@@ -101,11 +94,11 @@ def aasql_query(question: str) -> dict:
         if repaired is not None and _validate_aasql(repaired) is None:
             aasql = repaired
     target = _detect_target(aasql)
-    out = _post_aasql(aasql, target)
+    out = _post_aasql(aasql, target, base_url)
     # Self-correct: a cross-root query can be valid on the other endpoint.
     if "error" not in out and not out["results"]:
         other = "submodels" if target == "shells" else "shells"
-        retry = _post_aasql(aasql, other)
+        retry = _post_aasql(aasql, other, base_url)
         if "error" not in retry and retry["results"]:
             out, target = retry, other
     if "error" in out:
@@ -152,18 +145,7 @@ def _encode_path(path: str) -> str:
     return "/" + m.group(1) + "/" + "/".join([ident, *tail])
 
 
-@tool
-def repo_read(path: str, params: Optional[dict] = None) -> dict:
-    """Issue a GET to the AAS Repository REST API.
-
-    List or fetch shells / submodels / concept-descriptions, a specific one by id, or a
-    submodel's elements. Paths: /shells, /submodels, /concept-descriptions,
-    /shells/{id}, /submodels/{id}, /submodels/{id}/submodel-elements.
-
-    Pass the **id** (the URI, e.g. ``https://.../Y30`` or the ``submodel_id`` returned by
-    property_values), NOT the idShort — it is base64url-encoded into the path for you. An
-    idShort like ``F17`` is not a valid id here and yields 404.
-    """
+def _run_repo_read(path: str, params: Optional[dict], base_url: str) -> dict:
     path = (path or "").strip()
     if not path.startswith("/"):
         path = "/" + path
@@ -171,7 +153,7 @@ def repo_read(path: str, params: Optional[dict] = None) -> dict:
         return {"error": f"Path not allowed (read-only whitelist): {path}"}
     path = _encode_path(path)
     try:
-        resp = requests.get(f"{REPOSITORY_URL}{path}", params=params or {}, timeout=30)
+        resp = requests.get(f"{base_url}{path}", params=params or {}, timeout=30)
     except Exception as exc:  # noqa: BLE001
         return {"error": f"Repository unreachable: {exc}"}
     if resp.status_code >= 400:
@@ -188,11 +170,11 @@ def repo_read(path: str, params: Optional[dict] = None) -> dict:
 
 # --- Neo4j-backed tools (shared agent_tools), only when a backend is configured -------
 
-def _neo4j_tools() -> list:
+def _neo4j_tools(repo) -> list:
     from aas_mapping.aas_neo4j_adapter import agent_tools as at
 
     def _run(fn, **kwargs):
-        client = get_aas_client()
+        client = get_aas_client(repo.id)
         if client is None:
             return {"error": "Neo4j backend not configured (NEO4J_URI unset)."}
         try:
@@ -269,7 +251,7 @@ def _neo4j_tools() -> list:
     def _rows(cypher: str, params: dict) -> list[dict]:
         # execute_clause yields neo4j Record objects; convert to plain dicts so the tool
         # observation is clean JSON.
-        client = get_aas_client()
+        client = get_aas_client(repo.id)
         return [dict(r) for r in (client.execute_clause(cypher, params=params) or [])]
 
     # WHERE fragment: idShort contains every significant token of `field` (so
@@ -301,7 +283,7 @@ def _neo4j_tools() -> list:
             number parsed, units ignored); 'max'/'min' also report the asset and raw value
             that achieve it (answers 'highest/lowest/maximum …').
         """
-        client = get_aas_client()
+        client = get_aas_client(repo.id)
         if client is None:
             return {"error": "Neo4j backend not configured."}
         toks = _tokens(field)
@@ -360,7 +342,7 @@ def _neo4j_tools() -> list:
         `submodel_id` to repo_read (`/submodels/{submodel_id}`) only if you need the raw
         element.
         """
-        client = get_aas_client()
+        client = get_aas_client(repo.id)
         if client is None:
             return {"error": "Neo4j backend not configured."}
         toks = _tokens(field)
@@ -397,7 +379,7 @@ def _neo4j_tools() -> list:
         property name/keyword, e.g. 'CountryOfOrigin'). Returns the asset idShorts that do
         NOT have it. Use for 'which assets have no …', 'devices without a …'.
         """
-        client = get_aas_client()
+        client = get_aas_client(repo.id)
         if client is None:
             return {"error": "Neo4j backend not configured."}
         if submodel_type:
@@ -434,7 +416,7 @@ def _neo4j_tools() -> list:
         unit, and the ECLASS class(es) it belongs to. Use for 'what does X mean', 'define
         X', 'what is the semantic meaning of X'.
         """
-        client = get_aas_client()
+        client = get_aas_client(repo.id)
         if client is None:
             return {"error": "Neo4j backend not configured."}
         f = field.strip()
@@ -479,7 +461,7 @@ def _neo4j_tools() -> list:
         any version of the concept are returned. Use for 'find everything that means X',
         'all elements with semanticId Y'. Returns {asset, field, value} rows.
         """
-        client = get_aas_client()
+        client = get_aas_client(repo.id)
         if client is None:
             return {"error": "Neo4j backend not configured."}
         base = irdi.strip().rsplit("#", 1)[0] if "#" in irdi else irdi.strip()
@@ -502,7 +484,7 @@ def _neo4j_tools() -> list:
         idShorts and the part-of relationships. Use for 'what is the BOM of …', 'which
         components belong to …'.
         """
-        client = get_aas_client()
+        client = get_aas_client(repo.id)
         if client is None:
             return {"error": "Neo4j backend not configured."}
         rows = _rows(
@@ -527,56 +509,96 @@ def _neo4j_tools() -> list:
             explain_property, find_by_eclass_concept]
 
 
-@tool
-def find_relevant_fields(question: str) -> dict:
-    """Discover the real AAS field names relevant to a question (semantic search).
+def build_tools(repo=None) -> list:
+    """Active LangChain tools bound to one repository (Neo4j tools only when it has a backend).
 
-    Pass the user's ORIGINAL question VERBATIM — do NOT reword, translate, or shorten it.
-    The tool itself expands it into candidate field names and searches by meaning, so it
-    finds the right idShorts even when the question wording differs from them. Returns the
-    closest SubmodelElement fields (idShort, Submodel type, semanticId). Use this BEFORE
-    aasql_query when unsure how a property is named, then target those exact names.
+    `repo` is a config.RepoConfig; defaults to the default repo (used e.g. for building the
+    repo-independent tool-description map). Tools close over `repo` so each agent queries its
+    own REST + Neo4j backend.
     """
-    from retrieval import find_relevant_fields as _find
-    return _find(question)
+    if repo is None:
+        repo = get_repo(None)
 
+    @tool
+    def aasql_query(question: str) -> dict:
+        """Search the AAS Repository with the AAS Query Language.
 
-def build_tools() -> list:
-    """Active LangChain tools (Neo4j tools only when a backend is configured)."""
+        Give a natural-language request (the user's question, verbatim — do not reword or
+        narrow it). An AASQL query is generated and executed against shells/submodels. Use
+        for content searches by idShort, property value, manufacturer, country, semanticId.
+        """
+        return _run_aasql_query(question, repo.repository_url)
+
+    @tool
+    def repo_read(path: str, params: Optional[dict] = None) -> dict:
+        """Issue a GET to the AAS Repository REST API.
+
+        List or fetch shells / submodels / concept-descriptions, a specific one by id, or a
+        submodel's elements. Paths: /shells, /submodels, /concept-descriptions,
+        /shells/{id}, /submodels/{id}, /submodels/{id}/submodel-elements.
+
+        Pass the **id** (the URI, e.g. ``https://.../Y30`` or the ``submodel_id`` returned by
+        property_values), NOT the idShort — it is base64url-encoded into the path for you. An
+        idShort like ``F17`` is not a valid id here and yields 404.
+        """
+        return _run_repo_read(path, params, repo.repository_url)
+
+    @tool
+    def find_relevant_fields(question: str) -> dict:
+        """Discover the real AAS field names relevant to a question (semantic search).
+
+        Pass the user's ORIGINAL question VERBATIM — do NOT reword, translate, or shorten it.
+        The tool itself expands it into candidate field names and searches by meaning, so it
+        finds the right idShorts even when the question wording differs from them. Returns the
+        closest SubmodelElement fields (idShort, Submodel type, semanticId). Use this BEFORE
+        aasql_query when unsure how a property is named, then target those exact names.
+        """
+        from retrieval import find_relevant_fields as _find
+        return _find(question, repo.id)
+
     tools = [aasql_query, repo_read]
-    if neo4j_enabled():
-        tools.extend(_neo4j_tools())
+    if neo4j_enabled(repo.id):
+        tools.extend(_neo4j_tools(repo))
         tools.append(find_relevant_fields)
     else:
-        log.info("NEO4J_URI unset — neo4aas tools disabled")
+        log.info("Repo '%s' has no Neo4j backend — neo4aas tools disabled", repo.id)
     return tools
 
 
-_repo_context_cache: Optional[str] = None
+_repo_context_cache: dict[str, str] = {}  # repo_id -> grounding text
 
 
-def repo_context_text() -> str:
+def repo_context_text(repo) -> str:
     """Compact factual repository profile injected into the agent prompt for grounding.
-    Built once from repo_overview; empty when no Neo4j backend is configured."""
-    global _repo_context_cache
-    if _repo_context_cache is not None:
-        return _repo_context_cache
-    client = get_aas_client()
+    Built once per repo from repo_overview; empty when that repo has no Neo4j backend."""
+    if repo.id in _repo_context_cache:
+        return _repo_context_cache[repo.id]
+    client = get_aas_client(repo.id)
     if client is None:
-        _repo_context_cache = ""
-        return _repo_context_cache
+        _repo_context_cache[repo.id] = ""
+        return ""
     try:
         from aas_mapping.aas_neo4j_adapter import agent_tools as at
         ov = at.repo_overview(client)
     except Exception as exc:  # noqa: BLE001
         log.warning("repo_overview failed, no repo context: %s", exc)
-        _repo_context_cache = ""
-        return _repo_context_cache
+        _repo_context_cache[repo.id] = ""
+        return ""
     c = ov["counts"]
-    types = ", ".join(f"{t['idShort']} ({t['count']})" for t in ov["submodel_types"])
-    mans = ", ".join(ov["manufacturers"][:40])
-    assets = ", ".join(ov["asset_names"][:80])
-    _repo_context_cache = (
+
+    def _capped(items: list[str], n: int) -> str:
+        # Bound the grounding text: a large catalog (e.g. Lieferanten has thousands of
+        # distinct submodel idShorts) would otherwise overflow the model context.
+        extra = len(items) - n
+        return ", ".join(items[:n]) + (f", … (+{extra} more)" if extra > 0 else "")
+
+    # Most-frequent submodel types first, then cap.
+    sm_types = sorted(ov["submodel_types"], key=lambda t: t.get("count", 0), reverse=True)
+    types = _capped([f"{t['idShort']} ({t['count']})" for t in sm_types], 40)
+    mans = _capped(ov["manufacturers"], 40)
+    assets = _capped(ov["asset_names"], 60)
+    _repo_context_cache[repo.id] = (
+        f"REPOSITORY: {repo.label}\n"
         "REPOSITORY FACTS (live snapshot — use these exact spellings; do not invent):\n"
         f"- Totals: {c.get('assetAdministrationShells')} AAS, {c.get('submodels')} submodels, "
         f"{c.get('conceptDescriptions')} concept descriptions.\n"
@@ -587,4 +609,4 @@ def repo_context_text() -> str:
         "(e.g. 'Endress+Hauser', 'Samson AG', 'Krohne Messtechnik GmbH'); search with a "
         "single distinctive token and a substring match, not the full phrase."
     )
-    return _repo_context_cache
+    return _repo_context_cache[repo.id]

@@ -12,8 +12,6 @@ import sys
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("chatbot_v2")
 
-REPOSITORY_URL = os.getenv("REPOSITORY_URL", "http://localhost:8081/api/v3.1")
-
 KICONNECT_BASE_URL = os.getenv("KICONNECT_BASE_URL", "https://chat.kiconnect.nrw/api/v1")
 KICONNECT_API_KEY = os.getenv("KICONNECT_API_KEY", "").strip()
 
@@ -22,10 +20,6 @@ KICONNECT_API_KEY = os.getenv("KICONNECT_API_KEY", "").strip()
 MODEL_AGENT = os.getenv("MODEL_AGENT", "gpt-oss-120b")
 MODEL_UTIL = os.getenv("MODEL_UTIL", "gpt-oss-120b")
 MODEL_EMBED = os.getenv("MODEL_EMBED", "qwen3-embedding-8b")
-
-NEO4J_URI = os.getenv("NEO4J_URI", "").strip()
-NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "").strip()
 
 # HyDE: when on, find_relevant_fields first asks the LLM for hypothetical field names
 # (closer in embedding space to real idShorts than the raw question), then multi-query
@@ -68,27 +62,73 @@ def get_callbacks() -> list:
                 log.warning("Langfuse unavailable, tracing off: %s", exc)
     return [_langfuse_handler] if _langfuse_handler else []
 
-_aas_client = None
+# --- Repository registry ------------------------------------------------------------
+# Two fixed backends the UI can switch between; URLs are env-overridable (the demonstrator
+# compose points Lieferanten at the separate stack's published host ports).
+from dataclasses import dataclass
 
 
-def neo4j_enabled() -> bool:
-    return bool(NEO4J_URI)
+@dataclass(frozen=True)
+class RepoConfig:
+    id: str
+    label: str
+    repository_url: str          # AAS Repository REST base (…/api/v3.1)
+    neo4j_uri: str               # bolt URI ("" → no Neo4j tools for this repo)
+    neo4j_user: str
+    neo4j_password: str
+    domain: str                  # selects the per-repo system-prompt domain hints
 
 
-def get_aas_client():
-    """Lazily build a read-only AASNeo4JClient (only when NEO4J_URI is configured).
+REPOSITORIES: dict[str, RepoConfig] = {
+    "pumpwerk": RepoConfig(
+        id="pumpwerk",
+        label="Pumpwerk",
+        repository_url=os.getenv("REPOSITORY_URL", "http://localhost:8081/api/v3.1"),
+        neo4j_uri=os.getenv("NEO4J_URI", "bolt://localhost:7687").strip(),
+        neo4j_user=os.getenv("NEO4J_USER", "neo4j"),
+        neo4j_password=os.getenv("NEO4J_PASSWORD", "12345678").strip(),
+        domain="pumpwerk",
+    ),
+    "lieferanten": RepoConfig(
+        id="lieferanten",
+        label="Lieferanten",
+        repository_url=os.getenv("LIEFERANTEN_REPOSITORY_URL", "http://localhost:8084/api/v3.1"),
+        neo4j_uri=os.getenv("LIEFERANTEN_NEO4J_URI", "bolt://localhost:7689").strip(),
+        neo4j_user=os.getenv("LIEFERANTEN_NEO4J_USER", "neo4j"),
+        neo4j_password=os.getenv("LIEFERANTEN_NEO4J_PASSWORD", "12345678").strip(),
+        domain="lieferanten",
+    ),
+}
+DEFAULT_REPO_ID = os.getenv("DEFAULT_REPO_ID", "pumpwerk")
 
-    auto_optimize=False so this read-only consumer never writes schema on connect.
+
+def get_repo(repo_id: str | None) -> RepoConfig:
+    """Resolve a repo id to its config; unknown/empty → the default repo."""
+    return REPOSITORIES.get(repo_id or DEFAULT_REPO_ID, REPOSITORIES[DEFAULT_REPO_ID])
+
+
+def neo4j_enabled(repo_id: str) -> bool:
+    return bool(get_repo(repo_id).neo4j_uri)
+
+
+_aas_clients: dict[str, object] = {}  # repo_id -> AASNeo4JClient (one per repo)
+
+
+def get_aas_client(repo_id: str):
+    """Lazily build a read-only AASNeo4JClient for the given repo (None if it has no Neo4j).
+
+    auto_optimize=False so this read-only consumer never writes schema on connect. Cached
+    per repo_id so each backend keeps its own driver/connection.
     """
-    global _aas_client
-    if not neo4j_enabled():
+    repo = get_repo(repo_id)
+    if not repo.neo4j_uri:
         return None
-    if _aas_client is None:
+    if repo.id not in _aas_clients:
         from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import (
             AASNeo4JClient, AAS_NEO4J_MODEL_CONFIG,
         )
-        _aas_client = AASNeo4JClient(
-            uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASSWORD,
+        _aas_clients[repo.id] = AASNeo4JClient(
+            uri=repo.neo4j_uri, user=repo.neo4j_user, password=repo.neo4j_password,
             model_config=AAS_NEO4J_MODEL_CONFIG, auto_optimize=False,
         )
-    return _aas_client
+    return _aas_clients[repo.id]

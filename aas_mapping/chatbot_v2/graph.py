@@ -10,14 +10,13 @@ from functools import lru_cache
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
-from config import MODEL_AGENT
+from config import MODEL_AGENT, get_repo
 from llm import chat_model
 from tools import build_tools, repo_context_text
 
-_RULES = """\
-You are an assistant for an Asset Administration Shell (AAS) repository (a laboratory \
-pumping station). Answer the user's question by calling the read-only tools, then \
-explain the result concisely.
+_CORE_RULES = """\
+You are an assistant for an Asset Administration Shell (AAS) repository. Answer the \
+user's question by calling the read-only tools, then explain the result concisely.
 
 RULES:
 - Apart from the REPOSITORY FACTS above, you have NO knowledge of the contents. NEVER \
@@ -83,8 +82,13 @@ then answer from its result. Only fall back to another tool if it returns 0 afte
 question, give the final answer — do not re-verify a successful result.
 - Ground the final answer strictly in the tool results. Be concise.
 - If asked about your capabilities, briefly describe these tools; do not output repository \
-data or invent counts.
+data or invent counts."""
 
+
+# Per-repo domain guidance, appended to the generic core rules. `domain` comes from the
+# RepoConfig (config.REPOSITORIES). Keyed so the agent's hints fit the data it queries.
+_DOMAIN_HINTS = {
+    "pumpwerk": """\
 DOMAIN HINTS (this pumping-station repository):
 - "What kinds/types of devices/assets/sensors/valves do we have" → there is NO 'asset type' \
 field. Use aggregate_field on 'ManufacturerProductDesignation' with operation \
@@ -98,20 +102,42 @@ list of sensor kinds.
 - find_relevant_fields returns candidates by similarity; a candidate may be semantically \
 wrong (e.g. matching 'type' to 'ArcheType'). Sanity-check that the field actually holds the \
 thing asked for before answering; if a field yields only 1-2 values for a 'what kinds' \
-question, it is probably the wrong field."""
+question, it is probably the wrong field.""",
+    "lieferanten": """\
+DOMAIN HINTS (this is a multi-vendor SUPPLIER component catalog, not one plant):
+- It bundles product-type AAS from several manufacturers (ABB, Bürkert, Phoenix Contact, \
+R. Stahl, SICK). Each AAS is a catalog product, not an installed asset; assetKind is 'Type'.
+- "What kinds/types of devices/products do we have" → there is no single 'type' field; the \
+device category is in 'ManufacturerProductDesignation'. Use aggregate_field on it with \
+count_by_value; group/count by manufacturer with aggregate_field on 'ManufacturerName'.
+- Many products carry hazardous-area (Ex) and temperature ratings: e.g. \
+'MaxAmbientTemperature', 'MinimumAmbientTemperature', 'TemperatureClass' (T4/T6), nested \
+under the Nameplate/Markings/ExplosionSafety structure. Use aasql_query (recursive $sme by \
+idShort) or property_values to find products meeting a requirement; use $numCast on a \
+Property #value for numeric thresholds (e.g. ambient temperature ≥ 60).
+- This catalog is large (~9000 AAS): prefer aggregate_field / property_values / cypher_read \
+over fetching full listings, and filter narrowly.""",
+}
 
 
-def system_prompt() -> str:
-    context = repo_context_text()
-    return (context + "\n\n" + _RULES) if context else _RULES
+def system_prompt(repo_id: str) -> str:
+    repo = get_repo(repo_id)
+    rules = _CORE_RULES + "\n\n" + _DOMAIN_HINTS.get(repo.domain, "")
+    context = repo_context_text(repo)
+    return (context + "\n\n" + rules) if context else rules
 
 
-@lru_cache(maxsize=1)
-def build_agent():
-    """Compile the ReAct agent once (tools + model + in-memory checkpointer)."""
+@lru_cache(maxsize=8)
+def build_agent(repo_id: str):
+    """Compile a ReAct agent for one repository (tools + model + own checkpointer).
+
+    Cached per repo_id, so each repository has its own tools/backend, system prompt and
+    in-memory conversation memory (thread_id is scoped to the agent → no cross-repo bleed).
+    """
+    repo = get_repo(repo_id)
     return create_react_agent(
         model=chat_model(MODEL_AGENT),
-        tools=build_tools(),
-        prompt=system_prompt(),
+        tools=build_tools(repo),
+        prompt=system_prompt(repo_id),
         checkpointer=MemorySaver(),
     )

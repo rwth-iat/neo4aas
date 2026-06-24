@@ -88,21 +88,30 @@ services:
     volumes:
       - ./data/discovery/storage:/storage
 
-  chatbot:
+  # Next-gen chatbot: LangGraph agent, native tool-calling, streaming Claude-Code-style UI.
+  # Runs alongside the original `chatbot` for comparison (own port 8091).
+  chatbot-v2:
     build:
-      # context = repo root so the image can pip-install the local aas4graph package
       context: ..
-      dockerfile: aas_mapping/chatbot/Dockerfile
+      dockerfile: aas_mapping/chatbot_v2/Dockerfile
     ports:
-      - "8090:8090"
+      - "8091:8091"
     environment:
       KICONNECT_API_KEY: ${KICONNECT_API_KEY}
-      # Server-side calls use the internal docker network name (repository listens on :80)
+      # Pumpwerk = this demonstrator stack (internal docker network names).
       REPOSITORY_URL: http://repository/api/v3.1
-      # Enables the read-only cypher_read tool (backend is our neo4aas store)
       NEO4J_URI: bolt://neo4j:7687
       NEO4J_USER: neo4j
       NEO4J_PASSWORD: "12345678"
+      # Lieferanten = the separate aas_lieferanten stack, reached via its published host ports
+      # (host.docker.internal → the Docker host). Requires that stack to be running.
+      LIEFERANTEN_REPOSITORY_URL: http://host.docker.internal:8084/api/v3.1
+      LIEFERANTEN_NEO4J_URI: bolt://host.docker.internal:7689
+      LIEFERANTEN_NEO4J_USER: neo4j
+      LIEFERANTEN_NEO4J_PASSWORD: "12345678"
+    extra_hosts:
+      # Make host.docker.internal resolve on Linux too (works out of the box on Docker Desktop).
+      - "host.docker.internal:host-gateway"
     depends_on:
       repository:
         condition: service_healthy

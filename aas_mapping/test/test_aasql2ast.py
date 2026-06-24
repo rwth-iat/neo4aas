@@ -72,14 +72,14 @@ def test_cross_root_join_scopes_sm_under_aas():
     }
     cypher = converter(parse_aasql_query(data))
     assert "(aas)-[:submodels]->(:Reference)-[:references]->(sm)" in cypher
-    assert cypher.rstrip().endswith("RETURN aas")
+    assert cypher.rstrip().endswith("RETURN DISTINCT aas")
 
 
 def test_target_param_forces_return_var():
     """An explicit target overrides the default precedence (endpoint-typed result)."""
     data = {"$condition": {"$eq": [{"$field": "$sm#idShort"}, {"$strVal": "TechnicalData"}]}}
-    assert converter(parse_aasql_query(data)).rstrip().endswith("RETURN sm")
-    assert converter(parse_aasql_query(data), target="aas").rstrip().endswith("RETURN aas")
+    assert converter(parse_aasql_query(data)).rstrip().endswith("RETURN DISTINCT sm")
+    assert converter(parse_aasql_query(data), target="aas").rstrip().endswith("RETURN DISTINCT aas")
 
 
 @pytest.mark.parametrize("stem", _FIXTURE_STEMS)

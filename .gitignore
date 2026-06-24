@@ -2,3 +2,17 @@
 *.pyc
 # Python cache directories
 __pycache__/
+
+aas_mapping/examples/real_aas
+.gitignore
+.claude/
+.idea/
+aas4graph.egg-info
+BA_AAS
+BA_SEM_DICT_IN_AAS_GRAPH
+CLAUDE.md
+TODOs.md
+Report.md
+Report2.md
+eclass
+archive

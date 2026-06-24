@@ -26,6 +26,13 @@ body {
 }
 .topbar .logo { font-weight: 600; }
 .topbar .sub { color: var(--muted); font-size: 12px; }
+.repo-select { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.repo-label { color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-size: 10px; }
+.repo-select select {
+  background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 7px; padding: 5px 8px; font-size: 12px; cursor: pointer;
+}
+.repo-select select:hover { border-color: var(--accent); }
 .chatid {
   margin-left: auto; display: inline-flex; align-items: center; gap: 7px;
   background: var(--panel-2); border: 1px solid var(--border); border-radius: 7px;
