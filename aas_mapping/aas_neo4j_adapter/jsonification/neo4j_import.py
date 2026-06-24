@@ -253,6 +253,11 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         self.deduplicated_to_existing_uid_map.clear()
         self.deduplicated_rels.clear()
         self.uid_to_internal_id.clear()
+        # Invalidate the cached containment relationship-type filter (AASNeo4JClient): this
+        # upload may introduce a new relationship type (e.g. the first :submodels edge when a
+        # shell is stored after its submodel), and a stale cached filter would omit it and break
+        # incremental :references resolution. Recomputed lazily on the next subgraph fetch.
+        self._containment_rel_filter_cache = None
 
         # Group nodes and filter relationships for this batch
         grouped_nodes = self._group_nodes_by_label(nodes)

@@ -506,12 +506,13 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         Subgraph fetches must traverse only AAS containment/attribute edges; following the
         resolved ``:references`` edge (or the ECLASS-derived ``:HAS_PROPERTY``/``:HAS_UNIT``)
         wanders into the whole semantic graph, so a single object reconstruction would pull in
-        a large slice of the database (a shell took ~13s before this filter). Computed fresh
-        each call from ``db.relationshipTypes()`` (a cheap metadata lookup) — NOT cached, since
-        new relationship types appear as objects are added incrementally (e.g. ``submodels``
-        only exists once a shell is stored), and a stale filter would skip them. Falls back to
-        ``'>'`` (all) when the DB has no relationships yet.
+        a large slice of the database (a shell took ~13s before this filter). Cached per client
+        — the AAS relationship-type vocabulary is fixed once any data is loaded. Falls back to
+        ``'>'`` (all) when the DB has no relationships yet, without caching that transient state.
         """
+        cached = getattr(self, "_containment_rel_filter_cache", None)
+        if cached is not None:
+            return cached
         virtual = set(self.model_config.virtual_relationships)
         rows = self.execute_clause(
             "CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType AS t"
@@ -519,7 +520,9 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         allowed = [r["t"] for r in rows if r["t"] not in virtual]
         if not allowed:
             return ">"
-        return "|".join(f"{t}>" for t in allowed)
+        filt = "|".join(f"{t}>" for t in allowed)
+        self._containment_rel_filter_cache = filt
+        return filt
 
     def _get_subgraph_of_referable(self, parent_id: str, id_short_path: Optional[str] = None):
         """
