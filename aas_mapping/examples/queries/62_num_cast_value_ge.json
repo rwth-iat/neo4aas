@@ -1,0 +1,8 @@
+{
+  "$condition": {
+    "$match": [
+      { "$eq": [ { "$field": "$sme#idShort" }, { "$strVal": "MaxAmbientTemperature" } ] },
+      { "$ge": [ { "$numCast": { "$field": "$sme#value" } }, { "$numVal": 60 } ] }
+    ]
+  }
+}

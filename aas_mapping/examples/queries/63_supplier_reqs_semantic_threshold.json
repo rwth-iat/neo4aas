@@ -1,0 +1,14 @@
+{
+  "$condition": {
+    "$and": [
+      { "$match": [
+          { "$eq": [ { "$field": "$sme#semanticId" }, { "$strVal": "0173-1#02-AAY818#001" } ] },
+          { "$le": [ { "$numCast": { "$field": "$sme#value" } }, { "$numVal": -40 } ] }
+        ] },
+      { "$match": [
+          { "$eq": [ { "$field": "$sme#semanticId" }, { "$strVal": "0173-1#02-AAY819#001" } ] },
+          { "$ge": [ { "$numCast": { "$field": "$sme#value" } }, { "$numVal": 120 } ] }
+        ] }
+    ]
+  }
+}
