@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AAS Assistant v2</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <span class="logo">▣ AAS Assistant</span>
+    <span class="sub">LangGraph · gpt-oss-120b · read-only</span>
+    <span id="chatid" class="chatid" title="Copy this id and send it for debugging" hidden>
+      <span class="chatid-label">chat</span>
+      <code id="chatid-val"></code>
+      <button id="chatid-copy" title="Copy chat id">⧉</button>
+    </span>
+    <button id="reset" title="New conversation">New chat</button>
+  </header>
+
+  <main id="transcript" class="transcript">
+    <div class="hint">
+      Ask about the Asset Administration Shell repository — shells, submodels, manufacturers,
+      device properties. Tool calls show inline as they run.
+
+      <div class="chip-group-label">Repository overview</div>
+      <div class="chips">
+        <button class="chip">How many AAS are in the repo?</button>
+        <button class="chip">Give me an overview of the repository.</button>
+        <button class="chip">What submodel types exist?</button>
+      </div>
+
+      <div class="chip-group-label">Search (natural language → AASQL)</div>
+      <div class="chips">
+        <button class="chip">Find all shells made by Festo.</button>
+        <button class="chip">Which devices have a nameplate submodel?</button>
+        <button class="chip">Show properties whose value contains 'IP65'.</button>
+      </div>
+
+      <div class="chip-group-label">Aggregation &amp; lookup</div>
+      <div class="chips">
+        <button class="chip">How many devices per manufacturer?</button>
+        <button class="chip">What's the max flow rate, and which asset?</button>
+        <button class="chip">List all manufacturer names with their submodel ids.</button>
+        <button class="chip">Which devices are missing a Nameplate submodel?</button>
+      </div>
+
+      <div class="chip-group-label">Semantic / ECLASS enrichment</div>
+      <div class="chips">
+        <button class="chip">What does the property Max_medium_temperature mean?</button>
+        <button class="chip">Which properties relate to 'flow rate'?</button>
+      </div>
+
+      <div class="chip-group-label">Validation</div>
+      <div class="chips">
+        <button class="chip">Validate AAS constraints on the repo.</button>
+      </div>
+    </div>
+  </main>
+
+  <form id="composer" class="composer">
+    <textarea id="input" rows="1" placeholder="Ask about the AAS repository…"></textarea>
+    <button id="send" type="submit">Send</button>
+  </form>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
