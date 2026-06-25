@@ -6,7 +6,7 @@ name: aas-demonstrator
 #   Registry  API   http://localhost:8082/api/v3.1
 #   Discovery API   http://localhost:8083/api/v3.1
 #   AAS Web UI      http://localhost:3000
-#   Chatbot         http://localhost:8090
+#   Chatbot         http://localhost:8091
 #
 # Requires a .env file next to this compose with: KICONNECT_API_KEY=<key>
 
@@ -88,8 +88,7 @@ services:
     volumes:
       - ./data/discovery/storage:/storage
 
-  # Next-gen chatbot: LangGraph agent, native tool-calling, streaming Claude-Code-style UI.
-  # Runs alongside the original `chatbot` for comparison (own port 8091).
+  # Chatbot: LangGraph agent, native tool-calling, streaming Claude-Code-style UI (port 8091).
   chatbot-v2:
     build:
       context: ..

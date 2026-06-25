@@ -1,10 +1,8 @@
 # chatbot_v2 — LangGraph AAS agent
 
-Next-gen chatbot for the AAS repository. Replaces the original `aas_mapping/chatbot/`
-(hand-rolled text-JSON ReAct loop, two-column AASQL workbench) with a modern agent. The
-original is left untouched; the two run side-by-side (8090 vs 8091).
+LangGraph agent chatbot for the AAS repository (port 8091).
 
-## What's different
+## Features
 
 - **LangGraph `create_react_agent`** with **native tool-calling** (no text-JSON protocol,
   no brace-scraping extractor, no nudge/broaden machinery).

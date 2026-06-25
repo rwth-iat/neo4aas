@@ -2,7 +2,7 @@
 
 These functions are the single source of truth for the capabilities exposed both by
 the MCP server (`aas_mapping/mcp_server/server.py`) and the chatbot agent
-(`aas_mapping/chatbot`). Each takes a client and returns a plain JSON-able dict and
+(`aas_mapping/chatbot_v2`). Each takes a client and returns a plain JSON-able dict and
 raises ``ValueError`` for user-facing errors. All are read-only.
 """
 
