@@ -24,17 +24,22 @@ body {
   display: flex; align-items: center; gap: 12px; padding: 10px 18px;
   border-bottom: 1px solid var(--border); background: var(--panel);
 }
-.topbar .logo { font-weight: 600; }
+/* A single spacer splits the bar: brand on the left, controls + logo on the right.
+   One flex:1 element (not stacked margin-left:auto) keeps the layout predictable. */
+.topbar .spacer { flex: 1 1 auto; }
+.topbar .brand-logo { height: 44px; width: auto; display: block; margin-left: 4px; }
+.topbar .logo { font-weight: 600; letter-spacing: .01em; }
 .topbar .sub { color: var(--muted); font-size: 12px; }
 .repo-select { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
 .repo-label { color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-size: 10px; }
 .repo-select select {
   background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
   border-radius: 7px; padding: 5px 8px; font-size: 12px; cursor: pointer;
+  transition: border-color .15s;
 }
 .repo-select select:hover { border-color: var(--accent); }
 .chatid {
-  margin-left: auto; display: inline-flex; align-items: center; gap: 7px;
+  display: inline-flex; align-items: center; gap: 7px;
   background: var(--panel-2); border: 1px solid var(--border); border-radius: 7px;
   padding: 4px 8px; font-size: 12px;
 }
@@ -42,15 +47,14 @@ body {
 .chatid code { font-family: var(--mono); color: var(--text); }
 .chatid #chatid-copy {
   background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px;
-  padding: 0 2px;
+  padding: 0 2px; transition: color .15s;
 }
 .chatid #chatid-copy:hover { color: var(--accent); }
 .topbar #reset {
-  margin-left: auto; background: var(--panel-2); color: var(--text);
+  background: var(--panel-2); color: var(--text);
   border: 1px solid var(--border); border-radius: 7px; padding: 6px 12px; cursor: pointer;
+  transition: border-color .15s;
 }
-/* When the id badge is visible it already takes the auto-margin, so just space the button. */
-.chatid:not([hidden]) + #reset { margin-left: 8px; }
 .topbar #reset:hover { border-color: var(--accent); }
 
 .transcript {
@@ -70,8 +74,9 @@ body {
 .chip {
   background: var(--panel); border: 1px solid var(--border); color: var(--text);
   border-radius: 999px; padding: 6px 13px; font-size: 13px; cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
 }
-.chip:hover { border-color: var(--accent); }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
 
 .msg { margin: 14px 0; }
 .msg.user .bubble {
@@ -90,11 +95,12 @@ body {
 /* Tool call cards */
 .tool {
   border: 1px solid var(--border); border-radius: 10px; margin: 10px 0;
-  background: var(--panel); overflow: hidden;
+  background: var(--panel); overflow: hidden; transition: border-color .15s;
 }
+.tool:hover { border-color: var(--accent-soft); }
 .tool-head {
   display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer;
-  user-select: none;
+  user-select: none; transition: background .15s;
 }
 .tool-head:hover { background: var(--panel-2); }
 .tool-icon { color: var(--accent); font-family: var(--mono); }
@@ -154,6 +160,32 @@ body {
 .composer textarea:focus { outline: none; border-color: var(--accent); }
 .composer button {
   background: var(--accent); color: #1a1b1e; border: none; border-radius: 10px;
-  padding: 0 20px; font-weight: 600; cursor: pointer;
+  padding: 0 20px; font-weight: 600; cursor: pointer; transition: filter .15s, opacity .15s;
 }
+.composer button:hover:not(:disabled) { filter: brightness(1.08); }
 .composer button:disabled { opacity: .5; cursor: default; }
+
+/* Table zebra striping for readability in both answer and tool cards. */
+.answer tr:nth-child(even) td, .tool-body tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+.answer blockquote {
+  margin: 8px 0; padding: 2px 12px; border-left: 3px solid var(--accent-soft); color: var(--muted);
+}
+
+/* Keyboard focus rings (only for keyboard nav, not mouse clicks). */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* Custom scrollbars — thin, themed, unobtrusive. */
+.transcript, .tool-body, .tool-body .scroll, .composer textarea { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.transcript::-webkit-scrollbar, .tool-body::-webkit-scrollbar,
+.tool-body .scroll::-webkit-scrollbar, .composer textarea::-webkit-scrollbar { width: 9px; height: 9px; }
+.transcript::-webkit-scrollbar-thumb, .tool-body::-webkit-scrollbar-thumb,
+.tool-body .scroll::-webkit-scrollbar-thumb, .composer textarea::-webkit-scrollbar-thumb {
+  background: var(--border); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box;
+}
+.transcript::-webkit-scrollbar-thumb:hover { background: var(--muted); background-clip: padding-box; }
+.transcript::-webkit-scrollbar, .tool-body::-webkit-scrollbar { background: transparent; }
+
+/* Respect reduced-motion: kill the spinner animation and transitions. */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

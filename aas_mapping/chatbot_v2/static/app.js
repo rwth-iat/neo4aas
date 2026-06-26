@@ -10,6 +10,65 @@ const repoSelect = document.getElementById("repo");
 let threadId = null;       // persists across turns → multi-turn memory
 let currentRepo = null;    // selected repository id (sent with each turn)
 let busy = false;
+const repoMeta = {};       // repo id → {repository_url, aas_viewer_url} for viewer deep-links
+
+// --- example-query chips, per repository -----------------------------------
+const CHIPS = {
+  pumpwerk: [
+    ["Repository overview", [
+      "How many AAS are in the repo?",
+      "Give me an overview of the repository.",
+      "What submodel types exist?",
+    ]],
+    ["Search (natural language → AASQL)", [
+      "Find all assets made by Krohne.",
+      "Give me all properties which contain value 'IP65'",
+      "Give me current values in OperationalData Submodel of all temperature sensors",
+    ]],
+    ["Aggregation & lookup", [
+      "How many devices per manufacturer?",
+      "Find an asset with the max flow rate?",
+      "Which devices are missing a Nameplate submodel?",
+    ]],
+    ["Semantic / ECLASS enrichment", [
+      "What does the property Max_medium_temperature mean?",
+      "Which properties relate to 'flow rate'?",
+    ]],
+    ["Validation", [
+      "Validate AAS constraints on the repo.",
+    ]],
+  ],
+  lieferanten: [
+    ["Repository overview", [
+      "How many AAS are in the repo?",
+      "Which submodel types (by semanticId) exist?",
+    ]],
+    ["Semantic requirement matching (by IRDI)", [
+      "Search for a temperature sensor: measuring range starts at ≤ −20 °C (0173-1#02-AAY818#001), reaches ≥ 110 °C (0173-1#02-AAY819), max. process pressure ≥ 20 bar (0173-1#02-AAY820), max. ambient temperature ≥ 90 °C (0173-1#02-BAA039#010).",
+      "Which assets have a max. ambient temperature ≥ 100 °C (0173-1#02-BAA039)?",
+    ]]
+  ],
+};
+const HINT_INTRO =
+  "Ask about the Asset Administration Shell repository — shells, submodels, manufacturers, " +
+  "device properties. Tool calls show inline as they run.";
+
+function renderHint(repoId) {
+  const hint = document.getElementById("hint");
+  if (!hint) return;
+  hint.textContent = HINT_INTRO;
+  const groups = CHIPS[repoId] || CHIPS.pumpwerk;
+  for (const [label, chips] of groups) {
+    hint.appendChild(el("div", "chip-group-label", label));
+    const row = el("div", "chips");
+    for (const c of chips) {
+      const b = el("button", "chip", "");
+      b.textContent = c;
+      row.appendChild(b);
+    }
+    hint.appendChild(row);
+  }
+}
 
 const el = (tag, cls, html) => {
   const n = document.createElement(tag);
@@ -18,7 +77,20 @@ const el = (tag, cls, html) => {
   return n;
 };
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-const scroll = () => { transcript.scrollTop = transcript.scrollHeight; };
+
+// Autoscroll only when the user is already at the bottom — don't yank the view
+// while they scroll up to read. Coalesced to one scroll per animation frame so a
+// burst of tokens/cards doesn't force a layout reflow on every event.
+let atBottom = true;
+transcript.addEventListener("scroll", () => {
+  atBottom = transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 80;
+}, { passive: true });
+let scrollPending = false;
+const scroll = () => {
+  if (!atBottom || scrollPending) return;
+  scrollPending = true;
+  requestAnimationFrame(() => { transcript.scrollTop = transcript.scrollHeight; scrollPending = false; });
+};
 
 function addUser(text) {
   const m = el("div", "msg user");
@@ -29,7 +101,6 @@ function addUser(text) {
 
 // --- tool card -------------------------------------------------------------
 const cards = {};     // tool_call_id -> card element
-const cardArgs = {};  // tool_call_id -> input args
 
 function argSummary(args) {
   if (!args || !Object.keys(args).length) return "";
@@ -61,13 +132,16 @@ function toolStart(ev) {
   card.querySelector(".tool-head").addEventListener("click", () => card.classList.toggle("open"));
   transcript.appendChild(card);
   cards[ev.id] = card;
-  cardArgs[ev.id] = ev.args || {};
+  // Show the Input immediately — don't wait for the result to come back.
+  const args = ev.args || {};
+  if (Object.keys(args).length) card.querySelector(".tool-body").appendChild(section("Input", pre(args)));
   scroll();
 }
 
 function toolEnd(ev) {
   const card = cards[ev.id];
   if (!card) return;
+  collectAasIds(ev.observation);   // remember shell ids so the answer can link them
   card.querySelector(".spinner")?.remove();
   const status = card.querySelector(".tool-status");
   const obs = ev.observation;
@@ -76,10 +150,8 @@ function toolEnd(ev) {
   status.textContent = isErr ? "error" : (renderCount(obs) ?? "done");
 
   const body = card.querySelector(".tool-body");
-  const args = cardArgs[ev.id];
-  // 1) Input — what the agent passed to the tool.
-  if (args && Object.keys(args).length) body.appendChild(section("Input", pre(args)));
-  // 2) Generated AASQL — the compiled query (aasql_query only).
+  // Input was already rendered at tool_start.
+  // Generated AASQL — the compiled query (aasql_query only).
   if (obs && typeof obs === "object" && obs.aasql) {
     body.appendChild(section("Generated AASQL  →  " + (obs.target || ""), pre(obs.aasql)));
   }
@@ -111,6 +183,27 @@ function table(rows) {
   return wrap;
 }
 
+// Parse a CSV string (RFC4180: quoted cells, "" escape) into an array of row objects
+// keyed by the header row. Mirrors the csv.DictWriter output of aasql_query's summary.
+function parseCsv(text) {
+  const rows = [];
+  let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n") { row.push(cell); rows.push(row); row = []; cell = ""; }
+    else if (c !== "\r") cell += c;
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  if (!rows.length) return [];
+  const cols = rows.shift();
+  return rows.map((r) => Object.fromEntries(cols.map((c, j) => [c, r[j] ?? ""])));
+}
+
 function kv(obj) {
   const node = el("div", "kv");
   Object.entries(obj).forEach(([k, v]) => {
@@ -130,6 +223,9 @@ function renderObs(obs) {
   if (typeof obs !== "object") return el("pre", null, esc(String(obs)));
   if (obs.error) return el("div", "err", esc(obs.error));
   const wrap = el("div");
+  if (obs.format === "csv" && typeof obs.rows === "string") {
+    wrap.appendChild(table(parseCsv(obs.rows))); return wrap;
+  }
   if (Array.isArray(obs.results)) { wrap.appendChild(table(obs.results)); return wrap; }
   if (Array.isArray(obs.rows)) { wrap.appendChild(table(obs.rows)); return wrap; }
   if (Array.isArray(obs.types)) { wrap.appendChild(table(obs.types)); return wrap; }
@@ -143,6 +239,28 @@ function renderObs(obs) {
 // --- answer block ----------------------------------------------------------
 let answerBuf = "";
 let answerNode = null;
+let knownAasIds = new Set();   // real AAS shell ids seen in this turn's tool results
+
+// Collect AAS shell ids (aas_id values) from a tool observation, recursively.
+// Only these get viewer links — a bare URI in prose is often a semanticId/template id, not a shell.
+function collectAasIds(obj) {
+  if (!obj || typeof obj !== "object") return;
+  if (Array.isArray(obj)) { obj.forEach(collectAasIds); return; }
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === "aas_id" && typeof v === "string" && v) knownAasIds.add(v);
+    else collectAasIds(v);
+  }
+}
+// marked.parse over the whole buffer is O(n) per call; doing it on every token is
+// O(n²) and re-lays-out the page each token. Coalesce to one parse per frame.
+let renderRaf = 0;
+function renderAnswer() {
+  renderRaf = 0;
+  if (!answerNode) return;
+  answerNode.innerHTML = (typeof marked !== "undefined")
+    ? marked.parse(answerBuf) : esc(answerBuf).replace(/\n/g, "<br>");
+  scroll();
+}
 function token(text) {
   if (!answerNode) {
     answerNode = el("div", "msg answer");
@@ -150,8 +268,37 @@ function token(text) {
     answerBuf = "";
   }
   answerBuf += text;
-  answerNode.innerHTML = (typeof marked !== "undefined")
-    ? marked.parse(answerBuf) : esc(answerBuf).replace(/\n/g, "<br>");
+  if (!renderRaf) renderRaf = requestAnimationFrame(renderAnswer);
+}
+
+// base64url-encode an id the way basyx expects (padding kept) — mirrors tools.py _b64url.
+const b64url = (s) => btoa(unescape(encodeURIComponent(s)))
+  .replace(/\+/g, "-").replace(/\//g, "_");
+
+// Deep-link an AAS id URI into the configured viewer for the current repo.
+function viewerLink(uri) {
+  const m = repoMeta[currentRepo];
+  if (!m || !m.aas_viewer_url || !m.repository_url) return null;
+  return `${m.aas_viewer_url}/aasviewer?aas=${m.repository_url}/shells/${b64url(uri)}`;
+}
+
+// Once streaming is done, turn AAS shell ids that the tools returned into viewer deep-links,
+// then re-render. Done on the assembled buffer so a URI split across tokens is still matched.
+// Only ids harvested from tool results are linked (a bare URI is often a semanticId, not a shell).
+// Optional wrapping backticks are consumed so the model's `code`-formatted ids become links.
+function finalizeAnswer() {
+  if (renderRaf) { cancelAnimationFrame(renderRaf); renderRaf = 0; }  // don't let a queued render clobber the linkified HTML
+  if (!answerNode) return;
+  if (typeof marked === "undefined") { answerNode.innerHTML = esc(answerBuf).replace(/\n/g, "<br>"); return; }
+  const linkified = answerBuf.replace(/`?(https?:\/\/[^\s)<>"'`]+)`?/g, (m, raw) => {
+    const trail = (raw.match(/[.,;:!?]+$/) || [""])[0];   // keep trailing punctuation outside the link
+    const uri = raw.slice(0, raw.length - trail.length);
+    if (!knownAasIds.has(uri)) return m;                  // not a known shell id → leave untouched
+    const url = viewerLink(uri);
+    return url ? `[${uri}](${url})${trail}` : m;
+  });
+  answerNode.innerHTML = marked.parse(linkified);
+  answerNode.querySelectorAll("a").forEach((a) => { a.target = "_blank"; a.rel = "noopener"; });
   scroll();
 }
 
@@ -160,8 +307,9 @@ async function send(text) {
   if (busy || !text.trim()) return;
   busy = true; sendBtn.disabled = true;
   document.querySelector(".hint")?.remove();
+  atBottom = true;   // user just sent — follow the new output
   addUser(text);
-  answerNode = null; answerBuf = "";
+  answerNode = null; answerBuf = ""; knownAasIds = new Set();
 
   const resp = await fetch("/chat/stream", {
     method: "POST",
@@ -199,6 +347,7 @@ function handleEvent(block) {
   else if (ev === "tool_end") toolEnd(d);
   else if (ev === "token") token(d.text);
   else if (ev === "error") token("\n\n**Error:** " + d.message);
+  else if (ev === "done") finalizeAnswer();
 }
 
 // --- chat id (copyable, for debugging) -------------------------------------
@@ -232,7 +381,8 @@ repoSelect.addEventListener("change", () => {
   currentRepo = repoSelect.value;
   threadId = null;
   chatIdBox.hidden = true;
-  transcript.innerHTML = "";
+  transcript.innerHTML = '<div class="hint" id="hint"></div>';
+  renderHint(currentRepo);
 });
 
 (async function loadRepos() {
@@ -243,8 +393,10 @@ repoSelect.addEventListener("change", () => {
       const opt = document.createElement("option");
       opt.value = repo.id; opt.textContent = repo.label;
       repoSelect.appendChild(opt);
+      repoMeta[repo.id] = { repository_url: repo.repository_url, aas_viewer_url: repo.aas_viewer_url };
     }
     currentRepo = d.default;
     repoSelect.value = d.default;
-  } catch (err) { console.error("failed to load repos", err); }
+    renderHint(currentRepo);
+  } catch (err) { console.error("failed to load repos", err); renderHint("pumpwerk"); }
 })();

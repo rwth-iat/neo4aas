@@ -77,26 +77,36 @@ class RepoConfig:
     neo4j_user: str
     neo4j_password: str
     domain: str                  # selects the per-repo system-prompt domain hints
+    aas_viewer_url: str          # AAS UI viewer base (…/aasviewer?aas=… deep links)
+    public_repository_url: str   # browser-facing Repository base for viewer deep links
+                                 # (repository_url may be an internal Docker name the browser can't reach)
 
 
 REPOSITORIES: dict[str, RepoConfig] = {
     "pumpwerk": RepoConfig(
         id="pumpwerk",
-        label="Pumpwerk",
+        label="Pumping Station",
         repository_url=os.getenv("REPOSITORY_URL", "http://localhost:8081/api/v3.1"),
         neo4j_uri=os.getenv("NEO4J_URI", "bolt://localhost:7687").strip(),
         neo4j_user=os.getenv("NEO4J_USER", "neo4j"),
         neo4j_password=os.getenv("NEO4J_PASSWORD", "12345678").strip(),
         domain="pumpwerk",
+        aas_viewer_url=os.getenv("AAS_VIEWER_URL", "http://localhost:3000"),
+        public_repository_url=os.getenv(
+            "PUBLIC_REPOSITORY_URL", os.getenv("REPOSITORY_URL", "http://localhost:8081/api/v3.1")),
     ),
     "lieferanten": RepoConfig(
         id="lieferanten",
-        label="Lieferanten",
+        label="Suppliers/Warehouse",
         repository_url=os.getenv("LIEFERANTEN_REPOSITORY_URL", "http://localhost:8084/api/v3.1"),
         neo4j_uri=os.getenv("LIEFERANTEN_NEO4J_URI", "bolt://localhost:7689").strip(),
         neo4j_user=os.getenv("LIEFERANTEN_NEO4J_USER", "neo4j"),
         neo4j_password=os.getenv("LIEFERANTEN_NEO4J_PASSWORD", "12345678").strip(),
         domain="lieferanten",
+        aas_viewer_url=os.getenv("LIEFERANTEN_AAS_VIEWER_URL", "http://localhost:3000"),
+        public_repository_url=os.getenv(
+            "LIEFERANTEN_PUBLIC_REPOSITORY_URL",
+            os.getenv("LIEFERANTEN_REPOSITORY_URL", "http://localhost:8084/api/v3.1")),
     ),
 }
 DEFAULT_REPO_ID = os.getenv("DEFAULT_REPO_ID", "pumpwerk")
