@@ -1,43 +1,57 @@
-# aas4graph
+# neo4aas
 
-A proof-of-concept library for mapping [Asset Administration Shell (AAS)](https://industrialdigitaltwin.org/content-hub/aasspecifications) data to a [Neo4j](https://neo4j.com/) graph database, including bidirectional serialization and a query language compiler (AASQL → Cypher).
+A library for mapping [Asset Administration Shell (AAS)](https://industrialdigitaltwin.org/content-hub/aasspecifications) data to a [Neo4j](https://neo4j.com/) graph database, including bidirectional serialization and a query language compiler (AASQL → Cypher).
 
 ---
 
 ## Architecture
 
+The distribution is one library plus three apps. `neo4aas.core` depends on the Neo4j
+driver and nothing else; everything that touches the basyx SDK is confined to
+`basyx_ext/` and `eclass/`, so `neo4aas[mcp]` and `neo4aas[chatbot]` install without
+it. `tests/test_layering.py` and the `core-without-basyx` CI job enforce this.
+
 ```
-neo4aas/
-├── aas_neo4j_adapter/
-│   ├── aas_neo4j_client.py      # Main API: AASNeo4JClient
+src/neo4aas/
+├── core/                        # THE LIBRARY — neo4j driver only
+│   ├── client.py                # Main API: AASNeo4JClient
 │   ├── base.py                  # BaseNeo4JClient, Neo4jModelConfig
-│   ├── utils.py                 # UploadStats, hash helpers
+│   ├── utils.py                 # UploadStats, hash/IRDI helpers
+│   ├── fixers.py                # Import-time repair of non-conformant AAS data
 │   ├── validation.py            # AASConstraintChecker — spec constraint validation
-│   ├── neo_aas_object_store.py  # basyx-sdk AbstractObjectStore for Neo4j
-│   ├── jsonification/
-│   │   ├── neo4j_import.py      # JSON → Neo4j (JsonToNeo4jImporter)
-│   │   └── neo4j_export.py      # Neo4j → JSON (JsonFromNeo4jExporter)
-│   └── querification/
+│   ├── abstract.py              # Template-submodel merge logic
+│   ├── serialization/           # every AAS format <-> Neo4j path
+│   │   ├── json/{importer,exporter}.py
+│   │   ├── xml/{importer,xml_to_json}.py
+│   │   └── aasx.py              # AASX (zip) ingestion, wraps the XML importer
+│   └── query/                   # AASQL -> Cypher
 │       ├── aasql_to_ast.py      # AASQL JSON → AST (parser)
 │       ├── ast_nodes.py         # AST node type definitions
 │       ├── ast_to_cypher.py     # AST → Cypher (compiler)
 │       └── aasql_to_cypher.py   # Entry point: convert_aasql_to_cypher()
-├── mcp_server/
-│   ├── server.py                # MCP tool definitions (FastMCP)
-│   ├── abstract.py              # Template-submodel merge logic
-│   ├── config.py                # Neo4j connection config (from env)
-│   ├── __init__.py
-│   └── __main__.py              # CLI entry point
-├── examples/
-│   ├── queries/                 # Example AASQL queries (JSON)
-│   ├── ast/                     # Expected AST representations
-│   ├── cypher/                  # Generated Cypher scripts
-│   └── submodels/               # IDTA template submodel JSON files
-└── test/
-    ├── test_aasql2ast.py        # Unit tests for AASQL → AST parsing
-    ├── test_roundtrip.py        # Integration: JSON and XML ↔ Neo4j round-trip tests
-    ├── test_constraint_checker.py  # Unit + integration tests for AASConstraintChecker
-    └── test_mcp_server.py       # Unit + integration tests for MCP server
+├── agent_tools.py               # Read-only LLM-facing tools over core (mcp + chatbot)
+├── basyx_ext/                   # basyx-python-sdk integration  [extra: basyx]
+│   ├── object_store.py          # Neo4jObjectStore (AbstractObjectStore)
+│   └── server/                  # AAS Repository server        [extra: server]
+├── eclass/                      # ECLASS dictionary -> ConceptDescriptions [extra: eclass]
+├── mcp/                         # MCP server app               [extra: mcp]
+└── chatbot/                     # LangGraph chatbot app        [extra: chatbot]
+
+tests/                           # mirrors src/neo4aas/; fixtures in tests/data/
+examples/                        # AASQL queries, expected ASTs/Cypher, IDTA submodels
+deploy/                          # docker/ images; demonstrator/ + lieferanten/ stacks
+scripts/                         # operational simulator, eval harnesses, helpers
+docs/                            # notes and diagrams
+data/                            # gitignored: AAS corpora, ECLASS exports, samples
+```
+
+Install just what you need:
+
+```bash
+pip install neo4aas                # core: mapping + AASQL, neo4j driver only
+pip install "neo4aas[basyx]"       # + Neo4jObjectStore
+pip install "neo4aas[server]"      # + AAS Repository server
+pip install "neo4aas[chatbot]"     # + the LangGraph chatbot (no basyx)
 ```
 
 ---
@@ -216,15 +230,17 @@ RETURN sme_Color, sme_Size
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.12+
 - Neo4j Community Edition (tested with 5.26.x)
 - [APOC plugin](https://neo4j.com/labs/apoc/) enabled in Neo4j
 
 ### Install
 
 ```bash
-pip install .
+uv sync --all-extras      # or: make install
 ```
+
+`make help` lists the common tasks (test, lint, build, up/down for the demonstrator stack).
 
 ### Start Neo4j
 
@@ -277,10 +293,17 @@ print(cypher)
 ## Testing
 
 ```bash
-uv run pytest tests/
+make test-unit           # no database needed
+make test                # everything
+make test-integration    # only the tests that need Neo4j
 ```
 
-Integration tests require a live Neo4j instance (`bolt://localhost:7687`, user `neo4j`, password `12345678`). They are skipped automatically if Neo4j is unreachable.
+`tests/` mirrors `src/neo4aas/`, so a subtree runs on its own: `uv run pytest tests/core/query`.
+
+Integration tests are marked `@pytest.mark.integration`. By default they start a
+disposable `neo4j:5` container (testcontainers); set `NEO4J_URI` to run against an
+existing instance instead — the fixtures wipe that database, so point it only at a
+throwaway.
 
 ---
 
@@ -337,7 +360,7 @@ pip install ".[mcp]"
 ### Run
 
 ```bash
-python -m neo4aas.mcp      # or: aas4graph-mcp
+python -m neo4aas.mcp      # or: neo4aas-mcp
 ```
 
 Connection is configured via environment variables (defaults shown):
@@ -379,7 +402,7 @@ Add to `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "aas4graph": {
+    "neo4aas": {
       "command": "python",
       "args": ["-m", "neo4aas.mcp"],
       "env": {

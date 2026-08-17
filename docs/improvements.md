@@ -1,4 +1,4 @@
-# aas4graph — Mapping Optimization Ideas
+# neo4aas — Mapping Optimization Ideas
 
 Ideas for optimizing the AAS → Neo4j mapping. Grounded in the current schema.
 
