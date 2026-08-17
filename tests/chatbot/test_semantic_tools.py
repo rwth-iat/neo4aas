@@ -6,14 +6,14 @@ Regression for the SICK temperature-sensor case where the chatbot wrongly report
 (125 C). Both fields share the ECLASS semanticId 0173-1#02-BAA039, so a semanticId search
 unifies them.
 
-Run (needs the Lieferanten Neo4j up on bolt://localhost:7689 and the chatbot deps):
+These assert against *one specific supplier dataset*, not merely any Neo4j, so they
+skip unless the Lieferanten stack is both up and loaded:
 
-    KICONNECT_API_KEY=dummy uv run \
-      --with langgraph --with langchain-openai --with langchain-community \
-      --with faiss-cpu --with flask --with requests --with-editable ../.. \
-      python -m pytest test_semantic_tools.py -v
+    docker compose -f deploy/lieferanten/docker-compose.yml up -d
+    make test-integration
 """
 import os
+
 import pytest
 
 os.environ.setdefault("KICONNECT_API_KEY", "dummy")  # config import requires it; LLM unused here
@@ -31,10 +31,42 @@ AAY820 = "0173-1#02-AAY820#001"   # max process pressure
 
 @pytest.fixture(scope="module")
 def tools():
+    """The Lieferanten tool registry, or a skip.
+
+    A configured Neo4j URI is not sufficient: every test here asserts on the SICK
+    sensor, so the database must also be reachable and loaded. Checking only that
+    the tool exists (as this fixture used to) turns a stopped stack into four
+    ServiceUnavailable failures instead of an honest skip.
+    """
+    import neo4j
+    from neo4j.exceptions import AuthError, Neo4jError, ServiceUnavailable
+
     repo = config.get_repo("lieferanten")
     ts = {t.name: t for t in build_tools(repo)}
     if "find_submodel_elements_by_semantic_id" not in ts:
-        pytest.skip("Lieferanten repo has no Neo4j backend (stack down?)")
+        pytest.skip("Lieferanten repo has no Neo4j backend configured")
+
+    driver = neo4j.GraphDatabase.driver(
+        repo.neo4j_uri, auth=(repo.neo4j_user, repo.neo4j_password)
+    )
+    try:
+        driver.verify_connectivity()
+        with driver.session() as session:
+            loaded = session.run(
+                "MATCH (a:AssetAdministrationShell) WHERE a.id ENDS WITH $suffix "
+                "RETURN count(a) AS n",
+                suffix=SICK_SUFFIX,
+            ).single()["n"]
+    except (ServiceUnavailable, AuthError, Neo4jError) as exc:
+        pytest.skip(f"Lieferanten Neo4j unavailable at {repo.neo4j_uri}: {exc}")
+    finally:
+        driver.close()
+
+    if not loaded:
+        pytest.skip(
+            f"Lieferanten Neo4j at {repo.neo4j_uri} is up but holds no SICK sensor "
+            "(stack not loaded?)"
+        )
     return ts
 
 

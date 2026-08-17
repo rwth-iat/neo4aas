@@ -1,11 +1,14 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+# >=77 for PEP 639 (`license` as an SPDX string + `license-files`).
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "neo4aas"
 version = "0.1.0"
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 # `neo4aas.core` maps AAS JSON/XML/AASX to Neo4j and compiles AASQL to Cypher using
 # nothing but the driver. Everything that touches the basyx SDK lives in
