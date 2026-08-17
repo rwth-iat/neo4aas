@@ -14,11 +14,12 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir \
     "basyx-python-server @ git+https://github.com/rwth-iat/basyx-python-sdk.git@aas-demonstrator#subdirectory=server"
 
-# Install aas4graph (neo4aas) from the local checkout (build context = repo root) so
-# local changes apply without pushing. basyx-python-sdk is already installed (git), so
-# aas4graph's dependency on it is satisfied and not re-pulled from PyPI.
+# Install neo4aas from the local checkout (build context = repo root) so local changes
+# apply without pushing. The [server] extra pulls the basyx integration layer; the SDK
+# itself is already installed from git above, so it is satisfied and not re-pulled
+# from PyPI.
 COPY . /src/neo4aas
-RUN pip install --no-cache-dir /src/neo4aas
+RUN pip install --no-cache-dir "/src/neo4aas[server]"
 
 ENV INPUT=/input
 ENV NEO4J_URI=bolt://neo4j:7687
@@ -30,4 +31,4 @@ VOLUME ["/input"]
 EXPOSE 80
 
 CMD ["gunicorn", "--bind", "0.0.0.0:80", "--workers", "1", "--timeout", "120", \
-     "aas_mapping.server.run_neo4j_repository:application"]
+     "neo4aas.basyx_ext.server.run_repository:application"]

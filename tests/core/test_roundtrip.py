@@ -2,8 +2,8 @@ import json
 import pytest
 from pathlib import Path
 
-from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import IDENTIFIABLE_KEYS, AASNeo4JClient
-from aas_mapping.aas_neo4j_adapter.xmlification.xml_to_json import xml_to_aas_json
+from neo4aas.core.client import IDENTIFIABLE_KEYS, AASNeo4JClient
+from neo4aas.core.serialization.xml.xml_to_json import xml_to_aas_json
 
 from tests.paths import (
     SUBMODELS_DIR as _EXAMPLES_DIR,

@@ -4,15 +4,15 @@ from pathlib import Path
 
 import pytest
 
-from aas_mapping.aas_neo4j_adapter.querification.aasql_to_ast import (
+from neo4aas.core.query.aasql_to_ast import (
     parse_aasql_query,
     parse_aasql_full,
 )
-from aas_mapping.aas_neo4j_adapter.querification.ast_to_cypher import (
+from neo4aas.core.query.ast_to_cypher import (
     converter,
     converter_full,
 )
-from aas_mapping.aas_neo4j_adapter.querification.aasql_to_cypher import convert_aasql_to_cypher
+from neo4aas.core.query.aasql_to_cypher import convert_aasql_to_cypher
 
 
 from tests.paths import AST_DIR as _AST_DIR, QUERIES_DIR as _QUERY_DIR

@@ -109,7 +109,7 @@ services:
   chatbot-v2:
     build:
       context: ..
-      dockerfile: aas_mapping/chatbot_v2/Dockerfile
+      dockerfile: src/neo4aas/chatbot/Dockerfile
     ports:
       - "8091:8091"
     environment:

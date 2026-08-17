@@ -4,7 +4,7 @@ Focus: namespace handling must be version-agnostic across AAS metamodel namespac
 (3/0, 3/1, …) and tolerant of an explicit element prefix.
 """
 
-from aas_mapping.aas_neo4j_adapter.xmlification.xml_to_json import xml_to_aas_json
+from neo4aas.core.serialization.xml.xml_to_json import xml_to_aas_json
 
 # Default-namespace 3/0 (as ABB/Buerkert export it).
 _XML_30 = (

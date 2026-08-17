@@ -69,7 +69,7 @@ services:
       - "1800"
       - --graceful-timeout
       - "1800"
-      - aas_mapping.server.run_neo4j_repository:application
+      - neo4aas.basyx_ext.server.run_repository:application
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:80/api/v3.1/description')\" || exit 1"]
       interval: 15s

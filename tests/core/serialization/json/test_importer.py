@@ -2,7 +2,7 @@
 import pytest
 from neo4j.exceptions import TransientError
 
-from aas_mapping.aas_neo4j_adapter.jsonification.neo4j_import import JsonToNeo4jImporter
+from neo4aas.core.serialization.json.importer import JsonToNeo4jImporter
 
 
 class _RaisingSession:

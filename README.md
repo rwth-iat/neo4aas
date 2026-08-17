@@ -7,7 +7,7 @@ A proof-of-concept library for mapping [Asset Administration Shell (AAS)](https:
 ## Architecture
 
 ```
-aas_mapping/
+neo4aas/
 ├── aas_neo4j_adapter/
 │   ├── aas_neo4j_client.py      # Main API: AASNeo4JClient
 │   ├── base.py                  # BaseNeo4JClient, Neo4jModelConfig
@@ -241,7 +241,7 @@ Default bolt URI: `bolt://localhost:7687`
 ### Import an AAS file
 
 ```python
-from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import AASNeo4JClient, AAS_NEO4J_MODEL_CONFIG
+from neo4aas.core.client import AASNeo4JClient, AAS_NEO4J_MODEL_CONFIG
 
 client = AASNeo4JClient(
     uri="bolt://localhost:7687",
@@ -261,7 +261,7 @@ MATCH (n) RETURN n;
 ### Translate an AASQL query
 
 ```python
-from aas_mapping.aas_neo4j_adapter.querification.aasql_to_cypher import convert_aasql_to_cypher
+from neo4aas.core.query.aasql_to_cypher import convert_aasql_to_cypher
 
 query = {
     "$condition": {
@@ -289,7 +289,7 @@ Integration tests require a live Neo4j instance (`bolt://localhost:7687`, user `
 `AASConstraintChecker` validates AAS data already loaded in Neo4j against the AAS specification constraints. It runs Cypher queries and returns structured `ConstraintViolation` records grouped in a `ConstraintReport`.
 
 ```python
-from aas_mapping.aas_neo4j_adapter.validation import AASConstraintChecker
+from neo4aas.core.validation import AASConstraintChecker
 
 checker = AASConstraintChecker(
     uri="bolt://localhost:7687",
@@ -337,7 +337,7 @@ pip install ".[mcp]"
 ### Run
 
 ```bash
-python -m aas_mapping.mcp_server      # or: aas4graph-mcp
+python -m neo4aas.mcp      # or: aas4graph-mcp
 ```
 
 Connection is configured via environment variables (defaults shown):
@@ -381,7 +381,7 @@ Add to `claude_desktop_config.json`:
   "mcpServers": {
     "aas4graph": {
       "command": "python",
-      "args": ["-m", "aas_mapping.mcp_server"],
+      "args": ["-m", "neo4aas.mcp"],
       "env": {
         "NEO4J_URI": "bolt://localhost:7687",
         "NEO4J_USER": "neo4j",

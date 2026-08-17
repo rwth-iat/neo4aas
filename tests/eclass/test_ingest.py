@@ -2,11 +2,11 @@
 
 import pytest
 
-from aas_mapping.eclass.ingest import (
+from neo4aas.eclass.ingest import (
     build_concept_descriptions,
     push_concept_descriptions,
 )
-from aas_mapping.eclass.models import (
+from neo4aas.eclass.models import (
     EclassClass,
     EclassProperty,
     EclassUnit,

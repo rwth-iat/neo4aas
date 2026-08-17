@@ -12,8 +12,8 @@ import anyio
 import pytest
 from mcp.server.fastmcp.exceptions import ToolError
 
-from aas_mapping.mcp_server import server as mcp_server
-from aas_mapping.aas_neo4j_adapter.abstract import build_abstract_submodel
+from neo4aas.mcp import server as mcp_server
+from neo4aas.core.abstract import build_abstract_submodel
 
 
 def _fake_ctx(client):

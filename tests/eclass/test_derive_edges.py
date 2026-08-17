@@ -2,9 +2,9 @@
 
 import pytest
 
-from aas_mapping.eclass.derive_edges import derive_has_property_edges
-from aas_mapping.eclass.ingest import build_concept_descriptions, push_concept_descriptions
-from aas_mapping.eclass.models import EclassClass, EclassProperty, LangText, ParseResult
+from neo4aas.eclass.derive_edges import derive_has_property_edges
+from neo4aas.eclass.ingest import build_concept_descriptions, push_concept_descriptions
+from neo4aas.eclass.models import EclassClass, EclassProperty, LangText, ParseResult
 
 pytestmark = pytest.mark.integration
 

@@ -12,7 +12,7 @@ import pytest
 from basyx.aas import model
 from basyx.aas.model import datatypes
 
-from aas_mapping.aas_neo4j_adapter.neo_aas_object_store import Neo4jObjectStore
+from neo4aas.basyx_ext.object_store import Neo4jObjectStore
 
 pytestmark = pytest.mark.integration
 

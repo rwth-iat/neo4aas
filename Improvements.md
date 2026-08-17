@@ -3,7 +3,7 @@
 Ideas for optimizing the AAS → Neo4j mapping. Grounded in the current schema.
 
 **Current indexes** (only these): `Identifiable.id`, `Referable.idShort`, `:value(list_index)`
-— see [aas_neo4j_client.py:48-50](aas_mapping/aas_neo4j_adapter/aas_neo4j_client.py#L48-L50).
+— see [aas_neo4j_client.py:48-50](neo4aas/aas_neo4j_adapter/aas_neo4j_client.py#L48-L50).
 
 | # | Idea | Impact | Effort | Risk | Status |
 |---|------|--------|--------|------|--------|
@@ -22,14 +22,14 @@ Ideas for optimizing the AAS → Neo4j mapping. Grounded in the current schema.
 ## High-impact, low-effort
 
 ### 1. `Identifiable.id` → uniqueness CONSTRAINT (not just INDEX)
-Today it's a plain INDEX ([aas_neo4j_client.py:48](aas_mapping/aas_neo4j_adapter/aas_neo4j_client.py#L48)) and `identifiable_exists()` does a manual pre-check before insert — racy and an extra round-trip. A uniqueness constraint provides the index **and** enforces no duplicate ids at the DB level.
+Today it's a plain INDEX ([aas_neo4j_client.py:48](neo4aas/aas_neo4j_adapter/aas_neo4j_client.py#L48)) and `identifiable_exists()` does a manual pre-check before insert — racy and an extra round-trip. A uniqueness constraint provides the index **and** enforces no duplicate ids at the DB level.
 
 ```cypher
 CREATE CONSTRAINT identifiable_id IF NOT EXISTS
 FOR (n:Identifiable) REQUIRE n.id IS UNIQUE;
 ```
 
-**✅ Implemented** — replaced the `Identifiable.id` index in `default_optimization_clauses` ([aas_neo4j_client.py:47-53](aas_mapping/aas_neo4j_adapter/aas_neo4j_client.py#L47-L53)). Tests in `test_schema_constraints.py` (constraint present, duplicate id rejected at DB level, idempotent re-run). The manual `identifiable_exists()` pre-check is kept for a clean `KeyError`; the constraint is the backstop.
+**✅ Implemented** — replaced the `Identifiable.id` index in `default_optimization_clauses` ([aas_neo4j_client.py:47-53](neo4aas/aas_neo4j_adapter/aas_neo4j_client.py#L47-L53)). Tests in `test_schema_constraints.py` (constraint present, duplicate id rejected at DB level, idempotent re-run). The manual `identifiable_exists()` pre-check is kept for a clean `KeyError`; the constraint is the backstop.
 
 ### 2. Index / constrain the dedup key
 `Reference` and `ConceptDescription` are deduplicated by SHA256 `hash`, but **no index exists on `hash`** — every dedup MERGE scans. Add an index, or a uniqueness constraint so dedup happens DB-side via `MERGE` and the in-memory hash dict can be dropped.
@@ -39,7 +39,7 @@ CREATE INDEX reference_hash IF NOT EXISTS FOR (r:Reference) ON (r.hash);
 CREATE INDEX concept_description_hash IF NOT EXISTS FOR (c:ConceptDescription) ON (c.hash);
 ```
 
-**✅ Implemented** — node creation now MERGEs deduplicated-type nodes on `hash` (`apoc.merge.node`) instead of plain CREATE, and relationship creation uses `apoc.merge.relationship`, so a Reference/ConceptDescription imported by a *different* client/process reuses the canonical node and accrues no duplicate edges ([neo4j_import.py `_create_nodes` / `_create_relationships`](aas_mapping/aas_neo4j_adapter/jsonification/neo4j_import.py)). A backing `hash` index is created for every `deduplicated_object_types` entry (derived in `optimize_database()`), so adding/removing a deduplicated type needs no index edits and never silently falls back to a full scan. Tests in `test_dedup.py` (cross-client Reference dedup with shared incoming edges; distinct refs not merged). Plain index (not uniqueness constraint) chosen: MERGE itself guarantees a single node, and over-constraining interacts with the #8 self-loop case.
+**✅ Implemented** — node creation now MERGEs deduplicated-type nodes on `hash` (`apoc.merge.node`) instead of plain CREATE, and relationship creation uses `apoc.merge.relationship`, so a Reference/ConceptDescription imported by a *different* client/process reuses the canonical node and accrues no duplicate edges ([neo4j_import.py `_create_nodes` / `_create_relationships`](neo4aas/aas_neo4j_adapter/jsonification/neo4j_import.py)). A backing `hash` index is created for every `deduplicated_object_types` entry (derived in `optimize_database()`), so adding/removing a deduplicated type needs no index edits and never silently falls back to a full scan. Tests in `test_dedup.py` (cross-client Reference dedup with shared incoming edges; distinct refs not merged). Plain index (not uniqueness constraint) chosen: MERGE itself guarantees a single node, and over-constraining interacts with the #8 self-loop case.
 
 ### 3. Denormalize the resolution / lookup key → ⤳ merged into #7
 `keys_value[0]` is a **list element** → Neo4j cannot index it. The original idea was to store a scalar `target_id = keys_value[0]` on each Reference and index it for an indexed join.
@@ -54,7 +54,7 @@ It also costs duplicated data (must stay in sync with `keys_value`) and an extra
 ### 4. Kill the `uid` leak
 Every node carries a never-cleaned `uid` int that leaks into exported dicts (cleanup step is commented out — tracked in TODOs.md "Open Bugs"). Remove it post-import. Storage + round-trip cleanliness.
 
-- File: [jsonification/neo4j_import.py](aas_mapping/aas_neo4j_adapter/jsonification/neo4j_import.py)
+- File: [jsonification/neo4j_import.py](neo4aas/aas_neo4j_adapter/jsonification/neo4j_import.py)
 
 **✅ Implemented** — `_upload_nodes_and_relationships` now runs `_cleanup_uids_in_session` for the current batch's nodes after relationship wiring (kept the in-memory `uid → elementId` map; `hash` preserved for dedup). Removed the now-pointless per-label `uid` index. Exposed and fixed a latent exporter bug: a node with no scalar properties (e.g. `EmbeddedDataSpecification`) lost its only property (`uid`) and the subgraph JSON then omits `properties`; `_get_node_properties` now tolerates a missing `properties` key. Tests in `test_uid_cleanup.py` (no `uid` on any node post-import; `hash` retained).
 
@@ -88,14 +88,14 @@ The second case needs an **indexed lookup from the Reference side** by target id
 - add `target_id` to `NEO4J_INTERNAL_NODE_KEYS` so it is stripped on export;
 - incremental resolve: `MATCH (r:Reference {target_id: $new_id})` (indexed) instead of scanning all.
 
-- File: [aas_neo4j_client.py](aas_mapping/aas_neo4j_adapter/aas_neo4j_client.py) `resolve_references()`
+- File: [aas_neo4j_client.py](neo4aas/aas_neo4j_adapter/aas_neo4j_client.py) `resolve_references()`
 
 **✅ Implemented.** Added `resolve_references_for(identifier)`: resolves only references **inside** that Identifiable's subgraph plus references **targeting** it (`target_id == id`, indexed) — the two sets affected when an Identifiable appears. `Neo4jObjectStore.add`/`commit` call it instead of the full rebuild; `discard`/`remove` drop the resolve call entirely, since `DETACH DELETE` already removes every `:references` edge into the deleted subtree. The full `resolve_references()` remains for bulk imports. `#3` folded in: `target_id = keys_value[0]` is written on every Reference at import (References are content-addressed/immutable, so it never needs re-sync), indexed via `:Reference(target_id)`, and stripped on export through `NEO4J_INTERNAL_NODE_KEYS`. Per-write cost drops from O(all refs) to O(refs in the object + refs targeting it). Tests in `test_incremental_resolution.py`.
 
 ### 8. Fix the dedup self-loop
 `referredSemanticId` is stored as a relationship, invisible to the SHA256 hash, so two References differing only in `referredSemanticId` collapse into one node → self-loops, breaking round-trip (`IDTA 02056` xfail). Fold the `referredSemanticId` target into the hash, or exclude such References from dedup.
 
-- Files: [jsonification/neo4j_import.py](aas_mapping/aas_neo4j_adapter/jsonification/neo4j_import.py), [aas_neo4j_client.py](aas_mapping/aas_neo4j_adapter/aas_neo4j_client.py)
+- Files: [jsonification/neo4j_import.py](neo4aas/aas_neo4j_adapter/jsonification/neo4j_import.py), [aas_neo4j_client.py](neo4aas/aas_neo4j_adapter/aas_neo4j_client.py)
 
 ### 9. Bottom-up plan for recursive `$sme` search
 The no-path recursive `$sme` query compiles to `(sm:Submodel)-[:...*1..]->(sme)` then filters the attribute — the planner starts at every Submodel and **expands each full subtree before filtering** (expand-then-filter), visiting every SME regardless of selectivity.
@@ -110,7 +110,7 @@ Pairs with **#6**: an index on the queried value turns the initial SME scan into
 
 **Do first:** `PROFILE` both forms on the `real_aas` dataset — the Neo4j planner may already reorder given good stats; the tiny test DB won't reveal it. Compiler change: emit the SME-first / `RETURN DISTINCT` ordering for no-path `$sme` queries. See `ast_to_cypher.py` `_convert_sme` / `converter`.
 
-- File: [ast_to_cypher.py](aas_mapping/aas_neo4j_adapter/querification/ast_to_cypher.py)
+- File: [ast_to_cypher.py](neo4aas/aas_neo4j_adapter/querification/ast_to_cypher.py)
 
 ---
 

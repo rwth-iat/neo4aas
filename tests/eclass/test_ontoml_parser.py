@@ -5,7 +5,7 @@ element shapes as the real ``ECLASS15_0_BASIC_DE_SG_*.xml`` segment files) and
 checks classes/properties are extracted into typed models.
 """
 
-from aas_mapping.eclass.ontoml_parser import EclassOntomlParser
+from neo4aas.eclass.ontoml_parser import EclassOntomlParser
 
 # One class (with a superclass) and two properties (one a measure with a unit,
 # one deprecated), wrapped in the real ECLASS dictionary/ontoml namespaces.

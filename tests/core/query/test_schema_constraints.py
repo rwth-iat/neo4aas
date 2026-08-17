@@ -39,7 +39,7 @@ def test_duplicate_identifiable_id_rejected_at_db_level(aas_client):
 
 def test_constraint_present_without_explicit_optimize(neo4j_params, neo4j_available_or_skip):
     """A freshly constructed client must already have the schema in place."""
-    from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import AASNeo4JClient, AAS_NEO4J_MODEL_CONFIG
+    from neo4aas.core.client import AASNeo4JClient, AAS_NEO4J_MODEL_CONFIG
 
     client = AASNeo4JClient(
         uri=neo4j_params["uri"],

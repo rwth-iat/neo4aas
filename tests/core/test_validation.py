@@ -8,7 +8,7 @@ and use the `aas_client` fixture from conftest.py, which provides a clean databa
 
 import pytest
 
-from aas_mapping.aas_neo4j_adapter.validation import (
+from neo4aas.core.validation import (
     AASConstraintChecker,
     ConstraintReport,
     ConstraintViolation,

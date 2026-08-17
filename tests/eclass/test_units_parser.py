@@ -1,6 +1,6 @@
 """Unit tests for ECLASS UnitsML parsing (no Neo4j)."""
 
-from aas_mapping.eclass.ontoml_parser import EclassOntomlParser
+from neo4aas.eclass.ontoml_parser import EclassOntomlParser
 
 UNITS_XML = """<?xml version='1.0' encoding='UTF-8'?>
 <unt:eclass_units

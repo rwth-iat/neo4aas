@@ -1,7 +1,7 @@
 import pytest
 
-from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import AASNeo4JClient
-from aas_mapping.aas_neo4j_adapter.jsonification.neo4j_export import JsonFromNeo4jExporter
+from neo4aas.core.client import AASNeo4JClient
+from neo4aas.core.serialization.json.exporter import JsonFromNeo4jExporter
 
 
 def _exporter():

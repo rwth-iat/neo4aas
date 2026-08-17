@@ -7,8 +7,8 @@ No embedded DataSpecificationIEC61360; property->unit is a downstream graph edge
 
 import basyx.aas.model as model
 
-from aas_mapping.eclass.models import EclassClass, EclassProperty, EclassUnit, LangText
-from aas_mapping.eclass.spec_cd_writer import SpecCdWriter
+from neo4aas.eclass.models import EclassClass, EclassProperty, EclassUnit, LangText
+from neo4aas.eclass.spec_cd_writer import SpecCdWriter
 
 
 def test_property_to_cd():

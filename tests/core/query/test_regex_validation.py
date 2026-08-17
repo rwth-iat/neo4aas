@@ -10,7 +10,7 @@ No Neo4j needed — pure compile path.
 """
 import pytest
 
-from aas_mapping.aas_neo4j_adapter.querification.aasql_to_cypher import convert_aasql_to_cypher
+from neo4aas.core.query.aasql_to_cypher import convert_aasql_to_cypher
 
 
 def _regex_query(pattern: str) -> dict:

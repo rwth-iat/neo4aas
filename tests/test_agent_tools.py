@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from aas_mapping.aas_neo4j_adapter import agent_tools
+from neo4aas import agent_tools
 
 
 # ---------------------------------------------------------------------------

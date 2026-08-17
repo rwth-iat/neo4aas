@@ -7,7 +7,7 @@ ECLASS versions.
 
 import pytest
 
-from aas_mapping.aas_neo4j_adapter.utils import irdi_base
+from neo4aas.core.utils import irdi_base
 
 
 # ---------------------------------------------------------------------------

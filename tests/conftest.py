@@ -6,8 +6,8 @@ import pytest
 import neo4j
 from neo4j.exceptions import ServiceUnavailable, AuthError
 
-import aas_mapping.aas_neo4j_adapter.querification
-from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import AASNeo4JClient, AAS_NEO4J_MODEL_CONFIG
+import neo4aas.core.query
+from neo4aas.core.client import AASNeo4JClient, AAS_NEO4J_MODEL_CONFIG
 
 
 @pytest.fixture(scope="session")
@@ -18,7 +18,7 @@ def aasql_v32_validator():
     # Read the schema from the installed package, not a path relative to the tests —
     # the tests no longer live inside it.
     schema_path = (
-        Path(aas_mapping.aas_neo4j_adapter.querification.__file__).parent
+        Path(neo4aas.core.query.__file__).parent
         / "spec"
         / "query-json-schema-v3.2.json"
     )

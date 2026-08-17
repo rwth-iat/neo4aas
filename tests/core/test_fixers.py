@@ -6,7 +6,7 @@ integration test that the language-tag fix is applied on the real import path.
 
 import pytest
 
-from aas_mapping.aas_neo4j_adapter.fixers import (
+from neo4aas.core.fixers import (
     LangStringFixer,
     NumericValueTypeFixer,
     IdShortFixer,
@@ -154,7 +154,7 @@ def test_empty_langstring_fixer_in_default_fixers():
 
 def test_client_accepts_fix_on_import_kwarg():
     """fix_on_import must be accepted through the full inheritance chain (no Neo4j)."""
-    from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import (
+    from neo4aas.core.client import (
         AASNeo4JClient,
         AAS_NEO4J_MODEL_CONFIG,
     )

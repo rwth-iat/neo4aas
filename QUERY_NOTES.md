@@ -24,7 +24,7 @@ Neo4J Result -> AAS Query Result
 
 ## Examples
 
-Note: The following examples are written in AAS Query Language. To see the corresponding Cypher Query, please check the folder `aas_mapping/examples/queries`.
+Note: The following examples are written in AAS Query Language. To see the corresponding Cypher Query, please check the folder `neo4aas/examples/queries`.
 
 ### Single comparison
 ```json

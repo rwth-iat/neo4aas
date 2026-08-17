@@ -10,7 +10,7 @@ Requires a live Neo4j; skipped automatically when unreachable.
 """
 import pytest
 
-from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import AASNeo4JClient, AAS_NEO4J_MODEL_CONFIG
+from neo4aas.core.client import AASNeo4JClient, AAS_NEO4J_MODEL_CONFIG
 
 pytestmark = pytest.mark.integration
 
