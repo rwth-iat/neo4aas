@@ -10,6 +10,8 @@ No Neo4j dependency — this module is independently usable and testable.
 import xml.etree.ElementTree as ET
 from typing import Any
 
+from neo4aas.core.io import read_bytes
+
 AAS_NS = "https://admin-shell.io/aas/3/0"
 
 # Elements whose direct children form a list value.
@@ -191,7 +193,9 @@ def xml_to_aas_json(source: str | bytes) -> dict:
     if isinstance(source, bytes):
         root = ET.fromstring(source)
     else:
-        root = ET.parse(source).getroot()
+        # read_bytes() transparently gunzips, so `x.xml.gz` (how real corpora ship
+        # instances) parses exactly like `x.xml`.
+        root = ET.fromstring(read_bytes(source))
 
     result: dict[str, Any] = {}
     for child in root:

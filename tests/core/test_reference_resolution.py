@@ -278,3 +278,51 @@ def test_readd_after_delete_keeps_reference_edges(aas_client):
     assert _semantic_id_edge_count(aas_client, sm_id) == 1, "semanticId edge lost after re-add"
     data = aas_client.get_identifiable(sm_id)
     assert "semanticId" in data["submodelElements"][0], "semanticId missing from re-added property"
+
+
+def test_resolve_references_is_set_based_not_per_reference(aas_client, monkeypatch):
+    """Resolution cost must scale with the number of distinct key-chain lengths, not with
+    the number of References.
+
+    The previous implementation ran two round-trips per Reference (a DELETE and a MERGE,
+    each in its own session), which dominated a bulk corpus load. Resolution is now one
+    query per key-chain length, so adding more References must not add queries.
+    """
+    def env(n):
+        # The ConceptDescriptions must exist, otherwise the semanticIds are dangling
+        # references and nothing resolves.
+        return {
+            "submodels": [{
+                "modelType": "Submodel", "id": f"urn:sm/perf{n}", "idShort": f"SM{n}",
+                "submodelElements": [
+                    _property_with_semantic_id(f"P{i}", f"0173-1#02-PERF{n}{i}#001")
+                    for i in range(n)
+                ],
+            }],
+            "conceptDescriptions": [
+                {"modelType": "ConceptDescription", "id": f"0173-1#02-PERF{n}{i}#001"}
+                for i in range(n)
+            ],
+        }
+
+    counts = []
+    for n in (2, 20):
+        aas_client._remove_all()
+        aas_client.upload_json(env(n))
+        calls = 0
+        original = aas_client.execute_clause
+
+        def counting(clause, *args, _original=original, **kwargs):
+            nonlocal calls
+            calls += 1
+            return _original(clause, *args, **kwargs)
+
+        monkeypatch.setattr(aas_client, "execute_clause", counting)
+        resolved = aas_client.resolve_references()
+        monkeypatch.undo()
+        assert resolved == n, f"expected {n} resolved references, got {resolved}"
+        counts.append(calls)
+
+    assert counts[0] == counts[1], (
+        f"query count grew with the number of references: {counts[0]} -> {counts[1]}"
+    )

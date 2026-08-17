@@ -55,12 +55,22 @@ from neo4aas.core.base import BaseNeo4JClient
 # Constants
 # ---------------------------------------------------------------------------
 
-# AASd-002: "idShort shall only feature letters, digits, underscore ('_'); starting
-# mandatory with a letter. I.e. [a-zA-Z][a-zA-Z0-9_]+" — a hyphen is NOT part of the
-# allowed set (basyx enforces the same set on read-back, so accepting hyphens here
-# reported data as compliant that the SDK then refuses to reconstruct). The '+' makes
-# ≥2 characters the spec-mandated minimum.
-IDSHORT_PATTERN = re.compile(r'^[a-zA-Z][a-zA-Z0-9_]+$')
+# AASd-002 changed between metamodel versions (verified against aas-core-meta, the
+# machine-readable metamodel: `v3.py` vs `v3_1.py`/`v3_2.py`):
+#
+#   V3.0      "letters, digits, underscore; starting mandatory with a letter"
+#             -> ^[a-zA-Z][a-zA-Z0-9_]*$        (no hyphen, ≥1 character)
+#   V3.1/3.2  "at least two characters, letters, digits, hyphen and underscore;
+#              starting with a letter, not ending with a hyphen"
+#             -> ^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+$
+#
+# The checker validates against the *spec* and follows the current version (V3.2), which
+# the AASQL support in this repository also targets. basyx-python-sdk implements V3.0 and
+# rejects a hyphen on read-back, so data that is AASd-002-compliant here can still fail
+# reconstruction through the SDK — that is what IdShortFixer (fixers.py) repairs, using
+# IDSHORT_PATTERN_V30 as its target.
+IDSHORT_PATTERN = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+$')
+IDSHORT_PATTERN_V30 = re.compile(r'^[a-zA-Z][a-zA-Z0-9_]*$')
 
 # AASd-125: all keys following the first key in a ModelReference must be FragmentKeys
 FRAGMENT_KEYS: frozenset[str] = frozenset({

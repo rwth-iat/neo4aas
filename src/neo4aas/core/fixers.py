@@ -118,11 +118,16 @@ class IdShortFixer(AASFixer):
     read-back (``AASd-002``), which breaks reconstruction of the whole object — and, in a
     Repository, the entire shells/submodels listing.
 
-    AASd-002 is ``[a-zA-Z][a-zA-Z0-9_]+``: the allowed set is letters, digits and ``_``
-    only — a hyphen is **not** legal (basyx: "must contain only letters, digits and
-    underscore") — and the first character must be a letter. Illegal characters are
-    therefore replaced with ``_``, and an idShort that does not start with a letter is
-    prefixed with ``x`` (lossless, unlike stripping the leading characters).
+    AASd-002 differs by metamodel version (see ``validation.IDSHORT_PATTERN``): V3.0 allows
+    letters, digits and ``_``; V3.1/V3.2 additionally allow ``-`` (not as the last
+    character). Both require the first character to be a letter. The **target is V3.0**,
+    because the consumer that breaks is basyx-python-sdk, which implements V3.0 and rejects
+    a hyphen ("must contain only letters, digits and underscore") — so a V3.1-valid
+    ``Max-Flow-Rate`` still fails read-back. Pass ``allow_hyphen=True`` when the consumer
+    follows V3.1+ and hyphens should be preserved.
+
+    Illegal characters are replaced with ``_``; an idShort that does not start with a letter
+    is prefixed with ``x`` (lossless, unlike stripping the leading characters).
 
     Note: an idShort referenced by a ModelReference *idShort path* (a key ``value``) is not
     rewritten in lockstep, so such a reference could desync. The supplier data here references
@@ -132,7 +137,12 @@ class IdShortFixer(AASFixer):
 
     name = "idshort-aasd002"
 
-    _ILLEGAL = re.compile(r"[^A-Za-z0-9_]")
+    _ILLEGAL_V30 = re.compile(r"[^A-Za-z0-9_]")
+    _ILLEGAL_V31 = re.compile(r"[^A-Za-z0-9_-]")
+
+    def __init__(self, allow_hyphen: bool = False):
+        self._illegal = self._ILLEGAL_V31 if allow_hyphen else self._ILLEGAL_V30
+        self._allow_hyphen = allow_hyphen
 
     def fix(self, data: dict) -> int:
         count = 0
@@ -141,9 +151,12 @@ class IdShortFixer(AASFixer):
             nonlocal count
             value = node.get("idShort")
             if isinstance(value, str) and value:
-                fixed = self._ILLEGAL.sub("_", value)
+                fixed = self._illegal.sub("_", value)
                 if not fixed[0].isalpha():
                     fixed = "x" + fixed
+                if self._allow_hyphen and fixed.endswith("-"):
+                    # V3.1/V3.2 forbid a trailing hyphen even though '-' is otherwise legal.
+                    fixed = fixed[:-1] + "_"
                 if fixed != value:
                     node["idShort"] = fixed
                     count += 1

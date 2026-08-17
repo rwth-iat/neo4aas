@@ -78,3 +78,41 @@ def test_flattened_list_of_dicts_tolerates_heterogeneous_entries():
     assert root["keys_value"] == ["a", "b", None]
     assert root["keys_type"] == ["GlobalReference", None, None]
     assert root["keys_extra"] == [None, None, 1]
+
+
+def test_upload_all_json_from_dir_finds_gzipped_files(tmp_path, monkeypatch):
+    """A directory of `x.json.gz` (how real corpora ship) must be seen as JSON input.
+
+    The listing used `endswith('.json')`, so a gzipped corpus produced "Found 0 JSON
+    files" and an empty database instead of an error.
+    """
+    import gzip
+
+    (tmp_path / "a.json.gz").write_bytes(
+        gzip.compress(b'{"submodels": [{"modelType": "Submodel", "id": "urn:a"}]}')
+    )
+    (tmp_path / "b.json").write_bytes(b'{"submodels": [{"modelType": "Submodel", "id": "urn:b"}]}')
+    (tmp_path / "ignore.txt").write_text("x")
+
+    importer = JsonToNeo4jImporter(uri=None, user="x")
+    uploaded = []
+    monkeypatch.setattr(importer, "_upload_nodes_and_relationships",
+                        lambda nodes, rels, *a, **kw: uploaded.append(nodes) or kw.get("stats"))
+
+    stats = importer.upload_all_json_from_dir(str(tmp_path))
+
+    assert stats.total_files == 2
+    ids = {n.get("id") for batch in uploaded for n in batch}
+    assert {"urn:a", "urn:b"} <= ids
+
+
+def test_process_json_file_reads_gzipped_source(tmp_path):
+    import gzip
+
+    path = tmp_path / "env.json.gz"
+    path.write_bytes(gzip.compress(b'{"submodels": [{"modelType": "Submodel", "id": "urn:gz"}]}'))
+
+    importer = JsonToNeo4jImporter(uri=None, user="x")
+    nodes, _ = importer._process_json_file(str(path))
+
+    assert any(n.get("id") == "urn:gz" for n in nodes)

@@ -6,10 +6,10 @@ then the entire existing JSON import pipeline (_process_json_data, _process_dict
 deduplication, batch upload) is reused unchanged.
 """
 import logging
-import os
 import time
-from os.path import isfile, join
+from os.path import join
 
+from neo4aas.core.io import list_aas_files
 from neo4aas.core.serialization.json.importer import JsonToNeo4jImporter
 from neo4aas.core.utils import UploadStats
 from neo4aas.core.serialization.xml.xml_to_json import xml_to_aas_json
@@ -47,7 +47,8 @@ class XmlToNeo4jImporter(JsonToNeo4jImporter):
         Neo4j in db_batch_size-sized transactions.
         """
         stats = UploadStats()
-        xml_files = [f for f in os.listdir(directory) if isfile(join(directory, f)) and f.endswith('.xml')]
+        # gz-aware (see neo4aas.core.io): `x.xml.gz` is how real corpora ship instances.
+        xml_files = [p.name for p in list_aas_files(directory, suffixes=(".xml",))]
         stats.total_files = len(xml_files)
         stats.total_batches = (stats.total_files + file_batch_size - 1) // file_batch_size
 

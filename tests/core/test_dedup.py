@@ -155,3 +155,68 @@ def test_concept_description_dedup_by_id_across_clients(aas_client, neo4j_params
     finally:
         client2.driver.close()
     assert _count_cd(aas_client, cd_id) == 1
+
+
+# ---------------------------------------------------------------------------
+# Repeated Identifiable ids across files (real vendor data)
+# ---------------------------------------------------------------------------
+
+def _count_identifiable(client, ident_id: str) -> int:
+    clause = "MATCH (n:Identifiable {id: $id}) RETURN count(n) AS c"
+    with client.driver.session() as session:
+        return session.run(clause, id=ident_id).single()["c"]
+
+
+def test_repeated_submodel_id_across_files_does_not_abort_the_import(aas_client):
+    """Vendors ship the same Submodel id in many AAS files; that must not fail the load.
+
+    Harting, for instance, repeats `…/submodels/ContactInformations/1/0` across its
+    catalogue. The `Identifiable.id` uniqueness constraint then made the *second* file
+    raise IndexEntryConflictException — inside a bulk upload that loses the whole batch,
+    and in the repository loader it drops the entire shell that happened to share one
+    submodel. Same id means the same object, so it merges (first content wins).
+    """
+    shared_sm = "https://vendor.example/submodels/ContactInformations/1/0"
+    aas_client.upload_json({"submodels": [
+        _submodel(shared_sm, "ContactInformations", _property_with_semantic_id("P1", "0173-A")),
+    ]})
+    aas_client.upload_json({"submodels": [
+        _submodel(shared_sm, "ContactInformations", _property_with_semantic_id("P1", "0173-A")),
+        _submodel("urn:sm/other", "TechnicalData", _property_with_semantic_id("P2", "0173-B")),
+    ]})
+
+    assert _count_identifiable(aas_client, shared_sm) == 1
+    # the rest of the second file must still be there
+    assert _count_identifiable(aas_client, "urn:sm/other") == 1
+
+
+def test_repeated_shell_id_merges_first_content_wins(aas_client):
+    def shell(id_short):
+        return {"modelType": "AssetAdministrationShell", "id": "urn:aas/dup",
+                "idShort": id_short,
+                "assetInformation": {"assetKind": "Instance", "globalAssetId": "urn:asset/1"}}
+
+    aas_client.upload_json({"assetAdministrationShells": [shell("First")]})
+    aas_client.upload_json({"assetAdministrationShells": [shell("Second")]})
+
+    assert _count_identifiable(aas_client, "urn:aas/dup") == 1
+    with aas_client.driver.session() as session:
+        id_short = session.run(
+            "MATCH (n:AssetAdministrationShell {id: 'urn:aas/dup'}) RETURN n.idShort AS s"
+        ).single()["s"]
+    assert id_short == "First"
+
+
+def test_repeated_identifiable_id_across_clients(aas_client, neo4j_params):
+    """Cross-client (empty in-memory dedup map): the DB-level MERGE must still collapse."""
+    sm_id = "urn:sm/cross-client-dup"
+    aas_client.upload_json({"submodels": [
+        _submodel(sm_id, "SM", _property_with_semantic_id("P", "0173-C"))]})
+    client2 = _second_client(neo4j_params)
+    try:
+        client2.upload_json({"submodels": [
+            _submodel(sm_id, "SM", _property_with_semantic_id("P", "0173-C"))]})
+    finally:
+        client2.driver.close()
+
+    assert _count_identifiable(aas_client, sm_id) == 1

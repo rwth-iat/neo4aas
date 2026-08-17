@@ -1,15 +1,15 @@
 import hashlib
 import json
 import logging
-import os
 import time
-from os.path import join, isfile
+from os.path import join
 from typing import Optional, List, Dict, Tuple, Any
 
 from neo4j import Session
 from neo4j.exceptions import ClientError
 
 from neo4aas.core.base import BaseNeo4JClient, Neo4jModelConfig
+from neo4aas.core.io import list_aas_files, read_bytes
 from neo4aas.core.utils import UploadStats, irdi_base
 
 logger = logging.getLogger(__name__)
@@ -110,20 +110,23 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
 
         dedup_by_id = set(self.model_config.deduplicated_by_id)
 
-        # Split into MERGE-by-id (dedup-by-id types), MERGE-by-hash (other dedup types, have a
-        # `hash`) and plain CREATE.
+        # Route each label bucket: MERGE-by-id for dedup-by-id types (keyed on the
+        # Identifiable `id`, which carries a uniqueness constraint), MERGE-by-hash for
+        # content-deduplicated types (they carry a `hash` from _deduplicate_nodes), plain
+        # CREATE otherwise. By-id routing is decided by the labels alone — a dedup-by-id
+        # type does not need a content hash, so no `hash` property is written for it.
         merge_data: Dict[str, List[Dict]] = {}
         merge_by_id_data: Dict[str, List[Dict]] = {}
         create_data: Dict[str, List[Dict]] = {}
         for label_tuple, node_list in grouped_nodes.items():
             key = ",".join(label_tuple)
+            if dedup_by_id.intersection(label_tuple):
+                merge_by_id_data[key] = node_list
+                continue
             dedup = [n for n in node_list if "hash" in n]
             plain = [n for n in node_list if "hash" not in n]
             if dedup:
-                if dedup_by_id.intersection(label_tuple):
-                    merge_by_id_data[key] = dedup
-                else:
-                    merge_data[key] = dedup
+                merge_data[key] = dedup
             if plain:
                 create_data[key] = plain
 
@@ -184,27 +187,42 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
     def _deduplicate_nodes(self, grouped_nodes: dict[tuple[str], list[dict]]):
         dedup_by_id = set(self.model_config.deduplicated_by_id)
         for label_tuple, nodes in grouped_nodes.items():
-            # Check if any of the labels in this tuple should be deduplicated
-            if not any(lbl in self.model_config.deduplicated_object_types for lbl in label_tuple):
+            # Dedup-by-id types collapse on their Identifiable id (first-content-wins) so two
+            # nodes that share an id but differ in content don't both survive to creation —
+            # the second would violate the id-uniqueness constraint and abort the import.
+            # Content-deduplicated types collapse on a hash of their properties instead.
+            # A type may be in either set independently: an Identifiable is identified by
+            # its id and needs no content hash.
+            by_id = bool(dedup_by_id.intersection(label_tuple))
+            by_hash = any(lbl in self.model_config.deduplicated_object_types for lbl in label_tuple)
+            if not (by_id or by_hash):
                 continue
 
-            # Dedup-by-id types collapse on their Identifiable id (first-content-wins) so two
-            # nodes that share an id but differ in content don't both survive to creation; the
-            # rest dedup on content hash. The hash is still assigned (backs the hash index).
-            by_id = bool(dedup_by_id.intersection(label_tuple))
             filtered_nodes = []
             for node in nodes:
-                # Deterministic JSON hash from properties
-                node_copy = {k: v for k, v in node.items() if k != "uid"}
-                hash_value = hashlib.sha256(json.dumps(node_copy, sort_keys=True).encode()).hexdigest()
-                dedup_key = node["id"] if by_id else hash_value
+                if by_id:
+                    # An Identifiable without an id is malformed input; leave it to be
+                    # created (and to fail loudly) rather than dropping it silently here.
+                    dedup_key = node.get("id")
+                    if dedup_key is None:
+                        filtered_nodes.append(node)
+                        continue
+                    hash_value = None
+                else:
+                    # Deterministic JSON hash from properties
+                    node_copy = {k: v for k, v in node.items() if k != "uid"}
+                    hash_value = hashlib.sha256(
+                        json.dumps(node_copy, sort_keys=True).encode()
+                    ).hexdigest()
+                    dedup_key = hash_value
 
                 if dedup_key in self.deduplicated_nodes:
                     # This node already exists (deduplicate)
                     existing_uid = self.deduplicated_nodes[dedup_key]
                     self.deduplicated_to_existing_uid_map[node["uid"]] = existing_uid
                 else:
-                    node["hash"] = hash_value
+                    if hash_value is not None:
+                        node["hash"] = hash_value
                     # First time we see this node -> keep it
                     self.deduplicated_nodes[dedup_key] = node["uid"]
                     filtered_nodes.append(node)
@@ -437,11 +455,9 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         return self._process_dict(json_data)
 
     def _process_json_file(self, file_path: str) -> Tuple[List[Dict], Dict[str, List]]:
-        """Process a single JSON file and return nodes and relationships."""
-        with open(file_path, encoding='utf-8') as f:
-            data = json.load(f)
-            nodes, relationships = self._process_json_data(data)
-        return nodes, relationships
+        """Process a single JSON file (gzipped or not) and return nodes and relationships."""
+        data = json.loads(read_bytes(file_path))
+        return self._process_json_data(data)
 
     def _process_json_files_batch(self, directory: str, files_batch: List[str]) -> Tuple[List[Dict], Dict[str, List]]:
         """Process a batch of JSON files and return nodes and relationships."""
@@ -457,7 +473,9 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
                                  db_batch_size: int = 10000, max_num_of_batches=10000) -> UploadStats:
         """Upload JSON files from directory into Neo4j using batch processing."""
         stats = UploadStats()
-        json_files = [f for f in os.listdir(directory) if isfile(join(directory, f)) and f.endswith('.json')]
+        # gz-aware: real corpora keep instances as `x.json.gz`, which a bare
+        # `endswith(".json")` silently skipped (reporting "0 files", not an error).
+        json_files = [p.name for p in list_aas_files(directory, suffixes=(".json",))]
         stats.total_files = len(json_files)
         stats.total_batches = (stats.total_files + file_batch_size - 1) // file_batch_size
 

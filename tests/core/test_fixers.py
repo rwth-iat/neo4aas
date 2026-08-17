@@ -112,15 +112,25 @@ def test_idshort_fixer_sanitizes_illegal_chars():
     assert data["submodels"][0]["idShort"] == "Already_Valid_1"  # legal chars kept
 
 
-def test_idshort_fixer_replaces_hyphen():
-    """AASd-002 allows only letters, digits and underscore — a hyphen is NOT legal.
-
-    basyx rejects it on read-back ("must contain only letters, digits and underscore"),
-    which is exactly the failure this fixer exists to prevent, so it must be replaced.
-    """
+def test_idshort_fixer_replaces_hyphen_by_default():
+    """AAS V3.1+ permits a hyphen in an idShort, but basyx implements V3.0 and rejects it
+    ("must contain only letters, digits and underscore") — which is exactly the read-back
+    failure this fixer exists to prevent. Default target is therefore the V3.0 charset."""
     data = {"submodels": [{"modelType": "Submodel", "idShort": "Max-Flow-Rate"}]}
     assert IdShortFixer().fix(data) == 1
     assert data["submodels"][0]["idShort"] == "Max_Flow_Rate"
+
+
+def test_idshort_fixer_can_keep_hyphens_for_v31_consumers():
+    data = {"submodels": [
+        {"modelType": "Submodel", "idShort": "Max-Flow-Rate"},   # valid V3.1 -> untouched
+        {"modelType": "Submodel", "idShort": "trailing-"},        # trailing '-' is invalid
+        {"modelType": "Submodel", "idShort": "with space"},
+    ]}
+    assert IdShortFixer(allow_hyphen=True).fix(data) == 2
+    assert [sm["idShort"] for sm in data["submodels"]] == [
+        "Max-Flow-Rate", "trailing_", "with_space",
+    ]
 
 
 @pytest.mark.parametrize(

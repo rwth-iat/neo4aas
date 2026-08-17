@@ -8,7 +8,24 @@ from basyx.aas.model import AbstractObjectStore
 from basyx.aas.model.provider import DictIdentifiableStore as _FileStore
 
 from neo4aas.core.client import AASNeo4JClient, AAS_NEO4J_MODEL_CONFIG
+from neo4aas.core.io import aas_suffix, is_aas_file, list_aas_files
+from neo4aas.core.serialization.aasx import AasxToNeo4jImporter
 from neo4aas.basyx_ext.object_store import Neo4jObjectStore
+
+
+def _read_supplementary_files(path, container: DictSupplementaryFileContainer,
+                              logger: logging.Logger) -> None:
+    """Best-effort extraction of an AASX package's supplementary files (thumbnails, PDFs).
+
+    Only basyx can populate its own file container, and its reader rejects packages
+    whose metamodel namespace it does not know — so a failure here must not fail the
+    import: the AAS content is already loaded by neo4aas' own package reader.
+    """
+    try:
+        with AASXReader(str(path)) as reader:
+            reader.read_into(object_store=_FileStore(), file_store=container)
+    except Exception as exc:  # noqa: BLE001 — supplementary files are optional
+        logger.info('No supplementary files read from "%s": %s', getattr(path, "name", path), exc)
 
 
 def build_neo4j_object_store(uri: str, user: str, password: str) -> Neo4jObjectStore:
@@ -20,9 +37,6 @@ def build_neo4j_object_store(uri: str, user: str, password: str) -> Neo4jObjectS
         model_config=AAS_NEO4J_MODEL_CONFIG, fix_on_import=fix_on_import,
     )
     return Neo4jObjectStore(client=client)
-
-
-_AAS_SUFFIXES = (".json", ".xml", ".aasx")
 
 
 def _select_input_files(env_input: str, logger: logging.Logger) -> list:
@@ -38,13 +52,12 @@ def _select_input_files(env_input: str, logger: logging.Logger) -> list:
     root = Path(env_input)
     groups: dict[str, list] = {}
     for entry in sorted(root.iterdir()):
-        if entry.is_file() and entry.suffix.lower() in _AAS_SUFFIXES:
+        # is_aas_file/aas_suffix ignore a trailing `.gz`: real corpora ship instances
+        # compressed (`x.json.gz`), and a suffix-only match found none of them.
+        if entry.is_file() and is_aas_file(entry):
             groups.setdefault("", []).append(entry)
         elif entry.is_dir():
-            groups[entry.name] = sorted(
-                p for p in entry.rglob("*")
-                if p.is_file() and p.suffix.lower() in _AAS_SUFFIXES
-            )
+            groups[entry.name] = list_aas_files(entry, recursive=True)
 
     selected: list = []
     for name, files in groups.items():
@@ -79,23 +92,26 @@ def build_neo4j_storage(
     # (so XML imports get the same repair via MRO), preserving non-conformant content. The
     # Repository still serves the result through this Neo4jObjectStore.
     client = store._client
+    aasx_importer = AasxToNeo4jImporter(client)
     input_supp_files = DictSupplementaryFileContainer()
     loaded = failed = 0
     for file in _select_input_files(env_input, logger):
-        suffix = file.suffix.lower()
+        suffix = aas_suffix(file)
         try:
             if suffix == ".json":
                 client.upload_json_file(str(file))
             elif suffix == ".xml":
                 client.upload_xml_file(str(file))
             elif suffix == ".aasx":
-                # .aasx carries supplementary files, so still go through the basyx reader;
-                # add_identifiable applies the same fixers on this single-object path.
-                file_store = _FileStore()
-                with AASXReader(file) as reader:
-                    reader.read_into(object_store=file_store, file_store=input_supp_files)
-                for obj in file_store:
-                    store.add(obj)
+                # Load the AAS content with neo4aas' own package reader, for the same
+                # reason the JSON/XML paths avoid basyx: basyx's AASXReader accepts only
+                # the V3.0 namespace and *does not raise* when it recognizes nothing — a
+                # V3.1 package (e.g. the in-house Pumpwerk data) read as zero objects and
+                # was counted as loaded. Supplementary files still come from the basyx
+                # reader, best effort, since they are outside neo4aas' scope.
+                for env in aasx_importer.iter_environments(str(file)):
+                    client.upload_json(env)
+                _read_supplementary_files(file, input_supp_files, logger)
             else:
                 continue
             loaded += 1

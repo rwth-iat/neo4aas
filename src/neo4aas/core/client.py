@@ -73,16 +73,24 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
     # Neo4j and all relationships point to that single canonical node.
     deduplicated_object_types={
         "Reference",
-        "ConceptDescription",
         # "Qualifier",           # not deduplicated: qualifiers are structurally identical but semantically distinct per element
         # "Extension",           # same reasoning as Qualifier
         # "EmbeddedDataSpecification"
     },
-    # A ConceptDescription is globally identified by its IRDI: dedup it on `id` (first wins),
-    # not on content hash, since some sources (e.g. SICK) re-emit the same IRDI with differing
-    # definitions across files — hash-merge would create a duplicate id and violate the
-    # uniqueness constraint. References stay hash-deduped (they are content-addressed).
-    deduplicated_by_id={"ConceptDescription"},
+    # Every Identifiable (AssetAdministrationShell / Submodel / ConceptDescription) is
+    # globally identified by its `id`, which is exactly the scope of the uniqueness
+    # constraint above — so a repeated id means the same object and MERGEs onto the
+    # existing node (first content wins) instead of creating a second one.
+    #
+    # Real vendor data needs this: SICK re-emits the same ConceptDescription IRDI with
+    # differing definitions, and Harting ships one Submodel id
+    # (…/submodels/ContactInformations/1/0) across a whole catalogue of AAS files. Without
+    # id-merge the second occurrence raises IndexEntryConflictException, which loses a
+    # whole 50-file batch in `upload_all_json_from_dir` and makes the repository loader
+    # drop an entire shell because one of its submodels was already present.
+    #
+    # References stay hash-deduped: they are content-addressed and carry no id.
+    deduplicated_by_id={"Identifiable"},
     # Node properties that are lists of dicts with only scalar values are stored as parallel
     # flat lists instead, since Neo4j does not support list-of-dict properties.
     # BEFORE: description = [{"language": "en", "text": "Foo"}, {"language": "de", "text": "Bar"}]
@@ -352,8 +360,8 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         keys = ("assetAdministrationShells", "submodels", "conceptDescriptions")
         return {k: (result[k] if result else 0) for k in keys}
 
-    # Shared fragments for the resolvers: a Reference `r` is resolvable when it has a
-    # non-empty keys_value chain; the resolvers consume (rid, kv) records.
+    # Shared fragments for the resolver: a Reference `r` is resolvable when it has a
+    # non-empty keys_value chain; `_REF_KV` is the key chain to follow for it.
     #
     # Both reference types resolve. A ModelReference addresses an in-model Referable via its
     # full key chain (keys_value[0] = Identifiable id, then a descent per key). An
@@ -363,14 +371,18 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
     # sub-addressing we don't descend. An external target that simply isn't loaded yields no
     # edge, exactly like a dangling ModelReference.
     _REF_COND = "r.keys_value IS NOT NULL AND size(r.keys_value) > 0"
-    _REF_RETURN = (
-        "RETURN elementId(r) AS rid, "
+    _REF_KV = (
         "CASE r.type WHEN 'ExternalReference' THEN r.keys_value[..1] "
-        "ELSE r.keys_value END AS kv"
+        "ELSE r.keys_value END"
     )
 
-    def _resolve_refs(self, refs: list) -> int:
-        """(Re)build the ``:references`` edge for each given reference.
+    def _resolve_scope(self, match_scope: str, params: Optional[dict] = None) -> int:
+        """(Re)build the ``:references`` edges of every Reference bound by ``match_scope``.
+
+        ``match_scope`` is a Cypher fragment that binds the variable ``r`` to the References
+        to resolve (e.g. ``MATCH (r:Reference)`` for the whole graph). Their existing
+        ``:references`` edges are dropped first, so re-resolving is idempotent and
+        self-healing.
 
         A ModelReference addresses its target by a chain of keys: ``keys_value[0]`` is the
         global ``id`` of an Identifiable (AAS / Submodel / ConceptDescription), and each
@@ -380,32 +392,43 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         ``child.idShort = key OR edge.list_index = toInteger(key)`` (``toInteger`` of an
         idShort is null, so only the right branch ever matches).
 
-        Each reference's existing ``:references`` edge is dropped first, so re-resolving a
-        reference is idempotent and self-healing. ``refs`` items are ``{rid, kv}`` records.
-        Returns the number of references that resolved to a target.
+        The work is **set-based**: one query per distinct key-chain length (in practice 1–4),
+        each resolving all References of that length at once. The previous shape ran two
+        round-trips *per Reference*, i.e. two sessions and two transactions each, which
+        dominated bulk-load time — a corpus load spends most of its time here otherwise.
+        Returns the number of References that resolved to a target.
         """
+        params = params or {}
+        self.execute_clause(
+            f"{match_scope} WITH DISTINCT r MATCH (r)-[rel:references]->() DELETE rel", params=params
+        )
+        lengths = [
+            row["n"]
+            for row in self.execute_clause(
+                f"{match_scope} WITH DISTINCT r WHERE {self._REF_COND} "
+                f"WITH size({self._REF_KV}) AS n RETURN DISTINCT n ORDER BY n",
+                params=params,
+            ) or []
+        ]
+
         resolved = 0
-        for rec in refs:
-            rid, kv = rec["rid"], rec["kv"]
-            self.execute_clause(
-                "MATCH (r)-[rel:references]->() WHERE elementId(r) = $rid DELETE rel",
-                params={"rid": rid},
+        for length in lengths:
+            clause = (
+                f"{match_scope} WITH DISTINCT r WHERE {self._REF_COND} "
+                f"WITH r, {self._REF_KV} AS kv WHERE size(kv) = {length} "
+                "MATCH (t0:Identifiable {id: kv[0]})"
             )
-            clause = "MATCH (r) WHERE elementId(r) = $rid\nMATCH (t0:Identifiable {id: $k0})"
-            params = {"rid": rid, "k0": kv[0]}
             last = "t0"
-            for i in range(1, len(kv)):
+            for i in range(1, length):
                 nxt = f"t{i}"
                 clause += (
                     f"\nMATCH ({last})-[e{i}]->({nxt}:Referable) "
-                    f"WHERE {nxt}.idShort = $k{i} OR e{i}.list_index = toInteger($k{i})"
+                    f"WHERE {nxt}.idShort = kv[{i}] OR e{i}.list_index = toInteger(kv[{i}])"
                 )
-                params[f"k{i}"] = kv[i]
                 last = nxt
-            clause += f"\nMERGE (r)-[:references]->({last})\nRETURN count(*) AS c"
+            clause += f"\nMERGE (r)-[:references]->({last})\nRETURN count(DISTINCT r) AS c"
             result = self.execute_clause(clause, single=True, params=params)
-            if result and result["c"]:
-                resolved += 1
+            resolved += result["c"] if result else 0
         return resolved
 
     def resolve_references(self) -> int:
@@ -416,10 +439,7 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         incremental :meth:`resolve_references_for`. Returns the number of references resolved.
         """
         self.execute_clause("MATCH (:Reference)-[rel:references]->() DELETE rel")
-        refs = self.execute_clause(
-            f"MATCH (r:Reference) WHERE {self._REF_COND} {self._REF_RETURN}"
-        ) or []
-        return self._resolve_refs(refs)
+        return self._resolve_scope("MATCH (r:Reference)")
 
     def resolve_references_for(self, identifier: str) -> int:
         """Incrementally (re)resolve only the references affected by adding ``identifier``.
@@ -432,21 +452,17 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         Removing an Identifiable needs no work here: ``DETACH DELETE`` drops every
         ``:references`` edge pointing into the deleted subtree. Returns refs resolved.
         """
-        in_subtree = self.execute_clause(
+        in_subtree = (
             "MATCH (root:Identifiable {id: $id}) "
             f"CALL apoc.path.subgraphAll(root, {{relationshipFilter: '{self._containment_rel_filter()}'}}) YIELD nodes "
-            "UNWIND nodes AS r "
-            f"WITH r WHERE r:Reference AND {self._REF_COND} "
-            f"{self._REF_RETURN}",
-            params={"id": identifier},
-        ) or []
-        targeting = self.execute_clause(
-            f"MATCH (r:Reference {{target_id: $id}}) "
-            f"WHERE {self._REF_COND} {self._REF_RETURN}",
-            params={"id": identifier},
-        ) or []
-        by_rid = {rec["rid"]: rec for rec in (*in_subtree, *targeting)}
-        return self._resolve_refs(list(by_rid.values()))
+            "UNWIND nodes AS n WITH n AS r WHERE r:Reference"
+        )
+        targeting = "MATCH (r:Reference {target_id: $id})"
+        params = {"id": identifier}
+        # The two scopes can overlap (a self-referencing subtree); MERGE makes the second
+        # pass over a shared Reference a no-op, so the count is per scope.
+        return (self._resolve_scope(in_subtree, params)
+                + self._resolve_scope(targeting, params))
 
     # Backwards-compatible alias for the create-only name.
     create_reference_relationships = resolve_references

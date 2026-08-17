@@ -98,3 +98,56 @@ def test_property_fields_and_data_type():
     assert measure_prop.data_type == "REAL_MEASURE_TYPE_Type"
     assert measure_prop.unit_irdi == "0173-1#05-AAA480#002"
     assert measure_prop.is_deprecated is False
+
+
+def test_parse_file_matches_parse_string(tmp_path):
+    """parse_file streams the document (iterparse) instead of building a full DOM.
+
+    A real ECLASS segment is up to ~541 MB of XML and the DOM costs ~7x the file size
+    (measured: 89 MB segment -> 638 MB RSS), so the big segments could not be parsed in a
+    memory-capped container. Streaming must produce exactly the same models — including
+    the nested <described_by><property property_ref=.../> links, which live *inside* a
+    class element and are the thing a naive "clear every element" loop destroys.
+    """
+    path = tmp_path / "segment_SG_13.xml"
+    path.write_text(SAMPLE_XML, encoding="utf-8")
+
+    streamed = EclassOntomlParser().parse_file(path)
+    in_memory = EclassOntomlParser().parse_string(SAMPLE_XML)
+
+    assert streamed.classes == in_memory.classes
+    assert streamed.properties == in_memory.properties
+    assert streamed.classes[0].property_refs == [
+        "0173-1#02-BAD847#003", "0173-1#02-AAH880#003",
+    ]
+
+
+def test_parse_file_keeps_peak_memory_flat(tmp_path):
+    """Peak allocation must not scale with the number of definitions in the file."""
+    import tracemalloc
+
+    head, _, tail = SAMPLE_XML.partition("<ontoml:ontoml>")
+    body, _, close = tail.rpartition("</ontoml:ontoml>")
+
+    def write(path, repeats):
+        # Each repeat gets unique ids so nothing is deduplicated away.
+        chunks = [body.replace("#006", f"#{i:03d}").replace("#003", f"#{i:03d}")
+                  for i in range(repeats)]
+        path.write_text(head + "<ontoml:ontoml>" + "".join(chunks) + "</ontoml:ontoml>" + close,
+                        encoding="utf-8")
+
+    small, big = tmp_path / "small_SG_13.xml", tmp_path / "big_SG_13.xml"
+    write(small, 20)
+    write(big, 400)
+
+    peaks = []
+    for path in (small, big):
+        tracemalloc.start()
+        EclassOntomlParser().parse_file(path)
+        peaks.append(tracemalloc.get_traced_memory()[1])
+        tracemalloc.stop()
+
+    small_peak, big_peak = peaks
+    # 20x the definitions: a DOM parse scales with the document, streaming does not.
+    # The parsed models themselves are retained, so allow generous headroom.
+    assert big_peak < small_peak * 8, f"peak grew {big_peak / small_peak:.1f}x with document size"

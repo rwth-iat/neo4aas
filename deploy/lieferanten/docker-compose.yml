@@ -2,8 +2,9 @@ name: aas-lieferanten
 
 # Supplier ("Lieferanten") AAS Repository — Neo4j-backed, separate from the demonstrator
 # stack so both can run side by side. Loads real supplier AAS from
-# data/real_aas/real_aas_combined, capped at MAX_PER_DIR per manufacturer
-# subdirectory. chatbot_v2 is wired to it later.
+# data/real_aas/vendors (one subdirectory per manufacturer, files gzipped as the corpus
+# ships them), capped at MAX_PER_DIR per manufacturer subdirectory. chatbot_v2 is wired
+# to it later.
 #
 # Browser-reachable URLs (ports shifted +1/+3 from the demonstrator to avoid clashes):
 #   Neo4j browser   http://localhost:7476   (bolt 7689)
@@ -56,7 +57,7 @@ services:
       # Max AAS files loaded per manufacturer subdirectory under /input.
       MAX_PER_DIR: "2000"
     volumes:
-      - ../../data/real_aas/real_aas_combined:/input:ro
+      - ../../data/real_aas/vendors:/input:ro
     # Loading up to 2000 AAS x 5 manufacturers happens once at worker boot, so allow a
     # long boot/request timeout instead of the demonstrator's default 120s.
     command:

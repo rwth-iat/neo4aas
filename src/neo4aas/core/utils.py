@@ -8,12 +8,16 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
-# An ECLASS/IEC 61360 IRDI looks like "0173-1#02-AAO677#002": a 4-digit ICD prefix
-# and a trailing "#<version>". The version suffix is what differs between ECLASS
-# releases of the *same* property, so the version-agnostic identity is the IRDI
-# without that suffix. _IRDI_PREFIX_RE gates on the ICD so plain URIs (which may
-# also contain a '#') are left untouched.
-_IRDI_PREFIX_RE = re.compile(r"^\d{4}-")
+# An IRDI starts with a 4-digit ICD and ends in "#<version>". Two families appear in
+# real AAS data and both must be version-stripped:
+#   ECLASS   "0173-1#02-AAO677#002"          (ICD "0173-")
+#   IEC CDD  "0112/2///61360_4#AAF120#001"   (ICD "0112/")
+# The version suffix is what differs between releases of the *same* concept, so the
+# version-agnostic identity is the IRDI without it. _IRDI_PREFIX_RE gates on the ICD —
+# now with either separator, since matching only "\d{4}-" left every IEC CDD semanticId
+# versioned and therefore unmatchable across releases — so plain URIs (which may also
+# contain a '#') are left untouched.
+_IRDI_PREFIX_RE = re.compile(r"^\d{4}[-/]")
 _IRDI_VERSION_RE = re.compile(r"#\d+$")
 
 # ECLASS-CDP serves the same IRDIs as URLs with the two '#' separators replaced by

@@ -101,7 +101,38 @@ class EclassOntomlParser:
         return self._parse_root(ET.fromstring(xml))
 
     def parse_file(self, path: str | Path) -> ParseResult:
-        return self._parse_root(ET.parse(str(path)).getroot())
+        """Parse a segment file, streaming it (constant memory in the document size).
+
+        A real ECLASS segment reaches ~541 MB of XML and a DOM parse costs roughly 7x the
+        file size (measured: 89 MB segment -> 638 MB RSS), which puts the large segments
+        out of reach of a memory-capped container. ``iterparse`` keeps only the definition
+        currently being parsed: each ``class`` / ``property`` definition is consumed at its
+        end event, then cleared and detached from its parent.
+
+        Only elements carrying an ``id`` are definitions; the ``<property property_ref=…>``
+        link descriptors nested in a class's ``<described_by>`` have none and must NOT be
+        cleared — they are read as part of their enclosing class, which is freed as a whole.
+        """
+        result = ParseResult()
+        stack: list[ET.Element] = []
+        for event, elem in ET.iterparse(str(path), events=("start", "end")):
+            if event == "start":
+                stack.append(elem)
+                continue
+            stack.pop()
+            if not elem.get("id"):
+                continue
+            tag = _local(elem.tag)
+            if tag == "class":
+                result.classes.append(self._parse_class(elem))
+            elif tag == "property":
+                result.properties.append(self._parse_property(elem))
+            else:
+                continue
+            elem.clear()
+            if stack:
+                stack[-1].remove(elem)
+        return result
 
     def parse_units_string(self, xml: str) -> list[EclassUnit]:
         return self._parse_units_root(ET.fromstring(xml))

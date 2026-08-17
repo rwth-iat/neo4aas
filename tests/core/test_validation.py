@@ -13,6 +13,7 @@ from neo4aas.core.validation import (
     ConstraintReport,
     ConstraintViolation,
     IDSHORT_PATTERN,
+    IDSHORT_PATTERN_V30,
 )
 
 
@@ -20,19 +21,23 @@ from neo4aas.core.validation import (
 # Unit tests — no Neo4j needed
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("id_short", ["MyValidIdShort01", "a_b", "Ab"])
-def test_idshort_pattern_accepts_spec_conformant_names(id_short):
+@pytest.mark.parametrize("id_short", ["MyValidIdShort01", "a_b", "Ab", "Max-Flow-Rate"])
+def test_idshort_pattern_accepts_v32_conformant_names(id_short):
+    """The checker validates against the current metamodel (V3.1/V3.2), whose AASd-002 is
+    `^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+$` — a hyphen inside the name is allowed."""
     assert IDSHORT_PATTERN.match(id_short)
 
 
-@pytest.mark.parametrize("id_short", ["1invalid", "trailing-", "Max-Flow-Rate", "with space", "_x"])
+@pytest.mark.parametrize("id_short", ["1invalid", "trailing-", "with space", "_x", "A"])
 def test_idshort_pattern_rejects_non_conformant_names(id_short):
-    """AASd-002 is `[a-zA-Z][a-zA-Z0-9_]+` — a hyphen is not part of the allowed set.
-
-    basyx enforces the same set on read-back, so accepting hyphens here made the checker
-    report data compliant that the SDK then refuses to reconstruct.
-    """
+    """No leading non-letter, no trailing hyphen, no foreign characters, ≥2 characters."""
     assert not IDSHORT_PATTERN.match(id_short)
+
+
+@pytest.mark.parametrize("id_short", ["Max-Flow-Rate", "1invalid", "with space"])
+def test_v30_pattern_is_stricter(id_short):
+    """V3.0 (what basyx implements) forbids the hyphen the newer versions permit."""
+    assert not IDSHORT_PATTERN_V30.match(id_short)
 
 
 def test_report_is_compliant_when_empty():
