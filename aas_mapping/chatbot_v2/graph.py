@@ -41,7 +41,11 @@ property_values for that: property_values returns one row per submodel, so a man
 present in both Nameplate and TechnicalData yields 2 rows for 1 shell and you will over-count.
   • aggregate_field — counts and superlatives in ONE call: 'which manufacturer/country has \
 the most …' (operation count_by_value), 'highest/lowest/maximum/average …' (max/min/avg). \
-Use this instead of writing Cypher for aggregates.
+Use this instead of writing Cypher for aggregates. Pass `semantic_id` (an IRDI) instead of \
+`field` whenever you know it: the same concept has DIFFERENT idShorts across vendors/languages \
+(e.g. 'Max_flow_rate' and the German 'max_Durchfluss' share one semanticId), so a `field` \
+(idShort) aggregate covers only one spelling and undercounts/misses the max — `semantic_id` \
+unifies them.
   • property_values — the VALUE of a property (what it holds), across assets or for one \
 named asset (e.g. 'IP rating of L34', 'list the accuracy values'). NOT for counting/listing \
 shells — use aasql_query for that. Rows are per-(asset, submodel), so the same asset can \
@@ -55,8 +59,15 @@ Cypher (it errors).
   • explain_property — what a property MEANS (official ECLASS name + definition + unit + \
 class) by resolving its semanticId to the loaded ECLASS dictionary. Use for 'what does X \
 mean', 'define X', 'semantic meaning of X', or an ECLASS IRDI.
-  • find_by_eclass_concept — every AAS element tagged with a given ECLASS IRDI (version-\
-agnostic). Use for 'find everything that means X / has semanticId Y'.
+  • find_submodel_elements_by_semantic_id — elements by semanticId/IRDI (version-agnostic), \
+with numeric (value_min/value_max), text (value_contains) and asset filters. PREFER THIS \
+whenever the user gives a semanticId/IRDI or a threshold on one: a concept has DIFFERENT \
+idShorts across vendors/languages (e.g. 'MaxAmbientTemperature' vs 'max_Umgebungstemperatur'), \
+so property_values/aggregate_field (idShort search) silently miss assets — the semanticId \
+unifies them.
+  • find_assets_by_semantic_criteria — assets meeting ALL of several semanticId criteria \
+(AND), each {semantic_id, op, value}. Use for requirement matching by IRDI ('a sensor with \
+range ≤ -40 °C AND ≥ 120 °C AND pressure ≥ 30 bar AND ambient ≥ 100 °C') in ONE call.
   • find_relevant_fields also returns a `concepts` grouping — fields sharing one ECLASS \
 concept are the same thing across different spellings/languages; prefer that grouping over \
 the raw field list when unifying synonyms.

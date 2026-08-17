@@ -7,6 +7,8 @@ and ``repo_read`` talk to the AAS Repository REST API.
 """
 
 import base64
+import csv
+import io
 import json
 import re
 from typing import Optional
@@ -14,14 +16,17 @@ from typing import Optional
 import requests
 from langchain_core.tools import tool
 
+from aas_mapping.aas_neo4j_adapter.utils import irdi_base
 from config import neo4j_enabled, get_aas_client, get_repo, log
 from llm import util_model
 from system_prompt import SYSTEM_PROMPT
 
 # Keep tool observations small. Each result can be a full AAS JSON object, so an
 # unbounded list piled into the message history overflows the model context after a few
-# (looping) calls — cap both the row count and the total serialized size.
-_MAX_ROWS = 15
+# (looping) calls. The char budget is the real limiter; the row cap is only a loose safety
+# ceiling so short rows (e.g. bare idShorts) aren't undercounted — many fit within the char
+# budget, while fat AAS-JSON rows still stop at ~_MAX_OBS_CHARS.
+_MAX_ROWS = 200
 _MAX_OBS_CHARS = 4000
 
 
@@ -36,6 +41,85 @@ def _truncate(rows: list, limit: int = _MAX_ROWS) -> tuple[list, int]:
             break
         shown.append(r)
     return shown, total
+
+
+def _sem_id(obj: dict) -> str:
+    """A Reference dict's key values joined with '|' (single key → the bare value, missing
+    → ''). The full AAS JSON carries semanticId as {type, keys:[{value, type}]}."""
+    ref = obj.get("semanticId") or {}
+    vals = [k.get("value", "") for k in ref.get("keys", []) if k.get("value")]
+    return "|".join(vals)
+
+
+def _mlp_text(value):
+    """Flatten a MultiLanguageProperty value to one string, preferring en* then de* then the
+    first text. The REST JSON shape is a list of {language, text}; a scalar passes through."""
+    if not isinstance(value, list):
+        return value
+    texts = [(e.get("language", ""), e.get("text", "")) for e in value if isinstance(e, dict)]
+    if not texts:
+        return None
+    for pref in ("en", "de"):
+        for lang, text in texts:
+            if lang.lower().startswith(pref):
+                return text
+    return texts[0][1]
+
+
+def _project_row(obj: dict, target: str) -> dict:
+    """Compact identity row for one query result. Submodels carry a semanticId; shells carry
+    a globalAssetId instead (shells have no semanticId)."""
+    row = {"modelType": obj.get("modelType"), "idShort": obj.get("idShort"),
+           "id": obj.get("id")}
+    if target == "shells":
+        row["globalAssetId"] = (obj.get("assetInformation") or {}).get("globalAssetId")
+    else:
+        row["semanticId"] = _sem_id(obj)
+    return row
+
+
+def _project_elements(obj: dict) -> list:
+    """Top-level submodelElements projected to {idShort, modelType, value}. Property → scalar
+    value, MultiLanguageProperty → language-preferred text, Collection/List → None (shallow,
+    no recursion — bounds the size)."""
+    out = []
+    for se in obj.get("submodelElements", []):
+        mt = se.get("modelType")
+        if mt == "MultiLanguageProperty":
+            val = _mlp_text(se.get("value"))
+        elif mt in ("SubmodelElementCollection", "SubmodelElementList"):
+            val = None
+        else:
+            val = se.get("value")
+        out.append({"idShort": se.get("idShort"), "modelType": mt, "value": val})
+    return out
+
+
+def _rows_to_csv(rows: list) -> str:
+    """Serialize projected dict rows to CSV (header + rows). DictWriter quotes any cell
+    containing a comma or the '|' semanticId separator."""
+    if not rows:
+        return ""
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=list(rows[0].keys()))
+    writer.writeheader()
+    writer.writerows(rows)
+    return buf.getvalue()
+
+
+def _cap_list_field(out: dict, key: str, limit: int = _MAX_ROWS) -> dict:
+    """Cap an unbounded list field in a tool result so it can't overflow the model
+    context. Some agent_tools (list_submodel_types, assets_missing) return a list whose
+    length scales with the repository — on the ~9k-AAS supplier repo `list_submodel_types`
+    returns 7801 hash-suffixed idShorts (~410k tokens) and `assets_missing` thousands of
+    idShorts (~140k tokens), both of which exceed the 131k model window and 400 the run.
+    Keep at most `limit` items, drop the rest, and add a `{key}_total`/`truncated` marker so
+    the count stays honest. The full count is already reported separately (total_types /
+    missing_count)."""
+    if isinstance(out, dict) and isinstance(out.get(key), list) and len(out[key]) > limit:
+        total = len(out[key])
+        out = {**out, key: out[key][:limit], f"{key}_total": total, "truncated": True}
+    return out
 
 
 def _detect_target(aasql: dict) -> str:
@@ -83,7 +167,8 @@ def _generate_aasql(question: str, repair: Optional[str] = None) -> Optional[dic
         return None
 
 
-def _run_aasql_query(question: str, base_url: str) -> dict:
+def _run_aasql_query(question: str, base_url: str, verbosity: str = "summary",
+                     include_elements: bool = False) -> dict:
     aasql = _generate_aasql(question)
     if aasql is None:
         return {"error": "Failed to generate valid AASQL JSON."}
@@ -103,8 +188,25 @@ def _run_aasql_query(question: str, base_url: str) -> dict:
             out, target = retry, other
     if "error" in out:
         return {"aasql": aasql, "target": target, "error": out["error"]}
-    shown, total = _truncate(out["results"])
-    return {"aasql": aasql, "target": target, "count": total, "results": shown}
+
+    if verbosity == "full":
+        # Complete AAS JSON objects (capped). Use when the agent needs every field.
+        shown, total = _truncate(out["results"])
+        return {"aasql": aasql, "target": target, "count": total,
+                "truncated": total > len(shown), "results": shown}
+
+    # Summary: compact identity rows so most/all results fit one observation.
+    if include_elements:
+        # Nested elements can't be expressed as CSV → return compact JSON rows.
+        rows = [{**_project_row(o, target), "elements": _project_elements(o)}
+                for o in out["results"]]
+        shown, total = _truncate(rows)
+        return {"aasql": aasql, "target": target, "count": total,
+                "truncated": total > len(shown), "results": shown}
+    rows = [_project_row(o, target) for o in out["results"]]
+    shown, total = _truncate(rows)
+    return {"aasql": aasql, "target": target, "count": total,
+            "truncated": total > len(shown), "format": "csv", "rows": _rows_to_csv(shown)}
 
 
 _ALLOWED_PATH = re.compile(r"^/(shells|submodels|concept-descriptions)(/[^?#]*)?$")
@@ -208,19 +310,34 @@ def _neo4j_tools(repo) -> list:
     @tool
     def repo_overview() -> dict:
         """Factual repository snapshot for grounding: total counts, submodel types, the
-        exact manufacturers present, and all asset (AAS) idShort tags. Use for
-        open-ended 'what is in the repo' questions or to learn real spellings."""
-        return _run(at.repo_overview)
+        exact manufacturers present, and a sample of asset (AAS) idShort tags. Use for
+        open-ended 'what is in the repo' questions or to learn real spellings. The
+        submodel-type and asset-name lists are capped (totals reported) so the snapshot
+        stays bounded on large repositories — use list_submodel_types_by_semantic_id for a
+        full type breakdown, or aggregate_field for full manufacturer/value counts."""
+        out = _run(at.repo_overview)
+        # repo_overview embeds the full by-idShort type list (thousands when idShorts are
+        # per-instance suffixed) plus every asset idShort (~9k on the supplier repo): ~1.3M
+        # chars / ~410k tokens, which alone overflows the 131k model window. Cap each list.
+        out = _cap_list_field(out, "submodel_types")
+        out = _cap_list_field(out, "asset_names", limit=40)
+        out = _cap_list_field(out, "manufacturers", limit=40)
+        return out
 
     @tool
     def list_submodel_types() -> dict:
-        """Distinct Submodel types (idShort + semanticId) with an instance count each."""
-        return _run(at.list_submodel_types)
+        """Distinct Submodel types (idShort + semanticId) with an instance count each.
+
+        Note: groups by idShort, which can be in the thousands when sources suffix the
+        idShort per instance — prefer `list_submodel_types_by_semantic_id` for a clean
+        type overview. The result list is capped; `total_types` reports the true count."""
+        return _cap_list_field(_run(at.list_submodel_types), "types")
 
     @tool
     def list_submodel_types_by_semantic_id() -> dict:
-        """Distinct Submodel semanticIds (idShort ignored) with an instance count each."""
-        return _run(at.list_submodel_types_by_semantic_id)
+        """Distinct Submodel semanticIds (idShort ignored) with an instance count each.
+        Preferred for 'what submodel types exist' — collapses per-instance idShort noise."""
+        return _cap_list_field(_run(at.list_submodel_types_by_semantic_id), "types")
 
     @tool
     def get_identifiable(identifier: str) -> dict:
@@ -248,6 +365,13 @@ def _neo4j_tools(repo) -> list:
     def _tokens(field: str) -> list[str]:
         return [w.lower() for w in re.split(r"[\s_]+", field or "") if len(w) > 2]
 
+    def _is_number(v) -> bool:
+        try:
+            float(v)
+            return True
+        except (TypeError, ValueError):
+            return False
+
     def _rows(cypher: str, params: dict) -> list[dict]:
         # execute_clause yields neo4j Record objects; convert to plain dicts so the tool
         # observation is clean JSON.
@@ -257,8 +381,31 @@ def _neo4j_tools(repo) -> list:
     # WHERE fragment: idShort contains every significant token of `field` (so
     # "degree of protection" matches Degree_of_Protection). $field stored in params.
     _IDSHORT_MATCH = ("all(tok IN $tokens WHERE toLower(n.idShort) CONTAINS tok)")
-    # Value of a Property or MultiLanguageProperty (text list or scalar).
-    _VAL = "coalesce(n.value_text[0], n.value)"
+
+    def _lang_val(v: str = "n") -> str:
+        """Cypher expression for the value of a Property or MultiLanguageProperty, picking a
+        stable language for MLPs instead of the arbitrary first entry.
+
+        A Property stores its scalar in `value` (no `value_text`); a MultiLanguageProperty
+        flattens to parallel `value_text[]` / `value_language[]`. `value_text[0]` therefore
+        returned whatever language happened to be first (e.g. a Chinese designation). Prefer
+        English, then German, then fall back to the first text. The language lookup is two
+        tiny list comprehensions over the (1–3 element) language array — evaluated per row but
+        negligible, no extra MATCH/traversal, so the tool is no slower in practice."""
+        rng = f"range(0, size({v}.value_text)-1)"
+        guard = (f"{v}.value_language IS NOT NULL AND i < size({v}.value_language) "
+                 f"AND toLower({v}.value_language[i]) STARTS WITH ")
+        return (
+            f"CASE WHEN {v}.value_text IS NULL THEN {v}.value ELSE coalesce("
+            f"head([i IN {rng} WHERE {guard}'en' | {v}.value_text[i]]), "
+            f"head([i IN {rng} WHERE {guard}'de' | {v}.value_text[i]]), "
+            f"{v}.value_text[0], {v}.value) END"
+        )
+
+    # Value of a Property or MultiLanguageProperty (language-preferring: en > de > first).
+    _VAL = _lang_val("n")
+    # Leading number of a value (units ignored, comma decimal normalised), null if non-numeric.
+    _NUM = f"toFloatOrNull(replace(split(trim({_VAL}),' ')[0], ',', '.'))"
     # Spec-correct, dataset-agnostic asset↔element traversal: an AAS references its
     # Submodels (resolve_references() materialises :references), and a Submodel contains
     # its elements via the containment edges. The asset identity is the AAS idShort. This
@@ -269,11 +416,19 @@ def _neo4j_tools(repo) -> list:
     _ASSET = "a.idShort"
 
     @tool
-    def aggregate_field(field: str, operation: str) -> dict:
+    def aggregate_field(field: Optional[str] = None, operation: str = "max",
+                        semantic_id: Optional[str] = None) -> dict:
         """Aggregate a property across the whole repository in ONE call.
 
-        Use for counts/superlatives instead of writing Cypher. `field` is a property name
-        or keyword (e.g. 'ManufacturerName', 'CountryOfOrigin', 'medium temperature').
+        Use for counts/superlatives instead of writing Cypher. Identify the property by
+        EITHER:
+          - `semantic_id`: an ECLASS IRDI (e.g. '0173-1#02-AAC971'). PREFER THIS — it matches
+            the concept version-agnostically, so it unifies every vendor/language idShort of
+            the same property (e.g. 'Max_flow_rate' AND the German 'max_Durchfluss', which
+            share one semanticId). An idShort search would aggregate only one spelling and
+            silently miss the others.
+          - `field`: a property name/keyword (e.g. 'ManufacturerName', 'medium temperature').
+            idShort token match — use only when no semanticId is known.
         `operation`:
           - 'count_by_value' → distinct values of the property with a DEVICE (asset) count
             each, sorted desc (answers 'which manufacturer/country has the most …', 'how
@@ -286,30 +441,40 @@ def _neo4j_tools(repo) -> list:
         client = get_aas_client(repo.id)
         if client is None:
             return {"error": "Neo4j backend not configured."}
-        toks = _tokens(field)
-        if not toks:
-            return {"error": "Empty field."}
+        # Resolve the element-selection MATCH+WHERE: semanticId (preferred) or idShort tokens.
+        if semantic_id:
+            base = irdi_base(semantic_id.strip())
+            sel = f"{_JOIN}-[:semanticId]->(rf:Reference) WHERE rf.target_id_base = $base"
+            params: dict = {"base": base}
+            label = {"semantic_id": base}
+        else:
+            toks = _tokens(field or "")
+            if not toks:
+                return {"error": "Provide field or semantic_id."}
+            sel = f"{_JOIN} WHERE {_IDSHORT_MATCH}"
+            params = {"tokens": toks}
+            label = {"field": field}
         op = (operation or "").lower()
         if op in ("count_by_value", "count", "group", "by_value"):
             rows = _rows(
-                f"{_JOIN} WHERE {_IDSHORT_MATCH} "
+                f"{sel} "
                 f"WITH a, trim({_VAL}) AS value WHERE value IS NOT NULL AND value <> '' "
                 "RETURN value, count(DISTINCT a) AS count ORDER BY count DESC LIMIT 50",
-                {"tokens": toks})
-            return {"field": field, "operation": "count_by_value",
+                params)
+            return {**label, "operation": "count_by_value",
                     "total_values": len(rows), "values": rows}
         if op in ("max", "min", "avg", "average", "mean", "sum"):
             rows = _rows(
-                f"{_JOIN} WHERE {_IDSHORT_MATCH} "
+                f"{sel} "
                 f"WITH {_ASSET} AS asset, n.idShort AS f, trim({_VAL}) AS raw, "
-                f"toFloatOrNull(replace(split(trim({_VAL}),' ')[0], ',', '.')) AS num "
+                f"{_NUM} AS num "
                 "WHERE num IS NOT NULL "
                 "RETURN asset, f AS field, raw, num ORDER BY num DESC",
-                {"tokens": toks})
+                params)
             if not rows:
-                return {"field": field, "operation": op, "error": "No numeric values found."}
+                return {**label, "operation": op, "error": "No numeric values found."}
             nums = [r["num"] for r in rows]
-            res = {"field": field, "operation": op, "n": len(nums)}
+            res = {**label, "operation": op, "n": len(nums)}
             if op == "max":
                 res.update(value=nums[0], at=rows[0])
             elif op == "min":
@@ -356,12 +521,11 @@ def _neo4j_tools(repo) -> list:
         if value_contains:
             where.append(f"toLower({_VAL}) CONTAINS toLower($vc)")
             params["vc"] = value_contains
-        num = f"toFloatOrNull(replace(split(trim({_VAL}),' ')[0], ',', '.'))"
         if value_min is not None:
-            where.append(f"{num} >= $vmin")
+            where.append(f"{_NUM} >= $vmin")
             params["vmin"] = float(value_min)
         if value_max is not None:
-            where.append(f"{num} <= $vmax")
+            where.append(f"{_NUM} <= $vmax")
             params["vmax"] = float(value_max)
         rows = _rows(
             f"{_JOIN} WHERE {' AND '.join(where)} "
@@ -403,8 +567,13 @@ def _neo4j_tools(repo) -> list:
         else:
             return {"error": "Provide submodel_type or property."}
         missing = sorted(rows[0]["missing"]) if rows else []
-        return {"criterion": submodel_type or property,
-                "missing_count": len(missing), "missing_assets": missing}
+        # Cap the idShort list: on the supplier repo a submodel type absent from ~8k assets
+        # returns ~8k idShorts (~140k tokens) and overflows the model window. The full count
+        # is in missing_count; a sample is enough for the agent to answer.
+        return _cap_list_field(
+            {"criterion": submodel_type or property,
+             "missing_count": len(missing), "missing_assets": missing},
+            "missing_assets")
 
     @tool
     def explain_property(field: str) -> dict:
@@ -423,7 +592,7 @@ def _neo4j_tools(repo) -> list:
         is_irdi = ("#" in f) or ("/" in f)
         if is_irdi:
             base = "MATCH (cd:ConceptDescription {id_base: $base})"
-            params = {"base": f.rsplit("#", 1)[0] if "#" in f else f}
+            params = {"base": irdi_base(f)}
             id_short = None
         else:
             # idShort → its semanticId Reference → CD (version-agnostic via id_base).
@@ -452,28 +621,112 @@ def _neo4j_tools(repo) -> list:
         return {"field": field, "found": True, "matched_idShort": id_short,
                 "meanings": rows}
 
-    @tool
-    def find_by_eclass_concept(irdi: str) -> dict:
-        """Find every AAS element tagged with an ECLASS concept (version-agnostic discovery).
+    # Map a criterion operator to a Cypher predicate over the element value. Numeric ops
+    # compare the leading number (_NUM); contains/= are text. $v<i> holds the bound value.
+    def _sem_pred(op: str, vparam: str) -> str:
+        o = (op or ">=").strip().lower()
+        if o in (">=", "ge", "min"):       return f"{_NUM} >= ${vparam}"
+        if o in ("<=", "le", "max"):       return f"{_NUM} <= ${vparam}"
+        if o in (">", "gt"):               return f"{_NUM} > ${vparam}"
+        if o in ("<", "lt"):               return f"{_NUM} < ${vparam}"
+        if o in ("contains", "~"):         return f"toLower({_VAL}) CONTAINS toLower(${vparam})"
+        if o in ("=", "==", "eq"):
+            # numeric equality when the bound value parses as a number, else text equality.
+            return (f"(({_NUM} = ${vparam}_n) OR (toLower(trim({_VAL})) = "
+                    f"toLower(trim(toString(${vparam})))))")
+        raise ValueError(f"Unknown op '{op}'. Use >=,<=,>,<,=,contains.")
 
-        `irdi`: an ECLASS IRDI (e.g. '0173-1#02-AAO677#004' or without the version
-        '0173-1#02-AAO677'). Matches on the version-agnostic base, so elements tagged with
-        any version of the concept are returned. Use for 'find everything that means X',
-        'all elements with semanticId Y'. Returns {asset, field, value} rows.
+    _NUMERIC_OPS = {">=", "ge", "min", "<=", "le", "max", ">", "gt", "<", "lt"}
+
+    @tool
+    def find_submodel_elements_by_semantic_id(
+            semantic_id: str, value_min: Optional[float] = None,
+            value_max: Optional[float] = None, value_contains: Optional[str] = None,
+            asset: Optional[str] = None) -> dict:
+        """Find AAS elements by their semanticId (IRDI) — the stable, vendor/language-agnostic
+        way to query a property. PREFER THIS over property_values/aggregate_field when the
+        user gives a semanticId/IRDI (e.g. '0173-1#02-BAA039#010'): the same concept has
+        DIFFERENT idShorts across vendors/languages (e.g. 'MaxAmbientTemperature' vs the
+        German 'max_Umgebungstemperatur'), so an idShort search silently misses some assets;
+        the semanticId unifies them.
+
+        `semantic_id`: an IRDI, with or without the trailing version (matched version-
+        agnostically on the base, so any version of the concept matches). Optional filters:
+          - `value_min` / `value_max`: numeric range on the value's leading number
+            (e.g. value_min=100 for '≥ 100 °C'); units are ignored.
+          - `value_contains`: keep only values containing this text.
+          - `asset`: restrict to one asset by idShort.
+        Returns {asset, field, value, submodel} rows (one per matching element).
         """
         client = get_aas_client(repo.id)
         if client is None:
             return {"error": "Neo4j backend not configured."}
-        base = irdi.strip().rsplit("#", 1)[0] if "#" in irdi else irdi.strip()
+        base = irdi_base(semantic_id.strip())
+        where = ["rf.target_id_base = $base"]
+        params: dict = {"base": base}
+        if value_min is not None:
+            where.append(f"{_NUM} >= $vmin"); params["vmin"] = float(value_min)
+        if value_max is not None:
+            where.append(f"{_NUM} <= $vmax"); params["vmax"] = float(value_max)
+        if value_contains:
+            where.append(f"toLower({_VAL}) CONTAINS toLower($vc)"); params["vc"] = value_contains
+        if asset:
+            where.append(f"{_ASSET} = $asset"); params["asset"] = asset
         rows = _rows(
-            f"{_JOIN}-[:semanticId]->(rf:Reference) WHERE rf.target_id_base = $base "
+            f"{_JOIN}-[:semanticId]->(rf:Reference) WHERE {' AND '.join(where)} "
             f"RETURN DISTINCT {_ASSET} AS asset, n.idShort AS field, {_VAL} AS value, "
             "sm.idShort AS submodel ORDER BY asset LIMIT 80",
-            {"base": base})
+            params)
         names = _rows("MATCH (cd:ConceptDescription {id_base:$b}) "
                       "RETURN cd.displayName_text[0] AS name LIMIT 1", {"b": base})
-        return {"concept": base, "eclass_name": names[0]["name"] if names else None,
+        return {"semantic_id": base, "eclass_name": names[0]["name"] if names else None,
                 "count": len(rows), "elements": rows}
+
+    @tool
+    def find_assets_by_semantic_criteria(criteria: list[dict]) -> dict:
+        """Find assets whose elements satisfy ALL of several semanticId criteria (AND).
+
+        Use for requirement matching by IRDI — 'a sensor that measures from ≤ -40 °C AND up
+        to ≥ 120 °C AND tolerates ≥ 30 bar AND ambient ≥ 100 °C'. Each criterion is a dict
+        ``{"semantic_id": "<IRDI>", "op": "<>=|<=|>|<|=|contains>", "value": <number|str>}``
+        (op defaults to '>='). Because it keys on semanticId, it unifies vendor/language
+        idShort differences that an idShort search would miss. Returns only assets meeting
+        EVERY criterion, with the matched value per criterion.
+        """
+        client = get_aas_client(repo.id)
+        if client is None:
+            return {"error": "Neo4j backend not configured."}
+        if not criteria:
+            return {"error": "Provide at least one criterion."}
+        per: list[dict[str, dict]] = []  # criterion index -> {asset: value}
+        labels: list[str] = []
+        for i, crit in enumerate(criteria):
+            sid = str(crit.get("semantic_id") or crit.get("irdi") or "").strip()
+            if not sid:
+                return {"error": f"Criterion {i} has no semantic_id."}
+            op = crit.get("op", ">=")
+            val = crit.get("value")
+            base = irdi_base(sid)
+            params: dict = {"base": base}
+            preds = ["rf.target_id_base = $base"]
+            if val is not None:
+                preds.append(_sem_pred(op, "v"))
+                params["v"] = float(val) if str(op).strip().lower() in _NUMERIC_OPS else val
+                if str(op).strip().lower() in ("=", "==", "eq"):
+                    params["v_n"] = float(val) if _is_number(val) else None
+            rows = _rows(
+                f"{_JOIN}-[:semanticId]->(rf:Reference) WHERE {' AND '.join(preds)} "
+                f"RETURN DISTINCT {_ASSET} AS asset, {_VAL} AS value",
+                params)
+            per.append({r["asset"]: r["value"] for r in rows})
+            labels.append(f"{base} {op} {val}")
+        common = set(per[0])
+        for m in per[1:]:
+            common &= set(m)
+        assets = [{"asset": a, "matched": {labels[i]: per[i].get(a) for i in range(len(per))}}
+                  for a in sorted(common)]
+        out = {"criteria": labels, "match_count": len(assets), "assets": assets}
+        return _cap_list_field(out, "assets")
 
     @tool
     def asset_components(asset: str) -> dict:
@@ -502,11 +755,84 @@ def _neo4j_tools(repo) -> list:
         return {"asset": asset, "components": comps, "relationships": rels,
                 "found": bool(rows)}
 
+    @tool
+    def get_asset(asset: str) -> dict:
+        """Look up ONE asset (AAS) by its idShort OR its id (URI) and return a compact card.
+
+        `asset`: the asset's **id** (the globally-unique AAS id URI — preferred, unambiguous)
+        or its **idShort** (exact or partial, e.g. 'ABB_Actuators_310320262157'). idShort is
+        NOT unique — several AAS can share one — so when the lookup is ambiguous this returns
+        `{ambiguous: True, count, matches:[{asset, aas_id}]}` instead of guessing; re-call with
+        the chosen `aas_id`. On a unique match returns `{asset, aas_id, global_asset_id,
+        manufacturer, designation, submodels:[{type, id}]}` — the AAS id, its manufacturer/
+        product designation, and its submodels (type idShort + the id to pass to repo_read).
+        Use for 'show details of asset X', 'manufacturer of X', 'which submodels does X have'
+        instead of aasql_query + repo_read (which over-fetch a large subgraph and loop). The
+        `id` of a listed submodel is the key for repo_read('/submodels/{id}').
+        """
+        client = get_aas_client(repo.id)
+        if client is None:
+            return {"error": "Neo4j backend not configured."}
+        # Resolve candidates first (id is unique; idShort may collide). Rank: exact id (0),
+        # exact idShort (1), partial idShort (2); keep only the best tier present.
+        cands = _rows(
+            "MATCH (a:AssetAdministrationShell) "
+            "WHERE a.id = $q OR a.idShort = $q OR toLower(a.idShort) CONTAINS toLower($q) "
+            "RETURN a.id AS aas_id, a.idShort AS asset, "
+            "CASE WHEN a.id = $q THEN 0 WHEN a.idShort = $q THEN 1 ELSE 2 END AS rank "
+            "ORDER BY rank, asset LIMIT 51",
+            {"q": asset})
+        if not cands:
+            return {"asset": asset, "found": False,
+                    "note": "No AssetAdministrationShell with that id or idShort."}
+        best = min(c["rank"] for c in cands)
+        top = [c for c in cands if c["rank"] == best]
+        if len(top) > 1:
+            # idShort collision (or a partial term matching several): don't pick one silently.
+            shown = [{"asset": c["asset"], "aas_id": c["aas_id"]} for c in top[:_MAX_ROWS]]
+            return {"asset": asset, "found": True, "ambiguous": True,
+                    "count": len(top), "matches": shown,
+                    "note": "idShort is not unique; re-call get_asset with the chosen aas_id."}
+        aas_id = top[0]["aas_id"]
+        # Detailed card keyed by the unique id.
+        rows = _rows(
+            "MATCH (a:AssetAdministrationShell {id: $id}) "
+            "RETURN a.idShort AS asset, a.id AS aas_id, a.globalAssetId AS global_asset_id, "
+            "[(a)-[:submodels]->(:Reference)-[:references]->(sm:Submodel) "
+            "  | {type: sm.idShort, id: sm.id}] AS submodels, "
+            "[(a)-[:submodels]->(:Reference)-[:references]->(:Submodel)"
+            "-[:submodelElements|value|statements*1..]->(mn:Referable) "
+            f"  WHERE mn.idShort = 'ManufacturerName' | {_lang_val('mn')}] AS mfg, "
+            # Fallback: some suppliers (e.g. ABB) carry the maker as 'Company' in
+            # ContactInformations rather than a Nameplate ManufacturerName.
+            "[(a)-[:submodels]->(:Reference)-[:references]->(:Submodel)"
+            "-[:submodelElements|value|statements*1..]->(co:Referable) "
+            f"  WHERE co.idShort = 'Company' | {_lang_val('co')}] AS company, "
+            "[(a)-[:submodels]->(:Reference)-[:references]->(:Submodel)"
+            "-[:submodelElements|value|statements*1..]->(d:Referable) "
+            "  WHERE d.idShort = 'ManufacturerProductDesignation' "
+            f"  | {_lang_val('d')}] AS dsg",
+            {"id": aas_id})
+        r = rows[0]
+        # dedup submodels and pick the first non-null manufacturer/designation
+        seen, subs = set(), []
+        for s in r["submodels"]:
+            k = (s.get("type"), s.get("id"))
+            if k not in seen:
+                seen.add(k)
+                subs.append(s)
+        mfg = next((m for m in r["mfg"] if m), None) or next((c for c in r["company"] if c), None)
+        dsg = next((d for d in r["dsg"] if d), None)
+        return {"asset": r["asset"], "found": True, "aas_id": r["aas_id"],
+                "global_asset_id": r["global_asset_id"], "manufacturer": mfg,
+                "designation": dsg, "submodels": subs}
+
     return [cypher_read, count_stats, repo_overview, list_submodel_types,
             list_submodel_types_by_semantic_id, get_identifiable, get_referable,
             abstract_submodel, validate_constraints,
             aggregate_field, property_values, asset_components, assets_missing,
-            explain_property, find_by_eclass_concept]
+            explain_property, find_submodel_elements_by_semantic_id,
+            find_assets_by_semantic_criteria, get_asset]
 
 
 def build_tools(repo=None) -> list:
@@ -520,14 +846,24 @@ def build_tools(repo=None) -> list:
         repo = get_repo(None)
 
     @tool
-    def aasql_query(question: str) -> dict:
+    def aasql_query(question: str, verbosity: str = "summary",
+                    include_elements: bool = False) -> dict:
         """Search the AAS Repository with the AAS Query Language.
 
-        Give a natural-language request (the user's question, verbatim — do not reword or
-        narrow it). An AASQL query is generated and executed against shells/submodels. Use
-        for content searches by idShort, property value, manufacturer, country, semanticId.
+        Give a natural-language request describing the data to find — keep the user's intent
+        intact (don't distort it); when listing by submodel type you may first narrow with
+        list_submodel_types_by_semantic_id. An AASQL query is generated and executed against
+        shells/submodels. Use for content searches by idShort, property value, manufacturer,
+        country, semanticId.
+
+        Returns (default ``verbosity='summary'``) compact CSV rows — modelType, idShort, id,
+        semanticId (globalAssetId for shells) — so 'which/list' questions are answered in one
+        call; read the asset identity straight from the rows. Pass ``verbosity='full'`` for
+        the complete AAS JSON objects (then repo_read by id for detail). For submodels,
+        ``include_elements=True`` embeds compact submodelElements ({idShort, modelType,
+        value}) as JSON.
         """
-        return _run_aasql_query(question, repo.repository_url)
+        return _run_aasql_query(question, repo.repository_url, verbosity, include_elements)
 
     @tool
     def repo_read(path: str, params: Optional[dict] = None) -> dict:

@@ -23,7 +23,7 @@ const CHIPS = {
     ["Search (natural language → AASQL)", [
       "Find all assets made by Krohne.",
       "Give me all properties which contain value 'IP65'",
-      "Give me current values in OperationalData Submodel of all temperature sensors",
+      "Give me current values in OperationalData Submodel of T23",
     ]],
     ["Aggregation & lookup", [
       "How many devices per manufacturer?",

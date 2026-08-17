@@ -89,7 +89,11 @@ def index():
 @app.route("/repos")
 def repos():
     """Repositories the UI can switch between (id + label), and the default selection."""
-    return jsonify({"repos": [{"id": r.id, "label": r.label} for r in REPOSITORIES.values()],
+    return jsonify({"repos": [{"id": r.id, "label": r.label,
+                               # browser-facing URL for viewer deep links (not the internal REST url)
+                               "repository_url": r.public_repository_url,
+                               "aas_viewer_url": r.aas_viewer_url}
+                              for r in REPOSITORIES.values()],
                     "default": DEFAULT_REPO_ID})
 
 
