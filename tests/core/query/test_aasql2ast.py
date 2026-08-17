@@ -15,8 +15,7 @@ from aas_mapping.aas_neo4j_adapter.querification.ast_to_cypher import (
 from aas_mapping.aas_neo4j_adapter.querification.aasql_to_cypher import convert_aasql_to_cypher
 
 
-_QUERY_DIR = Path(__file__).resolve().parents[1] / "examples" / "queries"
-_AST_DIR = Path(__file__).resolve().parents[1] / "examples" / "ast"
+from tests.paths import AST_DIR as _AST_DIR, QUERIES_DIR as _QUERY_DIR
 
 _FIXTURE_STEMS = sorted(p.stem for p in _QUERY_DIR.glob("*.json"))
 

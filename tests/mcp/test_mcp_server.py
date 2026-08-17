@@ -277,11 +277,7 @@ def test_abstract_submodel_semantic_id_match_skips_idshort_fallback():
 # Integration tests (require live Neo4j)
 # ---------------------------------------------------------------------------
 
-_EXAMPLE_SUBMODEL = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    "examples",
-    "submodels",
-)
+from tests.paths import SUBMODELS_DIR as _EXAMPLE_SUBMODEL
 
 
 @pytest.mark.integration

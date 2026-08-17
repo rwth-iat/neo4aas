@@ -5,9 +5,11 @@ from pathlib import Path
 from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import IDENTIFIABLE_KEYS, AASNeo4JClient
 from aas_mapping.aas_neo4j_adapter.xmlification.xml_to_json import xml_to_aas_json
 
-_EXAMPLES_DIR = Path(__file__).parent.parent / "examples" / "submodels"
-_XML_TEST_DATA_DIR = Path(__file__).parent / "test_data" / "Expected_XML"
-_JSON_TEST_DATA_DIR = Path(__file__).parent / "test_data" / "Expected_JSON"
+from tests.paths import (
+    SUBMODELS_DIR as _EXAMPLES_DIR,
+    EXPECTED_XML_DIR as _XML_TEST_DATA_DIR,
+    EXPECTED_JSON_DIR as _JSON_TEST_DATA_DIR,
+)
 
 # Files with known exporter bugs — tracked in TODOs.md
 _XFAIL_STEMS = {

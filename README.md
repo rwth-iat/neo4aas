@@ -277,7 +277,7 @@ print(cypher)
 ## Testing
 
 ```bash
-uv run pytest aas_mapping/test/
+uv run pytest tests/
 ```
 
 Integration tests require a live Neo4j instance (`bolt://localhost:7687`, user `neo4j`, password `12345678`). They are skipped automatically if Neo4j is unreachable.
