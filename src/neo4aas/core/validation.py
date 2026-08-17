@@ -48,7 +48,6 @@ identical References share one Neo4j node, so same identity ⟺ same semantic co
 
 import re
 from dataclasses import dataclass, field
-from typing import Optional
 
 from neo4aas.core.base import BaseNeo4JClient
 

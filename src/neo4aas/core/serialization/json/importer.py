@@ -431,7 +431,7 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
 
     def _process_json_file(self, file_path: str) -> Tuple[List[Dict], Dict[str, List]]:
         """Process a single JSON file and return nodes and relationships."""
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             data = json.load(f)
             nodes, relationships = self._process_json_data(data)
         return nodes, relationships

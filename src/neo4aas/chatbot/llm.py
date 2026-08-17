@@ -1,6 +1,6 @@
 """LangChain model factories pointed at the KIConnect (OpenAI-compatible) endpoint."""
 
-from functools import lru_cache
+from functools import cache
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
@@ -9,7 +9,7 @@ from .config import (
 )
 
 
-@lru_cache(maxsize=None)
+@cache
 def chat_model(model: str = MODEL_AGENT, temperature: float = 0.0) -> ChatOpenAI:
     """A ChatOpenAI bound to KIConnect. temperature=0 for deterministic tool decisions."""
     return ChatOpenAI(
@@ -26,7 +26,7 @@ def util_model() -> ChatOpenAI:
     return chat_model(MODEL_UTIL)
 
 
-@lru_cache(maxsize=None)
+@cache
 def embeddings() -> OpenAIEmbeddings:
     """KIConnect embeddings (qwen3-embedding-8b, dim 4096) for the RAG field index."""
     return OpenAIEmbeddings(

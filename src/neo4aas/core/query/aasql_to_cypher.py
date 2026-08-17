@@ -1,11 +1,11 @@
 import os
 import json
-from typing import Optional, Union
+from typing import Optional
 
 from neo4aas.core.query.aasql_to_ast import parse_aasql_full
 from neo4aas.core.query.ast_to_cypher import converter_full
 
-def convert_aasql_to_cypher(aasql_query: Union[dict, str], target: Optional[str] = None,
+def convert_aasql_to_cypher(aasql_query: dict | str, target: Optional[str] = None,
                             model_config=None) -> str:
     """Compile an AASQL query (dict or JSON string) to Cypher.
 
@@ -30,7 +30,7 @@ def main():
     for file_name in os.listdir(query_dir):
         if file_name.endswith(".json"):
             path = os.path.join(query_dir, file_name)
-            with open(path, "r") as f:
+            with open(path) as f:
                 data = json.load(f)
             print(f"--- {file_name} ---")
             cypher = convert_aasql_to_cypher(data)

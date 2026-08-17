@@ -9,9 +9,7 @@ import logging
 import os
 import time
 from os.path import isfile, join
-from typing import Optional
 
-from neo4aas.core.base import Neo4jModelConfig
 from neo4aas.core.serialization.json.importer import JsonToNeo4jImporter
 from neo4aas.core.utils import UploadStats
 from neo4aas.core.serialization.xml.xml_to_json import xml_to_aas_json

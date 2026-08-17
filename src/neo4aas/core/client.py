@@ -570,10 +570,10 @@ def main():
         # set timer
         import time
         start_time = time.time()
-        result = optimized_client.upload_all_json_from_dir(submodels_folder,
-                                                           file_batch_size=100,
-                                                           db_batch_size=30000,
-                                                           max_num_of_batches=1)
+        optimized_client.upload_all_json_from_dir(submodels_folder,
+                                                  file_batch_size=100,
+                                                  db_batch_size=30000,
+                                                  max_num_of_batches=1)
         end_time = time.time()
         print(f"Execution time: {end_time - start_time} seconds")
 
