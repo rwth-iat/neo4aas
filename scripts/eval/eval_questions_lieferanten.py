@@ -8,7 +8,7 @@ Nameplate / ContactInformations / DigitalNameplate / CarbonFootprint; countries 
 DE/NO/CN/FI/…). Ground-truth notes live in GT, used only for the printed scorecard, never sent.
 
 Run (server must be up on :8091, both repos reachable):
-    uv run --with requests python aas_mapping/chatbot_v2/test_questions_lieferanten.py
+    uv run --with requests python scripts/eval/eval_questions_lieferanten.py
 """
 
 import json

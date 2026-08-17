@@ -10,9 +10,9 @@ from functools import lru_cache
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
-from config import MODEL_AGENT, get_repo
-from llm import chat_model
-from tools import build_tools, repo_context_text
+from .config import MODEL_AGENT, get_repo
+from .llm import chat_model
+from .tools import build_tools, repo_context_text
 
 _CORE_RULES = """\
 You are an assistant for an Asset Administration Shell (AAS) repository. Answer the \

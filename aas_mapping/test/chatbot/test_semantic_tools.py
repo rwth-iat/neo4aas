@@ -18,8 +18,8 @@ import pytest
 
 os.environ.setdefault("KICONNECT_API_KEY", "dummy")  # config import requires it; LLM unused here
 
-import config
-from tools import build_tools
+from aas_mapping.chatbot_v2 import config
+from aas_mapping.chatbot_v2.tools import build_tools
 
 # SICK TBT temperature sensor, present in the Lieferanten dataset.
 SICK_SUFFIX = "0044dfb8196ec50444cd001e745a95cf"

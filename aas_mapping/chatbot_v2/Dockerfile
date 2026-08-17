@@ -10,19 +10,14 @@ WORKDIR /app
 
 # Install aas4graph (neo4aas) from the local checkout (build context = repo root) so
 # chatbot_v2 reuses the shared agent_tools. Brings the neo4j driver and basyx.
+# chatbot_v2 is a package inside it, so the app modules and static/ come along —
+# no per-file COPY list to forget to update when a module is added.
 COPY . /src/neo4aas
 RUN pip install --no-cache-dir /src/neo4aas
-
-# chatbot_v2 app modules (flat imports) + static assets.
-COPY aas_mapping/chatbot_v2/app.py aas_mapping/chatbot_v2/config.py \
-     aas_mapping/chatbot_v2/llm.py aas_mapping/chatbot_v2/tools.py \
-     aas_mapping/chatbot_v2/graph.py aas_mapping/chatbot_v2/system_prompt.py \
-     aas_mapping/chatbot_v2/retrieval.py ./
-COPY aas_mapping/chatbot_v2/static/ static/
 
 ENV KICONNECT_API_KEY=""
 ENV REPOSITORY_URL="http://repository/api/v3.1"
 
 EXPOSE 8091
 
-CMD ["python", "app.py"]
+CMD ["python", "-m", "aas_mapping.chatbot_v2"]

@@ -16,8 +16,8 @@ from functools import lru_cache
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 
-from config import get_aas_client, log, HYDE
-from llm import embeddings, util_model
+from .config import get_aas_client, log, HYDE
+from .llm import embeddings, util_model
 
 # Distinct (submodel type, field idShort, semanticId, ECLASS concept) in the graph.
 # `concept` is the version-agnostic IRDI base (target_id_base) — the ECLASS concept the

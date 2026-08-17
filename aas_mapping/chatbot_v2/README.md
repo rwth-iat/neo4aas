@@ -47,14 +47,14 @@ so a chat is inspectable even after a restart.
 
 ```bash
 # from repo root, with the demonstrator stack up (repository on :8081)
-cd aas_mapping/chatbot_v2
-export KICONNECT_API_KEY=...           # or source ../../aas_demonstrator/.env
+export KICONNECT_API_KEY=...           # or source aas_demonstrator/.env
 export REPOSITORY_URL=http://localhost:8081/api/v3.1
 export NEO4J_URI=bolt://localhost:7687 NEO4J_USER=neo4j NEO4J_PASSWORD=12345678  # optional: enables neo4aas + RAG tools
-uv run --with langgraph --with langchain-openai --with langchain-community --with faiss-cpu \
-       --with flask --with requests --with-editable ../.. python app.py
-# → http://localhost:8091
+uv run --extra chatbot_v2 python -m aas_mapping.chatbot_v2
+# → http://localhost:8091   (PORT overrides the port)
 ```
+
+It is a normal package — run it from the repo root, not from inside this directory.
 
 Or via Docker: `docker compose up chatbot-v2` (in `aas_demonstrator/`).
 

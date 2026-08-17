@@ -16,7 +16,7 @@ import os
 
 os.environ.setdefault("KICONNECT_API_KEY", "dummy")  # config import requires it; LLM unused
 
-from tools import _mlp_text, _project_elements, _project_row, _rows_to_csv, _sem_id
+from aas_mapping.chatbot_v2.tools import _mlp_text, _project_elements, _project_row, _rows_to_csv, _sem_id
 
 
 def test_sem_id_single_and_multi_key():

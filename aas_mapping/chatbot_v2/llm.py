@@ -4,7 +4,7 @@ from functools import lru_cache
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-from config import (
+from .config import (
     KICONNECT_API_KEY, KICONNECT_BASE_URL, MODEL_AGENT, MODEL_UTIL, MODEL_EMBED,
 )
 

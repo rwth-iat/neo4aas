@@ -39,6 +39,12 @@ aas4graph-mcp = "aas_mapping.mcp_server.server:main"
 [tool.setuptools.packages.find]
 include = ["aas_mapping*"]
 
+[tool.setuptools.package-data]
+# chatbot_v2 serves its UI from the installed package (Flask static_folder="static"),
+# so the assets must ship in the wheel — the image no longer COPYs them separately.
+"aas_mapping.chatbot_v2" = ["static/*", "static/**/*"]
+"aas_mapping.aas_neo4j_adapter.querification" = ["spec/*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["aas_mapping/test"]
 markers = [

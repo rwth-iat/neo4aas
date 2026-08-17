@@ -15,9 +15,9 @@ from flask import Flask, Response, jsonify, request, send_from_directory
 from langchain_core.messages import AIMessage, AIMessageChunk, ToolMessage
 from langgraph.errors import GraphRecursionError
 
-from config import log, get_callbacks, get_repo, REPOSITORIES, DEFAULT_REPO_ID
-from graph import build_agent
-from tools import build_tools
+from .config import log, get_callbacks, get_repo, REPOSITORIES, DEFAULT_REPO_ID
+from .graph import build_agent
+from .tools import build_tools
 
 app = Flask(__name__, static_folder="static")
 
@@ -153,7 +153,7 @@ def _synthesize(agent, thread_id: str):
 
     Used when the agent ends without text (KIConnect occasionally returns empty content).
     """
-    from llm import util_model
+    from .llm import util_model
     try:
         state = agent.get_state({"configurable": {"thread_id": thread_id}})
         msgs = list(state.values.get("messages", []))
@@ -282,7 +282,3 @@ def debug(thread_id):
     if not out["turns"] and not out["messages"]:
         return jsonify({**out, "note": "unknown chat id (or server restarted)"}), 404
     return jsonify(out)
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8091)

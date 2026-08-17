@@ -17,9 +17,9 @@ import requests
 from langchain_core.tools import tool
 
 from aas_mapping.aas_neo4j_adapter.utils import irdi_base
-from config import neo4j_enabled, get_aas_client, get_repo, log
-from llm import util_model
-from system_prompt import SYSTEM_PROMPT
+from .config import neo4j_enabled, get_aas_client, get_repo, log
+from .llm import util_model
+from .system_prompt import SYSTEM_PROMPT
 
 # Keep tool observations small. Each result can be a full AAS JSON object, so an
 # unbounded list piled into the message history overflows the model context after a few
@@ -889,7 +889,7 @@ def build_tools(repo=None) -> list:
         closest SubmodelElement fields (idShort, Submodel type, semanticId). Use this BEFORE
         aasql_query when unsure how a property is named, then target those exact names.
         """
-        from retrieval import find_relevant_fields as _find
+        from .retrieval import find_relevant_fields as _find
         return _find(question, repo.id)
 
     tools = [aasql_query, repo_read]

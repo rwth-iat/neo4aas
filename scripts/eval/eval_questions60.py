@@ -1,7 +1,7 @@
 """60-question evaluation harness for chatbot_v2 (harder + more diverse than the 30-set).
 
 Run (server up on :8091):
-    uv run --with requests python aas_mapping/chatbot_v2/test_questions60.py
+    uv run --with requests python scripts/eval/eval_questions60.py
 Writes /tmp/v2_eval60.json.
 """
 
