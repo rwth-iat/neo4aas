@@ -1,18 +1,37 @@
-# Python bytecode files
+# Python
 *.pyc
-# Python cache directories
 __pycache__/
+*.egg-info/
+.venv/
+.pytest_cache/
 
-aas_mapping/examples/real_aas
-.gitignore
+# OS / editor / agent tooling
+.DS_Store
 .claude/
 .idea/
-aas4graph.egg-info
-BA_AAS
-BA_SEM_DICT_IN_AAS_GRAPH
+
+# Agent working documents (kept local, not part of the distribution)
 CLAUDE.md
 TODOs.md
 Report.md
 Report2.md
-eclass
-archive
+
+# Large external data: AAS corpora, ECLASS dictionary exports, symlinks into them.
+# NOTE: anchored with a leading slash — a bare `eclass` pattern also matched the
+# `eclass/` SOURCE packages and silently kept 11 modules out of git.
+/data/
+/eclass/
+aas_mapping/examples/real_aas
+
+# Runtime state written by the demonstrator stack (registry/discovery storage,
+# ingested AAS input) — not source.
+aas_demonstrator/archive/AAS/*
+!aas_demonstrator/archive/AAS/.gitkeep
+aas_demonstrator/data/registry/storage/
+aas_demonstrator/data/discovery/storage/*.json
+
+# Secrets. `.env.example` is tracked and does not match this pattern.
+.env
+
+# Binary presentation assets (diagram SOURCES live in docs/diagrams/*.puml)
+docs/presentations/
