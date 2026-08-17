@@ -346,8 +346,15 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
                 # AFTER:  keys_type = ["GlobalReference", ...]
                 #         keys_value = ["0173-1#02-AAW001#001", ...]
                 if value:
-                    for dict_key in value[0].keys():
-                        node_properties[f"{key}_{dict_key}"] = [dict_[dict_key] for dict_ in value]
+                    # Keys are the union over all entries (first-seen order), read with
+                    # .get: source data is not guaranteed homogeneous (a LangString without
+                    # `text`, a Reference key without `type`), and taking the first entry's
+                    # keys with [] raised KeyError and rejected the whole file. Missing
+                    # values become null, keeping the parallel lists index-aligned so the
+                    # exporter zips them back correctly.
+                    dict_keys = {k: None for dict_ in value for k in dict_}
+                    for dict_key in dict_keys:
+                        node_properties[f"{key}_{dict_key}"] = [dict_.get(dict_key) for dict_ in value]
             elif key in dict_prop_as_multiple_props:
                 if value:
                     child_nodes, child_rels = self._process_dict(value)

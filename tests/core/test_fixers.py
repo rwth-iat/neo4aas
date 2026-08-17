@@ -102,14 +102,55 @@ def test_idshort_fixer_sanitizes_illegal_chars():
             {"modelType": "AssetAdministrationShell", "idShort": "ABB_PMGA11* Control Unit_3103"},
         ],
         "submodels": [
-            {"modelType": "Submodel", "idShort": "Already_Valid-1"},  # untouched
+            {"modelType": "Submodel", "idShort": "Already_Valid_1"},  # untouched
             {"modelType": "Submodel"},  # no idShort — skipped
         ],
     }
     n = IdShortFixer().fix(data)
     assert n == 1
     assert data["assetAdministrationShells"][0]["idShort"] == "ABB_PMGA11__Control_Unit_3103"
-    assert data["submodels"][0]["idShort"] == "Already_Valid-1"  # legal chars kept
+    assert data["submodels"][0]["idShort"] == "Already_Valid_1"  # legal chars kept
+
+
+def test_idshort_fixer_replaces_hyphen():
+    """AASd-002 allows only letters, digits and underscore — a hyphen is NOT legal.
+
+    basyx rejects it on read-back ("must contain only letters, digits and underscore"),
+    which is exactly the failure this fixer exists to prevent, so it must be replaced.
+    """
+    data = {"submodels": [{"modelType": "Submodel", "idShort": "Max-Flow-Rate"}]}
+    assert IdShortFixer().fix(data) == 1
+    assert data["submodels"][0]["idShort"] == "Max_Flow_Rate"
+
+
+@pytest.mark.parametrize(
+    "raw, fixed",
+    [
+        ("3PhaseMotor", "x3PhaseMotor"),
+        ("_hidden", "x_hidden"),
+        ("*abc", "x_abc"),
+    ],
+)
+def test_idshort_fixer_enforces_leading_letter(raw, fixed):
+    """AASd-002 also requires the first character to be a letter."""
+    data = {"submodels": [{"modelType": "Submodel", "idShort": raw}]}
+    assert IdShortFixer().fix(data) == 1
+    assert data["submodels"][0]["idShort"] == fixed
+
+
+def test_idshort_fixer_output_is_accepted_by_basyx():
+    """End-to-end guard: whatever the fixer emits must pass basyx's AASd-002 check."""
+    basyx_model = pytest.importorskip("basyx.aas.model")
+    data = {
+        "submodels": [
+            {"modelType": "Submodel", "idShort": "ABB_PMGA11* Control Unit_3103"},
+            {"modelType": "Submodel", "idShort": "Max-Flow-Rate"},
+            {"modelType": "Submodel", "idShort": "3PhaseMotor"},
+        ]
+    }
+    IdShortFixer().fix(data)
+    for sm in data["submodels"]:
+        basyx_model.Referable.validate_id_short(sm["idShort"])
 
 
 def test_idshort_fixer_in_default_fixers():

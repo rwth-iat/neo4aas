@@ -205,3 +205,18 @@ def test_quoted_id_is_handled_safely(aas_client):
 
     aas_client.remove_identifiable(sm_id)
     assert aas_client.identifiable_exists(sm_id) is False
+
+
+def test_remove_referable_returns_deleted_node_count(aas_client):
+    """remove_referable reports how many nodes it deleted, as an int.
+
+    It used to return the raw neo4j record list, so `Neo4jObjectStore.remove`'s
+    `if result == 0` guard could never fire — a delete that removed nothing was reported
+    as success.
+    """
+    aas_client.add_identifiable(_collection_submodel())
+
+    deleted = aas_client.remove_referable("urn:sm/coll", "Specs.Color")
+
+    assert isinstance(deleted, int)
+    assert deleted == 1

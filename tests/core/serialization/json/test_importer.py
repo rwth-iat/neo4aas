@@ -1,7 +1,10 @@
 """Unit tests for JsonToNeo4jImporter internals (no live Neo4j required)."""
+from dataclasses import replace
+
 import pytest
 from neo4j.exceptions import TransientError
 
+from neo4aas.core.base import EMPTY_NEO4J_MODEL_CONFIG
 from neo4aas.core.serialization.json.importer import JsonToNeo4jImporter
 
 
@@ -49,3 +52,29 @@ def test_group_nodes_by_label_does_not_mutate_input():
     assert grouped[("Submodel",)] == [{"uid": 2, "id": "urn:sm"}]
     # Idempotent: a second pass works (no KeyError) and yields the same result.
     assert importer._group_nodes_by_label(nodes) == grouped
+
+
+def test_flattened_list_of_dicts_tolerates_heterogeneous_entries():
+    """A list-of-dicts property whose entries do not all carry the same keys must not
+    abort the import.
+
+    The flattening read every entry with `dict_[key]` for the keys of the *first* entry,
+    so one entry missing a key (a LangString without `text`, a Reference key without
+    `type`) raised KeyError and rejected the whole file — the opposite of the
+    "store non-conformant supplier data faithfully" contract of the ingest path. Keys are
+    now the union over all entries, missing ones filled with null, so the parallel lists
+    stay aligned and nothing is silently dropped.
+    """
+    config = replace(
+        EMPTY_NEO4J_MODEL_CONFIG,
+        list_of_dicts_prop_as_multiple_list_props={"Unknown": ["keys"]},
+    )
+    importer = JsonToNeo4jImporter(uri=None, user="x", model_config=config)
+    nodes, _ = importer._process_dict(
+        {"keys": [{"type": "GlobalReference", "value": "a"}, {"value": "b"}, {"extra": 1}]}
+    )
+
+    root = nodes[-1]
+    assert root["keys_value"] == ["a", "b", None]
+    assert root["keys_type"] == ["GlobalReference", None, None]
+    assert root["keys_extra"] == [None, None, 1]

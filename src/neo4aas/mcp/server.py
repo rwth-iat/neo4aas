@@ -49,6 +49,9 @@ async def lifespan(_server: FastMCP) -> AsyncIterator[AppContext]:
         user=cfg.user,
         password=cfg.password,
         model_config=AAS_NEO4J_MODEL_CONFIG,
+        # This server is read-only, so it must not write schema (indexes/constraints) on
+        # connect — same as the chatbot's client (config.get_aas_client).
+        auto_optimize=False,
     )
     try:
         yield AppContext(client=client)

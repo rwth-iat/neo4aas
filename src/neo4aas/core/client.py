@@ -223,7 +223,7 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         result = self.execute_clause(clause, single=True, params={"id": identifier})
         return result[0]
 
-    def remove_referable(self, parent_id: str, id_short_path: str = None):
+    def remove_referable(self, parent_id: str, id_short_path: str = None) -> int:
         # Resolve to exactly one node via _find_node, which raises if the path matches zero
         # (KeyError) or more than one (ValueError). This prevents an unbounded DETACH DELETE
         # of several subtrees when a path is malformed or hits a spec-violating duplicate idShort.
@@ -241,9 +241,13 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
             "DETACH DELETE node "
             "RETURN count(node) AS deletedNodes; "
         )
-        return self.execute_clause(delete_clause, params={"rid": root_internal_id})
+        # Return the deleted-node count, not the raw record list: callers check the result
+        # (Neo4jObjectStore.remove raises when nothing was deleted), and a list is never
+        # equal to 0, so that guard silently never fired.
+        result = self.execute_clause(delete_clause, single=True, params={"rid": root_internal_id})
+        return result["deletedNodes"] if result else 0
 
-    def remove_identifiable(self, identifier: str):
+    def remove_identifiable(self, identifier: str) -> int:
         return self.remove_referable(identifier)
 
     @staticmethod

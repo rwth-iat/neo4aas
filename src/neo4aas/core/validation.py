@@ -55,8 +55,12 @@ from neo4aas.core.base import BaseNeo4JClient
 # Constants
 # ---------------------------------------------------------------------------
 
-# AASd-002: idShort must match this pattern (requires ≥2 characters per spec regex)
-IDSHORT_PATTERN = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+$')
+# AASd-002: "idShort shall only feature letters, digits, underscore ('_'); starting
+# mandatory with a letter. I.e. [a-zA-Z][a-zA-Z0-9_]+" — a hyphen is NOT part of the
+# allowed set (basyx enforces the same set on read-back, so accepting hyphens here
+# reported data as compliant that the SDK then refuses to reconstruct). The '+' makes
+# ≥2 characters the spec-mandated minimum.
+IDSHORT_PATTERN = re.compile(r'^[a-zA-Z][a-zA-Z0-9_]+$')
 
 # AASd-125: all keys following the first key in a ModelReference must be FragmentKeys
 FRAGMENT_KEYS: frozenset[str] = frozenset({

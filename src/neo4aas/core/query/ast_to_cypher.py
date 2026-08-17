@@ -16,6 +16,24 @@ def _escape(value: str) -> str:
     return value.replace("\\", "\\\\").replace("'", "\\'")
 
 
+def _index(raw: str) -> str:
+    """Validate a list index taken from an AASQL field path before it is embedded in Cypher.
+
+    The compiler emits Cypher as text, so an index copied verbatim from the field path
+    (`$sme.List[0]`, `$aas#submodels[0]`, `$aas#specificAssetIds[0]`) is executable Cypher:
+    a crafted AASQL string could close the relationship pattern and append arbitrary —
+    including write — clauses. AASQL reaches the compiler from untrusted sources (the
+    repository's /query endpoint, LLM-generated queries), so only a plain non-negative
+    integer is accepted; anything else is a compile-time ValueError, which the chatbot's
+    compose->validate->repair loop surfaces instead of a query hitting the database.
+    """
+    if not raw.isdigit():
+        raise ValueError(
+            f"Invalid list index {raw!r} in field path: an index must be a non-negative integer"
+        )
+    return raw
+
+
 def _flat(prop: str, subfield: str) -> str:
     """Flattened sub-property name, matching the import convention `{prop}_{subfield}`.
 
@@ -106,7 +124,7 @@ def _convert_sme(root: str, mapping: dict[str, int]) -> Tuple[str, str]:
                     else:
                         match_part += f"-[:value]->(sme{depth}:SubmodelElement {{idShort: '{_escape(p)}'}})"
                 elif len(p) > 1:
-                    match_part += f"-[:value {{list_index: {p.rstrip(']')}}}]->(sme{depth}:SubmodelElement)"
+                    match_part += f"-[:value {{list_index: {_index(p.rstrip(']'))}}}]->(sme{depth}:SubmodelElement)"
                 else:
                     match_part += f"-[:value]->(sme{depth}:SubmodelElement)"
                 last_root = f"sme{depth}"
@@ -243,8 +261,8 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
             case _ if part.startswith("submodels"):
                 if "submodels" not in mapping:
                     mapping["submodels"] = 0
-                if "[" in part:
-                    idx = part[part.index("[") + 1: part.index("]")]
+                if "[" in part and "[]" not in part:
+                    idx = _index(part[part.index("[") + 1: part.index("]")])
                     match_part += f"-[:submodels {{list_index: {idx}}}]->(submodels{mapping['submodels']}:Reference)"
                 else:
                     match_part += f"-[:submodels]->(submodels{mapping['submodels']}:Reference)"
@@ -282,10 +300,11 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
                 # specificAssetIds can be referenced by index
                 if "specificAssetIds" not in mapping:
                     mapping["specificAssetIds"] = 0
-                if "[]" in part:
+                if "[]" in part or "[" not in part:
                     match_part += f"-[:specificAssetIds]->(specificAssetIds{mapping['specificAssetIds']})"
                 else:
-                    match_part += f"-[:specificAssetIds {{list_index: {part[part.index("[") + 1: part.index("]")]}}}]->(specificAssetIds{mapping['specificAssetIds']})"
+                    idx = _index(part[part.index("[") + 1: part.index("]")])
+                    match_part += f"-[:specificAssetIds {{list_index: {idx}}}]->(specificAssetIds{mapping['specificAssetIds']})"
                 last_root = f"specificAssetIds{mapping['specificAssetIds']}"
                 mapping["specificAssetIds"] += 1
             case _:
@@ -308,6 +327,14 @@ def _convert_field(field: Field, mapping: dict[str, int]) -> Tuple[str, str, boo
     match_part, last_root = _convert_root(root, mapping)
     where_part, match_addition, isList = _convert_attribute_elements(attribute, last_root, mapping)
     match_part += match_addition
+    if not where_part:
+        # The path ends on a node (e.g. "$aas#submodels[0]"), not on a value. A Field is
+        # always one side of a comparison, so an empty operand would emit broken Cypher
+        # ("WHERE  = 'x'") that only fails when the repository executes it.
+        raise ValueError(
+            f"Field '{field.name}' resolves to no comparable property; "
+            f"the attribute path must end on a value (e.g. '#semanticId', '.keys[0].value')"
+        )
     return where_part, match_part, isList
 
 

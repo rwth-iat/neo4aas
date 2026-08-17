@@ -116,8 +116,13 @@ class IdShortFixer(AASFixer):
     Some source data (e.g. ABB nameplates) uses spaces or symbols in an idShort like
     ``"ABB_PMGA11* Control Unit_310320262206"``. basyx's strict reader rejects these on
     read-back (``AASd-002``), which breaks reconstruction of the whole object — and, in a
-    Repository, the entire shells/submodels listing. Illegal characters are replaced with
-    ``_`` (the allowed set is letters, digits, ``_`` and ``-``).
+    Repository, the entire shells/submodels listing.
+
+    AASd-002 is ``[a-zA-Z][a-zA-Z0-9_]+``: the allowed set is letters, digits and ``_``
+    only — a hyphen is **not** legal (basyx: "must contain only letters, digits and
+    underscore") — and the first character must be a letter. Illegal characters are
+    therefore replaced with ``_``, and an idShort that does not start with a letter is
+    prefixed with ``x`` (lossless, unlike stripping the leading characters).
 
     Note: an idShort referenced by a ModelReference *idShort path* (a key ``value``) is not
     rewritten in lockstep, so such a reference could desync. The supplier data here references
@@ -127,7 +132,7 @@ class IdShortFixer(AASFixer):
 
     name = "idshort-aasd002"
 
-    _ILLEGAL = re.compile(r"[^A-Za-z0-9_-]")
+    _ILLEGAL = re.compile(r"[^A-Za-z0-9_]")
 
     def fix(self, data: dict) -> int:
         count = 0
@@ -135,8 +140,10 @@ class IdShortFixer(AASFixer):
         def visit(node: dict) -> None:
             nonlocal count
             value = node.get("idShort")
-            if isinstance(value, str):
+            if isinstance(value, str) and value:
                 fixed = self._ILLEGAL.sub("_", value)
+                if not fixed[0].isalpha():
+                    fixed = "x" + fixed
                 if fixed != value:
                     node["idShort"] = fixed
                     count += 1

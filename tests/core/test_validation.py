@@ -12,12 +12,28 @@ from neo4aas.core.validation import (
     AASConstraintChecker,
     ConstraintReport,
     ConstraintViolation,
+    IDSHORT_PATTERN,
 )
 
 
 # ---------------------------------------------------------------------------
 # Unit tests — no Neo4j needed
 # ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("id_short", ["MyValidIdShort01", "a_b", "Ab"])
+def test_idshort_pattern_accepts_spec_conformant_names(id_short):
+    assert IDSHORT_PATTERN.match(id_short)
+
+
+@pytest.mark.parametrize("id_short", ["1invalid", "trailing-", "Max-Flow-Rate", "with space", "_x"])
+def test_idshort_pattern_rejects_non_conformant_names(id_short):
+    """AASd-002 is `[a-zA-Z][a-zA-Z0-9_]+` — a hyphen is not part of the allowed set.
+
+    basyx enforces the same set on read-back, so accepting hyphens here made the checker
+    report data compliant that the SDK then refuses to reconstruct.
+    """
+    assert not IDSHORT_PATTERN.match(id_short)
+
 
 def test_report_is_compliant_when_empty():
     report = ConstraintReport()
