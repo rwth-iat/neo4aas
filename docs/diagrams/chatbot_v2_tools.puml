@@ -1,0 +1,69 @@
+@startuml chatbot_v2_tools
+title AAS Chatbot — Tool Catalog
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 13
+skinparam roundCorner 10
+skinparam rectangle {
+  BorderColor #BBBBBB
+  FontColor   #1A1A2E
+}
+skinparam package {
+  FontColor #FFFFFF
+  FontSize  15
+}
+
+' ===== Query & Search =====
+package "Query & Search" #007A66 {
+  rectangle "**aasql_query**\nNL → AASQL → search shells & submodels\nby property, manufacturer, semanticId" as q1
+  rectangle "**find_relevant_fields**\nSemantic RAG: maps 'flow rate'\n→ real AAS idShort names" as q2
+}
+
+' ===== Graph Analytics =====
+package "Graph Analytics" #D45F00 {
+  rectangle "**aggregate_field**\ncount_by_value / max / min / avg\nover a property in one call" as g1
+  rectangle "**property_values**\nlist a property's values across assets;\nfilter by asset, text, numeric range" as g2
+  rectangle "**assets_missing**\nassets that LACK a submodel type\nor property (negation / absence)" as g3
+  rectangle "**asset_components**\nbill-of-materials from the\nHierarchicalStructures submodel" as g4
+  rectangle "**cypher_read**\nread-only raw Cypher for\ncustom graph traversals" as g5
+}
+
+' ===== ECLASS Semantics =====
+package "ECLASS Semantics" #7B2FBE {
+  rectangle "**explain_property**\nidShort or IRDI → ECLASS name,\ndefinition, unit, parent classes" as e1
+  rectangle "**find_by_eclass_concept**\nall AAS elements tagged with an\nECLASS IRDI (version-agnostic)" as e2
+}
+
+' ===== AAS Data & REST Access =====
+package "AAS Data & REST Access" #006AB0 {
+  rectangle "**repo_read**\nGET /shells | /submodels |\n/concept-descriptions (id auto-encoded)" as r1
+  rectangle "**get_identifiable**\nfetch full AAS / Submodel /\nConceptDescription by global id" as r2
+  rectangle "**get_referable**\nfetch element by parent id + idShort\npath (e.g. Coll.List[0].Prop)" as r3
+  rectangle "**abstract_submodel**\nstructural template union of all\nsubmodels of a given type" as r4
+  rectangle "**validate_constraints**\ncheck AAS data against\nAAS spec constraints" as r5
+}
+
+' ===== Repository Overview =====
+package "Repository Overview" #1A7A2E {
+  rectangle "**repo_overview**\nlive snapshot: counts, submodel types,\nmanufacturers, asset tags" as o1
+  rectangle "**count_stats**\nquick AAS / Submodel /\nConceptDescription counts" as o2
+  rectangle "**list_submodel_types**\ndistinct submodel types\nwith instance count" as o3
+}
+
+' invisible layout hints (stack tools vertically per package)
+q1 -[hidden]down- q2
+g1 -[hidden]down- g2
+g2 -[hidden]down- g3
+g3 -[hidden]down- g4
+g4 -[hidden]down- g5
+e1 -[hidden]down- e2
+r1 -[hidden]down- r2
+r2 -[hidden]down- r3
+r3 -[hidden]down- r4
+r4 -[hidden]down- r5
+o1 -[hidden]down- o2
+o2 -[hidden]down- o3
+
+@enduml
