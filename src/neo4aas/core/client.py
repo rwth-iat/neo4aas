@@ -82,12 +82,12 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
     # constraint above — so a repeated id means the same object and MERGEs onto the
     # existing node (first content wins) instead of creating a second one.
     #
-    # Real vendor data needs this: SICK re-emits the same ConceptDescription IRDI with
-    # differing definitions, and Harting ships one Submodel id
-    # (…/submodels/ContactInformations/1/0) across a whole catalogue of AAS files. Without
-    # id-merge the second occurrence raises IndexEntryConflictException, which loses a
-    # whole 50-file batch in `upload_all_json_from_dir` and makes the repository loader
-    # drop an entire shell because one of its submodels was already present.
+    # Real vendor data needs this: one supplier re-emits the same ConceptDescription IRDI
+    # with differing definitions, another ships a single shared Submodel id (its contact
+    # information) across a whole catalogue of AAS files. Without id-merge the second
+    # occurrence raises IndexEntryConflictException, which loses a whole 50-file batch in
+    # `upload_all_json_from_dir` and makes the repository loader drop an entire shell
+    # because one of its submodels was already present.
     #
     # References stay hash-deduped: they are content-addressed and carry no id.
     deduplicated_by_id={"Identifiable"},

@@ -170,11 +170,12 @@ def _count_identifiable(client, ident_id: str) -> int:
 def test_repeated_submodel_id_across_files_does_not_abort_the_import(aas_client):
     """Vendors ship the same Submodel id in many AAS files; that must not fail the load.
 
-    Harting, for instance, repeats `…/submodels/ContactInformations/1/0` across its
-    catalogue. The `Identifiable.id` uniqueness constraint then made the *second* file
-    raise IndexEntryConflictException — inside a bulk upload that loses the whole batch,
-    and in the repository loader it drops the entire shell that happened to share one
-    submodel. Same id means the same object, so it merges (first content wins).
+One supplier repeats a single shared `ContactInformations` submodel id across its
+    whole catalogue. The `Identifiable.id` uniqueness constraint then made the *second*
+    file raise IndexEntryConflictException — inside a bulk upload that loses the whole
+    batch, and in the repository loader it drops the entire shell that happened to share
+    one submodel. Same id means the same object, so it merges (first content wins); on the
+    corpus the repeated objects are byte-identical, so nothing is lost.
     """
     shared_sm = "https://vendor.example/submodels/ContactInformations/1/0"
     aas_client.upload_json({"submodels": [

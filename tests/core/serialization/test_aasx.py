@@ -3,11 +3,13 @@
 Findings these guard, all from real corpus packages (aas-corpus `instances/vendors`,
 `instances/inhouse`):
 
-* the in-house Pumpwerk packages declare the **V3.1** metamodel namespace
+* the in-house packages declare the **V3.1** metamodel namespace
   (``https://admin-shell.io/aas/3/1``) — detection pinned to the V3.0 namespace found
   no AAS part in them and imported nothing, without an error;
-* R. Stahl packages carry their environment as ``aasx/data.json`` — a JSON part, which
-  a scan restricted to ``.xml`` entries never sees.
+* one supplier's packages carry the environment as ``aasx/data.json`` — a JSON part, which
+  a scan restricted to ``.xml`` entries never sees;
+* another supplier's packages are truncated mid-download, so the ZIP central directory is
+  gone and ``zipfile`` refuses the file although the environment itself is intact.
 
 Both failure modes are silent, which is the dangerous part: the caller counts the file
 as loaded.
@@ -104,3 +106,40 @@ def test_iter_environments_accepts_bytes_like_source(tmp_path):
     pkg = _package(tmp_path, {"aasx/data.json": json.dumps(_ENV_JSON)})
     envs = list(AasxToNeo4jImporter(None).iter_environments(io.BytesIO(pkg.read_bytes())))
     assert len(envs) == 1
+
+
+def test_truncated_package_still_yields_the_environment(tmp_path, caplog):
+    """A package cut short mid-download still holds its AAS part — read it.
+
+    Real corpus packages are truncated at a fixed size (the AAS XML sits at the front,
+    the tail is large PDFs), so the ZIP central directory is missing and `zipfile`
+    refuses the whole file. The environment itself inflates fine from the local file
+    header, so a truncated package must degrade to "read what is there, warn", not to
+    "import nothing".
+    """
+    pkg = _package(tmp_path, {
+        "aasx/data.xml": _ENV_XML.format(ns="https://admin-shell.io/aas/3/1"),
+        "aasx/files/big.bin": b"\x00" * 200_000,
+    })
+    raw = pkg.read_bytes()
+    cut = tmp_path / "cut.aasx"
+    cut.write_bytes(raw[: len(raw) // 2])
+
+    with pytest.raises(zipfile.BadZipFile):
+        zipfile.ZipFile(cut)  # the stdlib reader cannot open it at all
+
+    with caplog.at_level("WARNING"):
+        envs = list(AasxToNeo4jImporter(None).iter_environments(str(cut)))
+
+    assert len(envs) == 1
+    assert envs[0]["submodels"][0]["id"] == "urn:sm/1"
+    assert any("central directory" in r.message for r in caplog.records)
+
+
+def test_truncated_before_the_aas_part_yields_nothing_but_does_not_crash(tmp_path, caplog):
+    pkg = _package(tmp_path, {"aasx/data.xml": _ENV_XML.format(ns="https://admin-shell.io/aas/3/0")})
+    cut = tmp_path / "stub.aasx"
+    cut.write_bytes(pkg.read_bytes()[:40])
+
+    with caplog.at_level("WARNING"):
+        assert list(AasxToNeo4jImporter(None).iter_environments(str(cut))) == []

@@ -26,8 +26,8 @@ from neo4aas.core.utils import irdi_base
         ("https://api.eclass-cdp.com/0173-1-01-AHX837-002", "0173-1#01-AHX837"),
         ("http://api.eclass-cdp.com/0173-1-02-AAO677-002", "0173-1#02-AAO677"),
         # IEC CDD IRDIs use '/' after the ICD, not '-'; they carry the same trailing
-        # version and must be stripped the same way. Real vendor data (Harting, SICK,
-        # WAGO, ABB) references IEC CDD concepts alongside ECLASS ones.
+        # version and must be stripped the same way. Real vendor data references IEC CDD
+        # concepts alongside ECLASS ones.
         ("0112/2///61360_4#AAF120#001", "0112/2///61360_4#AAF120"),
         ("0112/2///61987#ABN590#002", "0112/2///61987#ABN590"),
         ("0112/2///61987#ABN590", "0112/2///61987#ABN590"),  # no version -> unchanged
