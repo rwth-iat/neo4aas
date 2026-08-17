@@ -21,14 +21,13 @@ Report2.md
 # `eclass/` SOURCE packages and silently kept 11 modules out of git.
 /data/
 /eclass/
-aas_mapping/examples/real_aas
 
 # Runtime state written by the demonstrator stack (registry/discovery storage,
 # ingested AAS input) — not source.
-aas_demonstrator/archive/AAS/*
-!aas_demonstrator/archive/AAS/.gitkeep
-aas_demonstrator/data/registry/storage/
-aas_demonstrator/data/discovery/storage/*.json
+deploy/demonstrator/input/*
+!deploy/demonstrator/input/.gitkeep
+deploy/demonstrator/data/registry/storage/
+deploy/demonstrator/data/discovery/storage/*.json
 
 # Secrets. `.env.example` is tracked and does not match this pattern.
 .env

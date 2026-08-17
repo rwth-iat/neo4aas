@@ -37,9 +37,9 @@ services:
 
   repository:
     build:
-      # context = repo root so the image installs aas4graph from the local checkout
-      context: ..
-      dockerfile: aas_demonstrator/Dockerfile
+      # context = repo root so the image installs neo4aas from the local checkout
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.repository
     ports:
       - "8081:80"
     depends_on:
@@ -52,7 +52,7 @@ services:
       API_BASE_PATH: /api/v3.1/
       INPUT: /input
     volumes:
-      - ../archive/AAS:/input:ro
+      - ./input:/input:ro
     healthcheck:
       # Use the cheap /description endpoint, NOT /shells: listing shells iterates the whole
       # object store (and with ECLASS ConceptDescriptions loaded that materializes 100k+
@@ -68,8 +68,8 @@ services:
   # writes; the Repository/chatbot read live from Neo4j so updates show up immediately.
   operational-simulator:
     build:
-      context: .
-      dockerfile: Dockerfile.simulator
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.simulator
     depends_on:
       neo4j:
         condition: service_healthy
@@ -108,8 +108,8 @@ services:
   # Chatbot: LangGraph agent, native tool-calling, streaming Claude-Code-style UI (port 8091).
   chatbot-v2:
     build:
-      context: ..
-      dockerfile: src/neo4aas/chatbot/Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.chatbot
     ports:
       - "8091:8091"
     environment:

@@ -39,9 +39,9 @@ services:
 
   repository:
     build:
-      # context = repo root so the image installs aas4graph from the local checkout
-      context: ..
-      dockerfile: aas_demonstrator/Dockerfile
+      # context = repo root so the image installs neo4aas from the local checkout
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.repository
     ports:
       - "8084:80"
     depends_on:
@@ -56,7 +56,7 @@ services:
       # Max AAS files loaded per manufacturer subdirectory under /input.
       MAX_PER_DIR: "2000"
     volumes:
-      - ../data/real_aas/real_aas_combined:/input:ro
+      - ../../data/real_aas/real_aas_combined:/input:ro
     # Loading up to 2000 AAS x 5 manufacturers happens once at worker boot, so allow a
     # long boot/request timeout instead of the demonstrator's default 120s.
     command:
