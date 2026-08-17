@@ -253,12 +253,20 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
             case "semanticId":
                 if "semanticId" not in mapping:
                     mapping["semanticId"] = 0
-                match_part += f"-[:semanticId]->(semanticId{mapping['semanticId']})"
+                # The semanticId node is a Reference; emit the :Reference label so the
+                # planner can seek the :Reference(target_id) index (an unlabelled node
+                # cannot use a label-scoped index — without it the planner expands every
+                # submodel subtree before filtering, which is catastrophically slow on a
+                # large repo: ~216s vs <1s for this query on the ~9k-AAS supplier graph).
+                match_part += f"-[:semanticId]->(semanticId{mapping['semanticId']}:Reference)"
                 last_root = f"semanticId{mapping['semanticId']}"
                 mapping["semanticId"] += 1
-                # if semanticId is used as attribute, we need to access keys_value[0]
+                # When semanticId is the terminal attribute, compare against the
+                # denormalized, indexed Reference.target_id (== keys_value[0], the first
+                # key's value, written on every Reference at import) rather than the
+                # unindexed keys_value[0] list access — see NEO4J_INTERNAL_NODE_KEYS.
                 if attribute.endswith("semanticId"):
-                    where_part += f"{last_root}.{_flat(_flattened_list_prop(mapping, 'Reference'), 'value')}[0]"
+                    where_part += f"{last_root}.target_id"
             case "valueType":
                 where_part += f"{last_root}.valueType"
             case "language":
@@ -386,6 +394,20 @@ def _convert_expression(exp: Expression, mapping: dict[str, int]) -> Tuple[str, 
     """
     match exp:
         case BinaryExpression():
+            # Fail fast on an invalid `$regex` literal: it compiles to a Cypher `=~`
+            # whose right side is a Java/PCRE regex, so a bad pattern (e.g. a bare "*",
+            # which a model emits as a glob) is only rejected at execution by Neo4j
+            # (Statement.SemanticError -> repository 500). Validating the literal here
+            # turns it into a compile error fed back to the AASQL compose->validate->repair
+            # loop, never a round-trip to the repository.
+            if isinstance(exp, Regex) and isinstance(exp.right, StringValue):
+                try:
+                    re.compile(exp.right.value)
+                except re.error as e:
+                    raise ValueError(
+                        f"Invalid $regex pattern {exp.right.value!r}: {e}. "
+                        f"$regex takes a regular expression, not a glob — use '.*' to match any."
+                    )
             left = _convert_value(exp.left, mapping)
             right = _convert_value(exp.right, mapping)
             operator = exp.get_operator()

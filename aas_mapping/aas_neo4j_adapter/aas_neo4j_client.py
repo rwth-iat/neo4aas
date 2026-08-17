@@ -465,7 +465,7 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
             raise ValueError(f"Multiple nodes found with parent_id={parent_id} and id_short_path={id_short_path}")
         return node_ids[0]
 
-    def _find_node_clause(self, parent_id: str, id_short_path: Optional[str] = None) -> (str, str, dict):
+    def _find_node_clause(self, parent_id: str, id_short_path: Optional[str] = None) -> (str, str, dict): # type: ignore
         """Build a MATCH clause locating a node by id (+ optional idShort path).
 
         Returns ``(clause, found_node_var, params)``. All caller-supplied values (the
