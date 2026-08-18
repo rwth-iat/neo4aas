@@ -56,41 +56,42 @@ class XmlToNeo4jImporter(JsonToNeo4jImporter):
         logger.info(f"File batch size: {stats.total_batches} batches of {file_batch_size} files each")
         logger.info(f"Database transaction batch size: {db_batch_size}")
 
-        for batch_num in range(stats.total_batches):
-            start_idx = batch_num * file_batch_size
-            end_idx = min(start_idx + file_batch_size, stats.total_files)
-            current_file_batch = xml_files[start_idx:end_idx]
+        # Each batch is written while the next one is parsed (see _overlapped_writes).
+        with self._overlapped_writes() as submit:
+            for batch_num in range(stats.total_batches):
+                start_idx = batch_num * file_batch_size
+                end_idx = min(start_idx + file_batch_size, stats.total_files)
+                current_file_batch = xml_files[start_idx:end_idx]
 
-            logger.info(f"\n--- Processing Batch {batch_num + 1}/{stats.total_batches} ---")
-            logger.info(f"Files {start_idx + 1}-{end_idx} of {stats.total_files}")
+                logger.info(f"\n--- Processing Batch {batch_num + 1}/{stats.total_batches} ---")
+                logger.info(f"Files {start_idx + 1}-{end_idx} of {stats.total_files}")
 
-            batch_start_time = time.time()
-            batch_nodes = []
-            batch_relationships = {}
+                batch_start_time = time.time()
+                batch_nodes = []
+                batch_relationships = {}
 
-            for filename in current_file_batch:
-                xml_dict = xml_to_aas_json(join(directory, filename))
-                nodes, relationships = self._process_json_data(xml_dict)
-                batch_nodes.extend(nodes)
-                self._merge_relationships(batch_relationships, relationships)
+                for filename in current_file_batch:
+                    xml_dict = xml_to_aas_json(join(directory, filename))
+                    nodes, relationships = self._process_json_data(xml_dict)
+                    batch_nodes.extend(nodes)
+                    self._merge_relationships(batch_relationships, relationships)
 
-            processing_time = time.time() - batch_start_time
-            stats.total_processing_time += processing_time
-            logger.info(f"Processed {len(current_file_batch)} files in {processing_time:.2f} seconds")
+                processing_time = time.time() - batch_start_time
+                stats.total_processing_time += processing_time
+                logger.info(f"Processed {len(current_file_batch)} files in {processing_time:.2f} seconds")
 
-            if not batch_nodes:
-                logger.info("No nodes to create in this batch, skipping...")
-                continue
+                if not batch_nodes:
+                    logger.info("No nodes to create in this batch, skipping...")
+                    continue
 
-            self._upload_nodes_and_relationships(batch_nodes, batch_relationships, stats,
-                                                 db_batch_size=db_batch_size)
+                submit(batch_nodes, batch_relationships, stats, db_batch_size)
 
-            batch_total_time = time.time() - batch_start_time
-            logger.info(f"Batch {batch_num + 1} completed in {batch_total_time:.2f} seconds")
+                batch_total_time = time.time() - batch_start_time
+                logger.info(f"Batch {batch_num + 1} completed in {batch_total_time:.2f} seconds")
 
-            if batch_num == max_num_of_batches:
-                logger.warning("Max number of batches reached")
-                break
+                if batch_num == max_num_of_batches:
+                    logger.warning("Max number of batches reached")
+                    break
 
         stats.finish()
         return stats

@@ -2,11 +2,12 @@ import hashlib
 import json
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from os.path import join
 from typing import Optional, List, Dict, Tuple, Any
 
 from neo4j import Session
-from neo4j.exceptions import ClientError
 
 from neo4aas.core.base import BaseNeo4JClient, Neo4jModelConfig
 from neo4aas.core.io import list_aas_files, read_bytes
@@ -24,8 +25,7 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         # e.g. {HASH: uid}
         self.deduplicated_nodes: dict[str, int] = {}
         self.deduplicated_to_existing_uid_map: dict[int, int] = {}
-        self.deduplicated_rels: set[str] = set()
-        self.uid_to_internal_id: dict[str, int] = {}
+        self.deduplicated_rels: set[tuple] = set()
 
     def _gen_unique_node_name(self) -> int:
         self.uid_counter += 1
@@ -63,126 +63,165 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         for key, value in source.items():
             target.setdefault(key, []).extend(value)
 
-    def _create_nodes(self, session: Session, grouped_nodes: Dict[Tuple[str], List[Dict]]) -> Dict[int, int]:
-        """Create nodes in Neo4j and return uid to internal_id mapping.
+    # One round trip writes a whole batch: the nodes, then the relationships between them,
+    # with the uid -> node map held *server-side*. That map is the reason this is a single
+    # query. Returning an elementId per node cost a Bolt row per node, a `uid` property
+    # written on every node and deleted again by a second pass, and two elementId seeks per
+    # relationship — 2.4x the total write time on a real batch (docs/import-performance.md).
+    #
+    # Node writes split three ways: MERGE on the Identifiable `id` for dedup-by-id types,
+    # MERGE on the content `hash` for content-deduplicated types, plain CREATE for the rest.
+    # `$existing` carries nodes already in the database that this batch attaches to (their
+    # elementId doubles as their uid), so their edges resolve through the same map.
+    #
+    # Relationship writes split two ways: only a node MERGEd on its content hash can be one
+    # the database already holds *with the edge*, so only its outgoing edges need MERGE
+    # (0.04 % of a corpus batch). Everything else leaves a node created here and is CREATEd.
+    _WRITE_GRAPH_QUERY = """
+    CALL () {
+        UNWIND keys($create) AS labelsString
+        WITH split(labelsString, ",") AS labels, $create[labelsString] AS rows
+        UNWIND rows AS row
+        CALL apoc.create.node(labels, row.props) YIELD node
+        RETURN collect([row.uid, node]) AS created_pairs
+    }
+    CALL () {
+        UNWIND keys($merge_by_hash) AS labelsString
+        WITH split(labelsString, ",") AS labels, $merge_by_hash[labelsString] AS rows
+        UNWIND rows AS row
+        CALL apoc.merge.node(labels, {hash: row.props.hash}, row.props, {}) YIELD node
+        RETURN collect([row.uid, node]) AS hash_pairs
+    }
+    CALL () {
+        UNWIND keys($merge_by_id) AS labelsString
+        WITH split(labelsString, ",") AS labels, $merge_by_id[labelsString] AS rows
+        UNWIND rows AS row
+        CALL apoc.merge.node(labels, {id: row.props.id}, row.props, {}) YIELD node
+        RETURN collect([row.uid, node]) AS id_pairs
+    }
+    CALL () {
+        UNWIND keys($existing) AS uid
+        MATCH (node) WHERE elementId(node) = $existing[uid]
+        RETURN collect([uid, node]) AS existing_pairs
+    }
+    WITH apoc.map.fromPairs(created_pairs + hash_pairs + id_pairs + existing_pairs) AS by_uid
+    CALL (by_uid) {
+        UNWIND keys($create_rels) AS relType
+        UNWIND $create_rels[relType] AS rel
+        WITH by_uid[rel.from] AS from_node, by_uid[rel.to] AS to_node, relType, rel
+        CREATE (from_node)-[edge:$(relType)]->(to_node)
+        SET edge = rel.props
+        RETURN count(edge) AS created
+    }
+    CALL (by_uid) {
+        UNWIND $merge_rels AS rel
+        WITH by_uid[rel.from] AS from_node, by_uid[rel.to] AS to_node, rel
+        CALL apoc.merge.relationship(from_node, rel.type, rel.props, {}, to_node, {}) YIELD rel AS edge
+        RETURN count(edge) AS merged
+    }
+    RETURN created + merged AS relationships
+    """
 
-        Nodes of a deduplicated type carry a ``hash`` property (assigned in
-        ``_deduplicate_nodes``) and are MERGEd on it, so an identical node imported by a
-        different client / process reuses the canonical node already in the database
-        instead of creating a duplicate. All other nodes are created as before.
+    def _write_buckets(self, grouped_nodes: Dict[Tuple[str], List[Dict]], relationships: Dict[str, List],
+                       exist_uid_to_internal_id: Dict) -> Tuple[Dict, Dict, Dict, Dict, List]:
+        """Split a batch into the parameter buckets of ``_WRITE_GRAPH_QUERY``.
+
+        Returns ``(create, merge_by_hash, merge_by_id, create_rels, merge_rels)``. Node uids
+        become the *keys* of the server-side map, so they are stringified here (an apoc map
+        key must be a string) and kept out of the property bag.
         """
-        create_nodes_query = """
-        UNWIND keys($data) AS labelsString
-
-        WITH split(labelsString, ",") AS labels, $data[labelsString] AS nodesProperties
-
-        UNWIND nodesProperties AS nodeProperties
-        CALL apoc.create.node(labels, nodeProperties) YIELD node AS n
-
-        RETURN elementId(n) AS internal_id, nodeProperties.uid AS uid
-        """
-        # MERGE deduplicated nodes on their content hash so repeated imports of the same
-        # Reference / ConceptDescription converge to a single node across client instances.
-        merge_nodes_query = """
-        UNWIND keys($data) AS labelsString
-
-        WITH split(labelsString, ",") AS labels, $data[labelsString] AS nodesProperties
-
-        UNWIND nodesProperties AS nodeProperties
-        CALL apoc.merge.node(labels, {hash: nodeProperties.hash}, nodeProperties, {}) YIELD node AS n
-
-        RETURN elementId(n) AS internal_id, nodeProperties.uid AS uid
-        """
-        # MERGE on `id` (not hash) for types in deduplicated_by_id: a globally-identified
-        # Identifiable (e.g. ConceptDescription) re-emitted with differing content under the
-        # same id collapses to one node (first-content-wins via empty onMatch), instead of
-        # producing a second node that violates the id-uniqueness constraint.
-        merge_by_id_query = """
-        UNWIND keys($data) AS labelsString
-
-        WITH split(labelsString, ",") AS labels, $data[labelsString] AS nodesProperties
-
-        UNWIND nodesProperties AS nodeProperties
-        CALL apoc.merge.node(labels, {id: nodeProperties.id}, nodeProperties, {}) YIELD node AS n
-
-        RETURN elementId(n) AS internal_id, nodeProperties.uid AS uid
-        """
-
         dedup_by_id = set(self.model_config.deduplicated_by_id)
+        create: Dict[str, List[Dict]] = {}
+        merge_by_hash: Dict[str, List[Dict]] = {}
+        merge_by_id: Dict[str, List[Dict]] = {}
+        merged_uids: set = set()
+        known_uids: set = {str(uid) for uid in exist_uid_to_internal_id or {}}
 
-        # Route each label bucket: MERGE-by-id for dedup-by-id types (keyed on the
-        # Identifiable `id`, which carries a uniqueness constraint), MERGE-by-hash for
-        # content-deduplicated types (they carry a `hash` from _deduplicate_nodes), plain
-        # CREATE otherwise. By-id routing is decided by the labels alone — a dedup-by-id
-        # type does not need a content hash, so no `hash` property is written for it.
-        merge_data: Dict[str, List[Dict]] = {}
-        merge_by_id_data: Dict[str, List[Dict]] = {}
-        create_data: Dict[str, List[Dict]] = {}
         for label_tuple, node_list in grouped_nodes.items():
             key = ",".join(label_tuple)
-            if dedup_by_id.intersection(label_tuple):
-                merge_by_id_data[key] = node_list
-                continue
-            dedup = [n for n in node_list if "hash" in n]
-            plain = [n for n in node_list if "hash" not in n]
-            if dedup:
-                merge_data[key] = dedup
-            if plain:
-                create_data[key] = plain
+            by_id = bool(dedup_by_id.intersection(label_tuple))
+            for node in node_list:
+                uid = str(node["uid"])
+                known_uids.add(uid)
+                row = {"uid": uid, "props": {k: v for k, v in node.items() if k != "uid"}}
+                if by_id:
+                    merge_by_id.setdefault(key, []).append(row)
+                elif "hash" in node:
+                    merge_by_hash.setdefault(key, []).append(row)
+                    merged_uids.add(uid)
+                else:
+                    create.setdefault(key, []).append(row)
 
-        uid_to_internal_id = {}
-        if create_data:
-            for record in session.run(create_nodes_query, data=create_data):
-                uid_to_internal_id[record['uid']] = record['internal_id']
-        if merge_data:
-            for record in session.run(merge_nodes_query, data=merge_data):
-                uid_to_internal_id[record['uid']] = record['internal_id']
-        if merge_by_id_data:
-            for record in session.run(merge_by_id_query, data=merge_by_id_data):
-                uid_to_internal_id[record['uid']] = record['internal_id']
-
-        return uid_to_internal_id
-
-    def _create_relationships(self, session: Session, relationships: Dict[str, List],
-                              uid_to_internal_id: Dict[int, int], db_batch_size: int = 10000):
-        """Create relationships in Neo4j."""
-        # MERGE (not CREATE) so a relationship onto a reused deduplicated node is not
-        # duplicated when the same edge is seen again by a later import. The relationship
-        # properties (e.g. list_index) are part of the merge key, so distinct list
-        # positions remain distinct edges.
-        create_rels_query = """
-        UNWIND $relationships AS rel
-        MATCH (from_node) WHERE elementId(from_node) = rel.from_id
-        MATCH (to_node) WHERE elementId(to_node) = rel.to_id
-        CALL apoc.merge.relationship(from_node, rel.rel_type, rel.rel_props, {}, to_node, {}) YIELD rel AS r
-        RETURN count(*) AS created
-        """
-
-        all_rels = []
+        create_rels: Dict[str, List[Dict]] = {}
+        merge_rels: List[Dict] = []
         for rel_type, rel_list in relationships.items():
             for rel in rel_list:
-                try:
-                    all_rels.append({
-                        'from_id': uid_to_internal_id[rel['from_uid']],
-                        'to_id': uid_to_internal_id[rel['to_uid']],
-                        'rel_type': rel_type,
-                        'rel_props': rel['rel_props']
-                    })
-                except KeyError:
+                from_uid, to_uid = str(rel["from_uid"]), str(rel["to_uid"])
+                if from_uid not in known_uids or to_uid not in known_uids:
                     logger.warning(
-                        f"Skipping relationship {rel_type} from {rel['from_uid']} to {rel['to_uid']} due to missing UID mapping.")
+                        f"Skipping relationship {rel_type} from {from_uid} to {to_uid} due to missing UID mapping.")
+                    continue
+                row = {"from": from_uid, "to": to_uid, "props": rel["rel_props"]}
+                if from_uid in merged_uids:
+                    merge_rels.append({"type": rel_type, **row})
+                else:
+                    create_rels.setdefault(rel_type, []).append(row)
+        return create, merge_by_hash, merge_by_id, create_rels, merge_rels
 
-        created_rels = 0
-        for i in range(0, len(all_rels), db_batch_size):
-            batch = all_rels[i:i + db_batch_size]
-            # Do not swallow a TransientError here: it would drop the whole batch of edges
-            # while reporting success, silently corrupting the graph. Let it propagate so the
-            # caller's transaction/retry handling surfaces the failure (node creation behaves
-            # the same way).
-            result = session.run(create_rels_query, relationships=batch)
-            created_rels += result.single()['created']
+    def _write_graph(self, session: Session, grouped_nodes: Dict[Tuple[str], List[Dict]],
+                     relationships: Dict[str, List],
+                     exist_uid_to_internal_id: Optional[Dict] = None) -> int:
+        """Write a batch's nodes and relationships in one query; return the edge count.
 
-        return created_rels
+        A TransientError is not caught here: swallowing it would drop the batch while
+        reporting success, silently corrupting the graph. Let it reach the caller's
+        transaction/retry handling.
+        """
+        create, merge_by_hash, merge_by_id, create_rels, merge_rels = self._write_buckets(
+            grouped_nodes, relationships, exist_uid_to_internal_id or {})
+        record = session.run(
+            self._WRITE_GRAPH_QUERY,
+            create=create,
+            merge_by_hash=merge_by_hash,
+            merge_by_id=merge_by_id,
+            existing={str(uid): eid for uid, eid in (exist_uid_to_internal_id or {}).items()},
+            create_rels=create_rels,
+            merge_rels=merge_rels,
+        ).single()
+        return record["relationships"]
+
+    @contextmanager
+    def _overlapped_writes(self):
+        """Yield ``submit(nodes, relationships, stats, db_batch_size)`` for a bulk loader.
+
+        The submitted batch is written on a background thread while the caller decodes and
+        maps the next one — a bulk load spends roughly a third of its time on the source
+        side and the rest writing, and overlapping hides the smaller of the two.
+
+        Exactly one writer thread, never more: deduplication state and the "already stored"
+        check that skips a duplicate Identifiable's subtree are only correct while writes
+        are serialized. Two concurrent writers each see the same id as not-yet-stored and
+        both write its subtree (measured: +0.4 % nodes at two workers, and no faster than
+        this at four — the write is lock-bound, not CPU-bound).
+
+        A failed write surfaces at the next ``submit`` or when the block exits, so a bulk
+        load still fails loudly instead of reporting success on a dropped batch.
+        """
+        executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="neo4aas-write")
+        pending = []
+
+        def submit(nodes, relationships, stats, db_batch_size):
+            while pending:
+                pending.pop().result()
+            pending.append(executor.submit(self._upload_nodes_and_relationships, nodes,
+                                           relationships, stats, db_batch_size=db_batch_size))
+
+        try:
+            yield submit
+            while pending:
+                pending.pop().result()
+        finally:
+            executor.shutdown(wait=True)
 
     def _stored_identifiable_ids(self, ids: List[str]) -> set:
         """Which of these Identifiable ids already exist in the database.
@@ -312,13 +351,15 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
                 rel["from_uid"] = self.deduplicated_to_existing_uid_map.get(rel["from_uid"], rel["from_uid"])
                 rel["to_uid"] = self.deduplicated_to_existing_uid_map.get(rel["to_uid"], rel["to_uid"])
 
-                # Deterministic JSON hash from relationship type and properties
-                hash_value = hashlib.sha256(
-                    json.dumps({"_type": rel_type, **rel}, sort_keys=True).encode()
-                ).hexdigest()
+                # Identity of an edge is its type, endpoints and properties. A tuple key is
+                # used rather than a hash of a JSON dump: the key is never stored (unlike a
+                # node `hash`, which the database MERGEs on), and hashing every edge of a
+                # batch through json.dumps + sha256 costs more than the write it guards.
+                key = (rel_type, rel["from_uid"], rel["to_uid"],
+                       tuple(sorted(rel["rel_props"].items())))
 
-                if hash_value not in self.deduplicated_rels:
-                    self.deduplicated_rels.add(hash_value)
+                if key not in self.deduplicated_rels:
+                    self.deduplicated_rels.add(key)
                     updated_rels.append(rel)
 
             # Replace with deduplicated and updated relationships
@@ -342,7 +383,6 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         self.deduplicated_nodes.clear()
         self.deduplicated_to_existing_uid_map.clear()
         self.deduplicated_rels.clear()
-        self.uid_to_internal_id.clear()
         # Invalidate the cached containment relationship-type filter (AASNeo4JClient): this
         # upload may introduce a new relationship type (e.g. the first :submodels edge when a
         # shell is stored after its submodel), and a stale cached filter would omit it and break
@@ -363,53 +403,28 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         relationships = self._deduplicate_rels(relationships)
 
         # --- Continue with database operations ---
+        # One query per batch: nodes and their relationships, with the uid -> node map kept
+        # server-side (see _WRITE_GRAPH_QUERY). `db_batch_size` is accepted for call
+        # compatibility and no longer chunks the write — a batch is one transaction, sized
+        # by the caller's file/environment batch.
+        write_start_time = time.time()
         with self.driver.session() as session:
-            # 1. Create Nodes in Batches
-            node_start_time = time.time()
-            created_map = self._create_nodes(session, grouped_nodes)
-            self.uid_to_internal_id.update(created_map)
-            if exist_uid_to_internal_id:
-                # Merge existing UID to internal ID mapping with newly created nodes
-                self.uid_to_internal_id.update(exist_uid_to_internal_id)
+            relationship_count = self._write_graph(session, grouped_nodes, relationships,
+                                                   exist_uid_to_internal_id)
+        write_time = time.time() - write_start_time
 
-            node_creation_time = time.time() - node_start_time
-            stats.total_node_creation_time += node_creation_time
-            node_count = sum(len(nodes) for nodes in grouped_nodes.values())
-            stats.total_nodes_created += node_count
-            logger.info(f"Created {node_count} nodes in {node_creation_time:.2f} seconds")
-
-            # 2. Create Relationships in Batches
-            rel_start_time = time.time()
-            relationship_count = self._create_relationships(session, relationships, self.uid_to_internal_id, db_batch_size)
-            relationship_creation_time = time.time() - rel_start_time
-            stats.total_relationship_creation_time += relationship_creation_time
-            stats.total_relationships_created += relationship_count
-            logger.info(f"Created {relationship_count} relationships in {relationship_creation_time:.2f} seconds")
-
-            # 3. Cleanup UIDs in Batches — uid is an import-internal tracking property and
-            # must not persist on nodes. Only this batch's nodes are touched (the in-memory
-            # uid -> elementId map is kept for later relationship wiring). hash is preserved
-            # for deduplication.
-            self._cleanup_uids_in_session(session, list(created_map.values()), db_batch_size)
+        node_count = sum(len(bucket) for bucket in grouped_nodes.values())
+        # The single query no longer separates the two phases; attribute its time to node
+        # creation and keep the relationship counter exact.
+        stats.total_node_creation_time += write_time
+        stats.total_nodes_created += node_count
+        stats.total_relationships_created += relationship_count
+        logger.info(f"Wrote {node_count} nodes and {relationship_count} relationships "
+                    f"in {write_time:.2f} seconds")
 
         del grouped_nodes
 
         return stats
-
-    def _cleanup_uids_in_session(self, session: Session, internal_ids: List[int], batch_size: int):
-        """Removes `uid` property from nodes in batches within an existing session."""
-        delete_query = """
-        UNWIND $ids AS id
-        MATCH (n)
-        WHERE elementId(n) = id
-        REMOVE n.uid
-        """
-        for i in range(0, len(internal_ids), batch_size):
-            batch_ids = internal_ids[i:i + batch_size]
-            try:
-                session.run(delete_query, ids=batch_ids)
-            except ClientError as e:
-                logging.warning(f"Error during UID cleanup for batch: {e}")
 
     @staticmethod
     def identify_labels(obj: Dict):
@@ -568,35 +583,37 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         logger.info(f"File batch size: {stats.total_batches} batches of {file_batch_size} files each")
         logger.info(f"Database transaction batch size: {db_batch_size}")
 
-        # Process files in batches
-        for batch_num in range(stats.total_batches):
-            start_idx = batch_num * file_batch_size
-            end_idx = min(start_idx + file_batch_size, stats.total_files)
-            current_file_batch = json_files[start_idx:end_idx]
+        # Process files in batches, writing each batch while the next is decoded.
+        with self._overlapped_writes() as submit:
+            # Process files in batches
+            for batch_num in range(stats.total_batches):
+                start_idx = batch_num * file_batch_size
+                end_idx = min(start_idx + file_batch_size, stats.total_files)
+                current_file_batch = json_files[start_idx:end_idx]
 
-            logger.info(f"\n--- Processing Batch {batch_num + 1}/{stats.total_batches} ---")
-            logger.info(f"Files {start_idx + 1}-{end_idx} of {stats.total_files}")
+                logger.info(f"\n--- Processing Batch {batch_num + 1}/{stats.total_batches} ---")
+                logger.info(f"Files {start_idx + 1}-{end_idx} of {stats.total_files}")
 
-            # Process current batch
-            batch_start_time = time.time()
-            batch_nodes, batch_relationships = self._process_json_files_batch(directory, current_file_batch)
+                # Process current batch
+                batch_start_time = time.time()
+                batch_nodes, batch_relationships = self._process_json_files_batch(directory, current_file_batch)
 
-            processing_time = time.time() - batch_start_time
-            stats.total_processing_time += processing_time
-            logger.info(f"Processed {len(current_file_batch)} files in {processing_time:.2f} seconds")
+                processing_time = time.time() - batch_start_time
+                stats.total_processing_time += processing_time
+                logger.info(f"Processed {len(current_file_batch)} files in {processing_time:.2f} seconds")
 
-            if not batch_nodes:
-                logger.info("No nodes to create in this batch, skipping...")
-                continue
+                if not batch_nodes:
+                    logger.info("No nodes to create in this batch, skipping...")
+                    continue
 
-            self._upload_nodes_and_relationships(batch_nodes, batch_relationships, stats, db_batch_size=db_batch_size)
+                submit(batch_nodes, batch_relationships, stats, db_batch_size)
 
-            batch_total_time = time.time() - batch_start_time
-            logger.info(f"Batch {batch_num + 1} completed in {batch_total_time:.2f} seconds")
+                batch_total_time = time.time() - batch_start_time
+                logger.info(f"Batch {batch_num + 1} completed in {batch_total_time:.2f} seconds")
 
-            if batch_num == max_num_of_batches:
-                logger.warning("Max number of batches reached")
-                break
+                if batch_num == max_num_of_batches:
+                    logger.warning("Max number of batches reached")
+                    break
 
         stats.finish()
         return stats

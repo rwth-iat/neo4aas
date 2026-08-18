@@ -15,18 +15,73 @@ class _RaisingSession:
         raise TransientError("simulated deadlock")
 
 
-def test_transient_error_during_relationship_creation_is_not_swallowed():
-    """A TransientError while creating relationships must propagate, not be swallowed.
+def test_transient_error_during_graph_write_is_not_swallowed():
+    """A TransientError while writing a batch must propagate, not be swallowed.
 
-    Swallowing it would drop the whole batch of edges while reporting success, silently
-    corrupting the graph. Correct behaviour is to surface the failure to the caller.
+    Swallowing it would drop the whole batch while reporting success, silently corrupting
+    the graph. Correct behaviour is to surface the failure to the caller.
     """
     importer = JsonToNeo4jImporter(uri=None, user="x")  # driver is None; no Neo4j needed
+    grouped = {("Property",): [{"uid": 1, "idShort": "a"}, {"uid": 2, "idShort": "b"}]}
     relationships = {"value": [{"from_uid": 1, "to_uid": 2, "rel_props": {}}]}
-    uid_to_internal_id = {1: "e1", 2: "e2"}
 
     with pytest.raises(TransientError):
-        importer._create_relationships(_RaisingSession(), relationships, uid_to_internal_id)
+        importer._write_graph(_RaisingSession(), grouped, relationships)
+
+
+def test_only_edges_leaving_a_hash_merged_node_are_merged():
+    """Relationship writes split by whether the *source* node may already exist.
+
+    A node created in this batch cannot have the edge already, so its edges are CREATEd —
+    MERGE on a relationship costs ~4x a CREATE and is the single most expensive part of a
+    bulk import. Only a node MERGEd on its content hash can be one the database already
+    holds, complete with the edge, so only its outgoing edges need MERGE.
+    """
+    importer = JsonToNeo4jImporter(uri=None, user="x")
+    grouped = {
+        ("Property",): [{"uid": 1, "idShort": "a"}],
+        ("Reference",): [{"uid": 2, "hash": "h"}],
+    }
+    relationships = {
+        "semanticId": [{"from_uid": 1, "to_uid": 2, "rel_props": {}}],
+        "referredSemanticId": [{"from_uid": 2, "to_uid": 1, "rel_props": {}}],
+    }
+
+    _, _, _, create_rels, merge_rels = importer._write_buckets(grouped, relationships, {})
+
+    assert list(create_rels) == ["semanticId"]
+    assert create_rels["semanticId"] == [{"from": "1", "to": "2", "props": {}}]
+    assert merge_rels == [{"type": "referredSemanticId", "from": "2", "to": "1", "props": {}}]
+
+
+def test_relationship_with_an_unmapped_endpoint_is_dropped():
+    """An edge whose endpoint was not written (e.g. a dropped duplicate subtree) is skipped.
+
+    It cannot be created — the server-side uid map has no node for it — and passing it on
+    would make the whole batch fail on a null endpoint.
+    """
+    importer = JsonToNeo4jImporter(uri=None, user="x")
+    grouped = {("Property",): [{"uid": 1, "idShort": "a"}]}
+    relationships = {"value": [{"from_uid": 1, "to_uid": 99, "rel_props": {}}]}
+
+    _, _, _, create_rels, merge_rels = importer._write_buckets(grouped, relationships, {})
+
+    assert create_rels == {}
+    assert merge_rels == []
+
+
+def test_uid_is_not_part_of_the_written_properties():
+    """`uid` is import-internal bookkeeping and must never reach the property bag.
+
+    It used to be written with the node and deleted again by a second pass over every
+    node; keeping it out of `props` removes both the write and the pass.
+    """
+    importer = JsonToNeo4jImporter(uri=None, user="x")
+    grouped = {("Property",): [{"uid": 7, "idShort": "a"}]}
+
+    create, _, _, _, _ = importer._write_buckets(grouped, {}, {})
+
+    assert create == {"Property": [{"uid": "7", "props": {"idShort": "a"}}]}
 
 
 def test_group_nodes_by_label_does_not_mutate_input():
@@ -116,3 +171,41 @@ def test_process_json_file_reads_gzipped_source(tmp_path):
     nodes, _ = importer._process_json_file(str(path))
 
     assert any(n.get("id") == "urn:gz" for n in nodes)
+
+
+def test_overlapped_writes_run_off_the_calling_thread_and_in_order():
+    """A bulk loader's batches are written on one background thread, in submission order.
+
+    Overlapping the write with the decoding of the next batch is where the wall-clock win
+    comes from; a *single* writer is what keeps deduplication and the duplicate-subtree
+    skip correct, so the order must be exactly the submission order.
+    """
+    import threading
+
+    importer = JsonToNeo4jImporter(uri=None, user="x")
+    seen = []
+    importer._upload_nodes_and_relationships = (
+        lambda nodes, rels, stats=None, **kw: seen.append((nodes, threading.get_ident())))
+
+    main = threading.get_ident()
+    with importer._overlapped_writes() as submit:
+        for i in range(4):
+            submit([i], {}, None, 10)
+
+    assert [n for n, _ in seen] == [[0], [1], [2], [3]]
+    writers = {t for _, t in seen}
+    assert len(writers) == 1 and main not in writers
+
+
+def test_a_failed_overlapped_write_is_reported_to_the_caller():
+    """A write that fails on the background thread must not pass as a successful load."""
+    importer = JsonToNeo4jImporter(uri=None, user="x")
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("write failed")
+
+    importer._upload_nodes_and_relationships = boom
+
+    with pytest.raises(RuntimeError, match="write failed"):
+        with importer._overlapped_writes() as submit:
+            submit([{"uid": 1}], {}, None, 10)

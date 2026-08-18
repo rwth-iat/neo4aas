@@ -1,0 +1,12 @@
+{
+  "tier": "t1k",
+  "workers": 4,
+  "batch_envs": 50,
+  "environments": 1000,
+  "load_seconds": 66.7,
+  "aas_per_second": 14.99,
+  "resolve_seconds": 0.7,
+  "reference_edges": 6174,
+  "nodes": 546259,
+  "rels": 1067316
+}
