@@ -147,25 +147,33 @@ t100, after §2 + §3 + §6, 23.10 MB total:
 Cumulative on t100: **37.31 MB → 23.10 MB (−38.1 %)**, and 7.9x smaller than the same
 corpus stored without deduplication.
 
-## 8. Scaling: t100 vs t1k
+## 8. Scaling: t100, t1k, t10k
 
-Same code, ten times the corpus (1 000 AAS, 236.5 MB of AAS-JSON, 668 274 elements):
+Same code, three tier sizes:
 
-| tier | nodes | rels | props | store | load |
-|---|---|---|---|---|---|
-| t100, all three changes | 60 252 | 114 776 | 252 939 | 23.10 MB | 17.1 s |
-| t1k, all three changes | 542 073 | 1 060 387 | 2 260 959 | **251.76 MB** | 87.1 s |
-| t1k, subtree fix only | 542 073 | 1 060 387 | 2 780 815 | 293.55 MB | 85.0 s |
+| tier | AAS | source JSON | nodes | rels | props | store | store/AAS | load |
+|---|---|---|---|---|---|---|---|---|
+| t100 | 100 | 24.3 MB | 60 252 | 114 776 | 252 939 | 23.10 MB | 231 KB | 17 s |
+| t1k | 1 000 | 236.5 MB | 542 073 | 1 060 387 | 2 260 959 | 251.76 MB | 252 KB | 87 s |
+| t10k | 10 000 | 2 373.0 MB | 5 377 523 | 10 579 115 | 22 354 159 | **1 911.7 MB** | 191 KB | 756 s |
 
-The graph is linear in corpus size (9.0x the nodes, 9.2x the edges, 10.9x the store for 10x
-the AAS), so the per-AAS cost holds: **≈252 KB of Neo4j per AAS, from ≈237 KB of AAS-JSON**
-— a store slightly larger than the JSON it came from, index included. Load throughput is
-also flat: 11.5 AAS/s at t1k against 5.8 at t100 (t100 is dominated by the larger
-per-file ABB/Bürkert packages).
+The graph is linear in corpus size (9.9x the nodes and edges from t1k to t10k) and the
+**store grows slightly sublinearly** — 252 KB per AAS at t1k, 191 KB at t10k — because
+deduplication pays off more as the corpus grows: the same ConceptDescriptions, semanticIds
+and DataSpecification content recur across more vendors' files. At t10k the database is
+**smaller than the AAS-JSON it was built from** (1.91 GB vs 2.37 GB), indexes included.
 
-Property-count reduction holds at scale (−23.4 % at t1k, −22.5 % at t100); the disk
-reduction is smaller at t1k (−14.2 %) because the array-heavy DataSpecification content is
-a smaller share of a bigger, more varied corpus.
+Load throughput is flat at ~13 AAS/s (7 100 nodes/s), and `resolve_references()` stays
+negligible: 1.7 s for the whole 10 000-AAS graph, because it is set-based and the
+References it walks are deduplicated to 47 227 edges. The **page cache must hold the
+store's hot set**, though: the first t10k attempt with a 1 GiB cache ran ~10x slower as the
+MERGE-on-hash/id lookups turned into random disk reads. `scripts/bench/neo4j_box.py` now
+asks for 2 GiB.
+
+| t1k, for the record | props | store |
+|---|---|---|
+| subtree fix only | 2 780 815 | 293.55 MB |
+| all three changes | 2 260 959 | 251.76 MB |
 
 ## 9. Ideas measured and *not* taken
 
