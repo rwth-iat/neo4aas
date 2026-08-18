@@ -134,7 +134,27 @@ t100, after §2 + §3 + §6, 23.10 MB total:
 Cumulative on t100: **37.31 MB → 23.10 MB (−38.1 %)**, and 7.9x smaller than the same
 corpus stored without deduplication.
 
-## 8. Ideas measured and *not* taken
+## 8. Scaling: t100 vs t1k
+
+Same code, ten times the corpus (1 000 AAS, 236.5 MB of AAS-JSON, 668 274 elements):
+
+| tier | nodes | rels | props | store | load |
+|---|---|---|---|---|---|
+| t100, all three changes | 60 252 | 114 776 | 252 939 | 23.10 MB | 17.1 s |
+| t1k, all three changes | 542 073 | 1 060 387 | 2 260 959 | **251.76 MB** | 87.1 s |
+| t1k, subtree fix only | 542 073 | 1 060 387 | 2 780 815 | 293.55 MB | 85.0 s |
+
+The graph is linear in corpus size (9.0x the nodes, 9.2x the edges, 10.9x the store for 10x
+the AAS), so the per-AAS cost holds: **≈252 KB of Neo4j per AAS, from ≈237 KB of AAS-JSON**
+— a store slightly larger than the JSON it came from, index included. Load throughput is
+also flat: 11.5 AAS/s at t1k against 5.8 at t100 (t100 is dominated by the larger
+per-file ABB/Bürkert packages).
+
+Property-count reduction holds at scale (−23.4 % at t1k, −22.5 % at t100); the disk
+reduction is smaller at t1k (−14.2 %) because the array-heavy DataSpecification content is
+a smaller share of a bigger, more varied corpus.
+
+## 9. Ideas measured and *not* taken
 
 * **Shared metadata node** (§5) — ~6 % of the store today, and it moves `description` /
   `displayName` / `category` behind a hop that the AASQL compiler, the constraint checker
