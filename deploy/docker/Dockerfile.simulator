@@ -1,0 +1,10 @@
+FROM python:3.12-slim
+
+# Standalone live-value simulator: writes straight to Neo4j with the driver, so it
+# needs neither neo4aas nor basyx. Build context is the repo root (see the compose
+# file), hence the scripts/ prefix.
+RUN pip install --no-cache-dir neo4j
+
+COPY scripts/operational_simulator.py /app/operational_simulator.py
+
+CMD ["python", "/app/operational_simulator.py"]
