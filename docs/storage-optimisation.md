@@ -37,7 +37,8 @@ grows quadratically in the duplicate count):
 | deduplicated (with every change below) | 542 073 | 1 060 387 | 1 700 570 | **251.8 MB** |
 
 2.6x fewer nodes, 3.4x fewer node properties, 2.9x less disk — before counting the
-`:references` explosion that the undeduplicated graph would add on resolution.
+`:references` explosion that the undeduplicated graph would add on resolution. Both rows
+are the same code with the same §3/§6 encodings, so deduplication is the only difference.
 
 The relationship blow-up is not the raw import — structurally the two graphs differ by
 almost nothing (139 829 vs 139 109 edges before resolution). It is `:references`
@@ -178,4 +179,4 @@ a smaller share of a bigger, more varied corpus.
 * **Whole-subtree sharing** (identical element subtrees stored once): the redundancy is
   real and grows with the corpus (4.1x at t100, 6.8x at t1k), but sharing an element node
   between two AAS makes "which submodel does this element belong to" ambiguous and any
-  update to one instance change the other. Only defensible for a read-only catalogue.
+  update to one instance changes the other. Only defensible for a read-only catalogue.
