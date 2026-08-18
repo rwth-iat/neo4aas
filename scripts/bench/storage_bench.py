@@ -87,6 +87,11 @@ def measure(client: AASNeo4JClient) -> dict:
 
 def run_variant(variant: str, tier: str, limit: int | None, resolve: bool,
                 batch_envs: int = 50) -> dict:
+    """Load one tier under one storage variant and measure the result.
+
+    `batch_envs` is the transaction size in AAS environments. Undeduplicated loads need a
+    smaller one: the same tier produces several times the nodes, and a batch that fits
+    comfortably with deduplication on OOM-kills the container without it."""
     neo4j_box.fresh()
     client = AASNeo4JClient(neo4j_box.URI, *neo4j_box.AUTH, model_config=config_for(variant))
 
@@ -150,11 +155,13 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--resolve", action="store_true", help="also run resolve_references()")
     ap.add_argument("--tag", default="", help="suffix for the result file name")
+    ap.add_argument("--batch-envs", type=int, default=50,
+                    help="AAS environments per write transaction (lower it for nodedup runs)")
     args = ap.parse_args()
 
     RESULTS.mkdir(parents=True, exist_ok=True)
     for variant in args.variant.split(","):
-        res = run_variant(variant, args.tier, args.limit, args.resolve)
+        res = run_variant(variant, args.tier, args.limit, args.resolve, args.batch_envs)
         name = f"{args.tier}-{variant}{('-' + args.tag) if args.tag else ''}.json"
         (RESULTS / name).write_text(json.dumps(res, indent=2))
         print(json.dumps({k: v for k, v in res.items()

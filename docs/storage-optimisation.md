@@ -27,6 +27,19 @@ Tier t100 — 100 AAS, 48.9 MB gzipped on disk, **24.3 MB of AAS-JSON**, 68 971 
 
 2.0x fewer nodes, 16.4x fewer relationships, 4.9x less disk.
 
+The same comparison at t1k (1 000 AAS; the undeduplicated load is measured **without**
+`resolve_references()` — at t100 it needed 129 s and produced 2.16 M edges, and the cost
+grows quadratically in the duplicate count):
+
+| t1k | nodes | relationships | node props | store |
+|---|---|---|---|---|
+| no deduplication | 1 416 501 | 1 354 650 | 5 760 080 | **718.2 MB** |
+| deduplicated (with every change below) | 542 073 | 1 060 387 | 1 700 570 | **251.8 MB** |
+
+2.6x fewer nodes, 3.4x fewer node properties, 2.9x less disk — before counting the
+`:references` explosion that the undeduplicated graph would add on resolution. Both rows
+are the same code with the same §3/§6 encodings, so deduplication is the only difference.
+
 The relationship blow-up is not the raw import — structurally the two graphs differ by
 almost nothing (139 829 vs 139 109 edges before resolution). It is `:references`
 resolution: without id-dedup the corpus's 5 580 ConceptDescription objects become 5 580
@@ -101,3 +114,77 @@ plus ~55 k property slots. Moving `semanticId` onto the shared node as well woul
 every Cypher path that traverses `-[:semanticId]->` — the AASQL compiler, the AASd-107 /
 114 / 118 validation queries, the chatbot's semantic tools.
 
+## 6. Single-entry flattened lists as scalars
+
+87 % of the flattened list properties hold one entry, and §4 measured a one-entry array at
+~4x the cost of a scalar. Import now writes a scalar for the configured properties
+(`Referable` description/displayName, `MultiLanguageProperty` value,
+`DataSpecificationIec61360` preferredName/shortName/definition); `Reference.keys` keeps its
+list encoding because Cypher indexes it. The exporter accepts both encodings, and Cypher
+that indexes such a property goes through `apoc.convert.toList`
+(`core.utils.cypher_as_list`), so a store written before the change still reads correctly.
+
+| t100 | node props | store |
+|---|---|---|
+| before | 192 833 | 27.46 MB |
+| after | 192 833 | **23.10 MB** (−15.9 %) |
+
+Same number of properties, 4.4 MB less disk — the encoding is the whole difference.
+
+## 7. Where the bytes are now
+
+t100, after §2 + §3 + §6, 23.10 MB total:
+
+| store file | size | what it holds |
+|---|---|---|
+| property store | 7.82 MB | the 192 833 node + 60 106 relationship properties |
+| relationship store | 3.92 MB | 114 776 edges, ~34 B each |
+| array store | 3.09 MB | what is left of the parallel lists (2-entry en/de, Reference keys) |
+| string store | 2.18 MB | the long strings (descriptions, ids) |
+| node store | 0.91 MB | 60 252 nodes, ~15 B each |
+| schema (indexes) | 4.37 MB | id constraint, idShort, Reference.target_id(_base), hash |
+
+Cumulative on t100: **37.31 MB → 23.10 MB (−38.1 %)**, and 7.9x smaller than the same
+corpus stored without deduplication.
+
+## 8. Scaling: t100, t1k, t10k
+
+Same code, three tier sizes:
+
+| tier | AAS | source JSON | nodes | rels | props | store | store/AAS | load |
+|---|---|---|---|---|---|---|---|---|
+| t100 | 100 | 24.3 MB | 60 252 | 114 776 | 252 939 | 23.10 MB | 231 KB | 17 s |
+| t1k | 1 000 | 236.5 MB | 542 073 | 1 060 387 | 2 260 959 | 251.76 MB | 252 KB | 87 s |
+| t10k | 10 000 | 2 373.0 MB | 5 377 523 | 10 579 115 | 22 354 159 | **1 911.7 MB** | 191 KB | 756 s |
+
+The graph is linear in corpus size (9.9x the nodes and edges from t1k to t10k) and the
+**store grows slightly sublinearly** — 252 KB per AAS at t1k, 191 KB at t10k — because
+deduplication pays off more as the corpus grows: the same ConceptDescriptions, semanticIds
+and DataSpecification content recur across more vendors' files. At t10k the database is
+**smaller than the AAS-JSON it was built from** (1.91 GB vs 2.37 GB), indexes included.
+
+Load throughput is flat at ~13 AAS/s (7 100 nodes/s), and `resolve_references()` stays
+negligible: 1.7 s for the whole 10 000-AAS graph, because it is set-based and the
+References it walks are deduplicated to 47 227 edges. The **page cache must hold the
+store's hot set**, though: the first t10k attempt with a 1 GiB cache ran ~10x slower as the
+MERGE-on-hash/id lookups turned into random disk reads. `scripts/bench/neo4j_box.py` now
+asks for 2 GiB.
+
+| t1k, for the record | props | store |
+|---|---|---|
+| subtree fix only | 2 780 815 | 293.55 MB |
+| all three changes | 2 260 959 | 251.76 MB |
+
+## 9. Ideas measured and *not* taken
+
+* **Shared metadata node** (§5) — ~6 % of the store today, and it moves `description` /
+  `displayName` / `category` behind a hop that the AASQL compiler, the constraint checker
+  and the chatbot would all have to learn. Worth revisiting if descriptions grow.
+* **Inlining single-key `ExternalReference`s** as properties on the element: 98 % of all
+  references are single-key external, so this removes ~57 k `semanticId` edges (~1.9 MB of
+  relationship store) — but it adds ~114 k properties (~2.3 MB), loses the `:references`
+  edge to the ConceptDescription, and breaks every semanticId query. Net negative.
+* **Whole-subtree sharing** (identical element subtrees stored once): the redundancy is
+  real and grows with the corpus (4.1x at t100, 6.8x at t1k), but sharing an element node
+  between two AAS makes "which submodel does this element belong to" ambiguous and any
+  update to one instance changes the other. Only defensible for a read-only catalogue.

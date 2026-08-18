@@ -23,7 +23,11 @@ def _run(*args: str, check: bool = True) -> str:
     return p.stdout.strip()
 
 
-def fresh(heap: str = "4G", pagecache: str = "2G") -> None:
+# The Docker VM has ~8 GiB shared with whatever else is running, and an OOM kill
+# (exit 137) mid-load looks like a driver "defunct connection", so stay modest. The page
+# cache still has to hold the store's hot set: at t10k a 1 GiB cache turned the MERGE-on-
+# hash/id lookups into random disk reads and the load crawled (~10x slower per AAS).
+def fresh(heap: str = "2G", pagecache: str = "2G") -> None:
     _run("docker", "rm", "-f", NAME, check=False)
     _run("docker", "volume", "rm", VOLUME, check=False)
     _run(

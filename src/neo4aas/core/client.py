@@ -44,7 +44,11 @@ AAS_CLS_PARENTS: dict[str, tuple[str]] = {
 
 
 AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
-    keys_to_ignore=(),
+    # `modelType` is not stored: every element already carries its class hierarchy as Neo4j
+    # labels, so the property is that label written a second time — on corpus tier t100 that
+    # is ~69k property slots, over a quarter of all node properties. AASNeo4JClient
+    # ._restore_derived_props() puts it back on export (most specific label wins).
+    keys_to_ignore=("modelType",),
     # Derived/non-containment edges: excluded from export reconstruction and from the subgraph
     # traversal filter (_containment_rel_filter). `references` is materialized by
     # resolve_references(); `HAS_PROPERTY`/`HAS_UNIT` are the ECLASS-derived class→property /
@@ -115,6 +119,15 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
         # "Reference": ["referredSemanticId"],  # excluded: referredSemanticId is itself a Reference with a keys list
         # "Identifiable": ["administration"],   # excluded: AdministrativeInformation can contain a Reference (creator)
     },
+    # Single-entry instances of these flattened lists are stored as scalars (see
+    # Neo4jModelConfig.compact_single_entry_lists). Reference `keys` is intentionally absent:
+    # the AASQL compiler, the constraint checker and the agent tools index it as a list, and
+    # Reference nodes are content-deduplicated to a small population anyway.
+    compact_single_entry_lists={
+        "Referable": ["description", "displayName"],
+        "MultiLanguageProperty": ["value"],
+        "DataSpecificationIec61360": ["preferredName", "shortName", "definition"],
+    },
     all_list_item_relationships_have_index = False,
     list_item_relationships_with_index = {
         "SubmodelElementList": ["value"],
@@ -177,6 +190,23 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
             return ("EmbeddedDataSpecification",)
         else:
             return JsonToNeo4jImporter.identify_labels(obj)
+
+    def _restore_derived_props(self, labels: List[str], properties: Dict) -> Dict:
+        """Restore `modelType` from the node labels (it is not stored as a property).
+
+        A node carries its whole class chain as labels, so the model type is the *most
+        specific* AAS class among them — the one that is not a parent of another present
+        class (AnnotatedRelationshipElement is also labelled RelationshipElement). Nodes
+        that have no AAS class label (Reference, LangString, AssetInformation, …) have no
+        modelType in AAS JSON either, and get none.
+        """
+        candidates = [label for label in labels if label in AAS_CLS_PARENTS]
+        if not candidates:
+            return properties
+        parents = {parent for c in candidates for parent in AAS_CLS_PARENTS[c]}
+        specific = [c for c in candidates if c not in parents]
+        properties["modelType"] = specific[0]
+        return properties
 
     def add_identifiable(self, obj: Dict):
         if self.identifiable_exists(obj['id']):
