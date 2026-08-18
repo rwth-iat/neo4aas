@@ -58,7 +58,7 @@ def _concept_names(repo_id: str, concepts: list[str]) -> dict:
     rows = client.execute_clause(
         "UNWIND $bases AS b MATCH (cd:ConceptDescription {id_base: b}) "
         "WHERE cd.displayName_text IS NOT NULL "
-        "RETURN b AS concept, cd.displayName_text[0] AS name",
+        "RETURN b AS concept, apoc.convert.toList(cd.displayName_text)[0] AS name",
         params={"bases": list(concepts)}) or []
     return {r["concept"]: r["name"] for r in rows}
 

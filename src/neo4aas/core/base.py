@@ -25,6 +25,15 @@ class Neo4jModelConfig:
     all_list_item_relationships_have_index: bool
     list_item_relationships_with_index: Dict[str, List[str]]
 
+    # Flattened list properties (see list_of_dicts_prop_as_multiple_list_props) that are
+    # written as a *scalar* when they hold exactly one entry: label -> [base prop]. A
+    # one-entry array is not a cheap property in Neo4j — it lives in the dynamic array store
+    # and measures ~4x the same value stored as a scalar — and 87% of these properties hold
+    # a single entry (docs/storage-optimisation.md). Lossless: the property is always derived
+    # from a JSON array, so a scalar means "one entry" and the exporter wraps it back.
+    # Properties that Cypher reads as a list (Reference `keys`) are deliberately left out.
+    compact_single_entry_lists: Dict[str, List[str]] = None
+
     # Deduplicated types that are MERGEd on their Identifiable `id` instead of their content
     # `hash` (first-content-wins). Use for a globally-identified Identifiable that some sources
     # re-emit with differing content under the same id — e.g. a ConceptDescription whose IRDI
@@ -42,6 +51,7 @@ EMPTY_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
     keys_to_ignore=[],
     all_list_item_relationships_have_index=True,
     list_item_relationships_with_index={},
+    compact_single_entry_lists={},
 )
 
 
@@ -82,6 +92,11 @@ class BaseNeo4JClient:
             if label in self.model_config.list_of_dicts_prop_as_multiple_list_props
             for prop in self.model_config.list_of_dicts_prop_as_multiple_list_props[label]
         ]
+
+    def get_props_to_compact_when_single_entry(self, node_labels: Iterable[str]) -> List[str]:
+        """Flattened list properties of these labels that collapse to a scalar when single."""
+        config = self.model_config.compact_single_entry_lists or {}
+        return [prop for label in node_labels if label in config for prop in config[label]]
 
     def get_complex_props_to_model_as_multiple_simple_props(self, node_labels: Iterable[str]) -> List[str]:
         """Return dict properties to model as multiple simple properties."""

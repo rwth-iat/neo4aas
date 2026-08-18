@@ -392,14 +392,18 @@ def _neo4j_tools(repo) -> list:
         English, then German, then fall back to the first text. The language lookup is two
         tiny list comprehensions over the (1–3 element) language array — evaluated per row but
         negligible, no extra MATCH/traversal, so the tool is no slower in practice."""
-        rng = f"range(0, size({v}.value_text)-1)"
-        guard = (f"{v}.value_language IS NOT NULL AND i < size({v}.value_language) "
-                 f"AND toLower({v}.value_language[i]) STARTS WITH ")
+        # A single-entry flattened list is stored as a scalar (compact_single_entry_lists),
+        # so both parallel lists are normalised before they are indexed.
+        text = f"apoc.convert.toList({v}.value_text)"
+        lang = f"apoc.convert.toList({v}.value_language)"
+        rng = f"range(0, size({text})-1)"
+        guard = (f"{lang} IS NOT NULL AND i < size({lang}) "
+                 f"AND toLower({lang}[i]) STARTS WITH ")
         return (
             f"CASE WHEN {v}.value_text IS NULL THEN {v}.value ELSE coalesce("
-            f"head([i IN {rng} WHERE {guard}'en' | {v}.value_text[i]]), "
-            f"head([i IN {rng} WHERE {guard}'de' | {v}.value_text[i]]), "
-            f"{v}.value_text[0], {v}.value) END"
+            f"head([i IN {rng} WHERE {guard}'en' | {text}[i]]), "
+            f"head([i IN {rng} WHERE {guard}'de' | {text}[i]]), "
+            f"{text}[0], {v}.value) END"
         )
 
     # Value of a Property or MultiLanguageProperty (language-preferring: en > de > first).
@@ -606,11 +610,11 @@ def _neo4j_tools(repo) -> list:
             base + " "
             "OPTIONAL MATCH (cd)-[:HAS_UNIT]->(u:ConceptDescription) "
             "OPTIONAL MATCH (cls:ConceptDescription)-[:HAS_PROPERTY]->(cd) "
-            "RETURN DISTINCT cd.id AS irdi, cd.displayName_text[0] AS name, "
-            "cd.description_text[0] AS definition, "
-            "collect(DISTINCT u.displayName_text[0])[..3] AS units, "
+            "RETURN DISTINCT cd.id AS irdi, apoc.convert.toList(cd.displayName_text)[0] AS name, "
+            "apoc.convert.toList(cd.description_text)[0] AS definition, "
+            "collect(DISTINCT apoc.convert.toList(u.displayName_text)[0])[..3] AS units, "
             "count(DISTINCT u) AS unit_count, "
-            "collect(DISTINCT cls.displayName_text[0])[..5] AS classes, "
+            "collect(DISTINCT apoc.convert.toList(cls.displayName_text)[0])[..5] AS classes, "
             "count(DISTINCT cls) AS class_count LIMIT 5",
             params)
         rows = [r for r in rows if r.get("name") or r.get("definition")]
@@ -678,7 +682,7 @@ def _neo4j_tools(repo) -> list:
             "sm.idShort AS submodel ORDER BY asset LIMIT 80",
             params)
         names = _rows("MATCH (cd:ConceptDescription {id_base:$b}) "
-                      "RETURN cd.displayName_text[0] AS name LIMIT 1", {"b": base})
+                      "RETURN apoc.convert.toList(cd.displayName_text)[0] AS name LIMIT 1", {"b": base})
         return {"semantic_id": base, "eclass_name": names[0]["name"] if names else None,
                 "count": len(rows), "elements": rows}
 

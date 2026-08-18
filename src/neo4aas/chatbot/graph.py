@@ -77,7 +77,7 @@ which submodel types exist; abstract_submodel — the fields of a submodel type.
   • cypher_read — ONLY when no tool above fits. The graph schema is: \
 (AssetAdministrationShell)-[:submodels]->(Reference)-[:references]->(Submodel); a Submodel \
 contains elements via -[:submodelElements|value|statements*1..]->(Referable); a property's \
-value is coalesce(n.value_text[0], n.value). There is NO :hasSubmodel and ManufacturerName \
+value is coalesce(apoc.convert.toList(n.value_text)[0], n.value). There is NO :hasSubmodel and ManufacturerName \
 is not reached via :value from the shell. Prefer aggregate_field/property_values over Cypher.
 - STOP AS SOON AS A TOOL RETURNS A USABLE RESULT. If aasql_query (or any tool) returns \
 count>0, ANSWER from it — do NOT 're-verify' with cypher_read (that is the main cause of \

@@ -35,7 +35,7 @@ _LIST_TYPES_BY_SEM = (
 
 _DISTINCT_MANUFACTURERS = (
     "MATCH (n:Referable) WHERE n.idShort = 'ManufacturerName' "
-    "WITH trim(coalesce(n.value_text[0], n.value)) AS m "
+    "WITH trim(coalesce(apoc.convert.toList(n.value_text)[0], n.value)) AS m "
     "WHERE m IS NOT NULL AND m <> '' AND toLower(m) <> 'unknown' "
     "RETURN DISTINCT m AS manufacturer ORDER BY manufacturer"
 )
