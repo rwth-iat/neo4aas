@@ -184,6 +184,78 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
 
         return created_rels
 
+    def _stored_identifiable_ids(self, ids: List[str]) -> set:
+        """Which of these Identifiable ids already exist in the database.
+
+        One indexed lookup per dedup-by-id label (in practice one), instead of a per-object
+        round trip. No in-memory cache: an id can disappear again through remove/discard, and
+        a stale cache would silently skip a legitimate re-import.
+        """
+        if not ids or self.driver is None:
+            return set()
+        found = set()
+        with self.driver.session() as session:
+            for label in self.model_config.deduplicated_by_id:
+                query = f"UNWIND $ids AS id MATCH (n:`{label}` {{id: id}}) RETURN DISTINCT n.id AS id"
+                found.update(record["id"] for record in session.run(query, ids=list(ids)))
+        return found
+
+    def _drop_duplicate_identifiable_subtrees(self, nodes: List[Dict], relationships: Dict[str, List]
+                                              ) -> Tuple[List[Dict], Dict[str, List]]:
+        """Drop Identifiables that are already stored (or repeated in this batch), subtree included.
+
+        MERGE-on-id collapses the duplicate's *node*, but its children were created anyway and
+        hung off the surviving node: a ConceptDescription re-emitted by many vendor files ended
+        up with dozens of identical `embeddedDataSpecifications` — storage waste, and an export
+        that emits all of them. First occurrence wins, exactly as MERGE-on-id does.
+
+        Safe because the graph built by `_process_dict` is a forest at this point: every dict
+        gets its own uid, so one Identifiable's subtree is disjoint from every other's, and
+        cutting it away cannot orphan a kept node. Node deduplication (hash/id) runs later.
+        """
+        dedup_by_id = set(self.model_config.deduplicated_by_id)
+        roots = [n for n in nodes
+                 if n.get("id") is not None and dedup_by_id.intersection(n.get("labels", ()))]
+        if not roots:
+            return nodes, relationships
+
+        already_stored = self._stored_identifiable_ids([n["id"] for n in roots])
+        seen: set = set()
+        duplicate_uids = []
+        for node in roots:
+            identifier = node["id"]
+            if identifier in seen or identifier in already_stored:
+                duplicate_uids.append(node["uid"])
+            else:
+                seen.add(identifier)
+        if not duplicate_uids:
+            return nodes, relationships
+
+        children: Dict[int, List[int]] = {}
+        for rel_list in relationships.values():
+            for rel in rel_list:
+                children.setdefault(rel["from_uid"], []).append(rel["to_uid"])
+
+        dropped: set = set()
+        stack = list(duplicate_uids)
+        while stack:
+            uid = stack.pop()
+            if uid in dropped:
+                continue
+            dropped.add(uid)
+            stack.extend(children.get(uid, ()))
+
+        kept_nodes = [n for n in nodes if n["uid"] not in dropped]
+        kept_rels = {}
+        for rel_type, rel_list in relationships.items():
+            kept = [r for r in rel_list
+                    if r["from_uid"] not in dropped and r["to_uid"] not in dropped]
+            if kept:
+                kept_rels[rel_type] = kept
+        logger.info("Skipped %d duplicate Identifiable(s): %d nodes not created",
+                    len(duplicate_uids), len(dropped))
+        return kept_nodes, kept_rels
+
     def _deduplicate_nodes(self, grouped_nodes: dict[tuple[str], list[dict]]):
         dedup_by_id = set(self.model_config.deduplicated_by_id)
         for label_tuple, nodes in grouped_nodes.items():
@@ -276,6 +348,10 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         # shell is stored after its submodel), and a stale cached filter would omit it and break
         # incremental :references resolution. Recomputed lazily on the next subgraph fetch.
         self._containment_rel_filter_cache = None
+
+        # An Identifiable whose id is already stored is the same object per the spec: skip it
+        # *with its subtree*, before anything is grouped or written (see the method docstring).
+        nodes, relationships = self._drop_duplicate_identifiable_subtrees(nodes, relationships)
 
         # Group nodes and filter relationships for this batch
         grouped_nodes = self._group_nodes_by_label(nodes)
