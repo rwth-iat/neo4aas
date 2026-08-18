@@ -119,6 +119,15 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
         # "Reference": ["referredSemanticId"],  # excluded: referredSemanticId is itself a Reference with a keys list
         # "Identifiable": ["administration"],   # excluded: AdministrativeInformation can contain a Reference (creator)
     },
+    # Single-entry instances of these flattened lists are stored as scalars (see
+    # Neo4jModelConfig.compact_single_entry_lists). Reference `keys` is intentionally absent:
+    # the AASQL compiler, the constraint checker and the agent tools index it as a list, and
+    # Reference nodes are content-deduplicated to a small population anyway.
+    compact_single_entry_lists={
+        "Referable": ["description", "displayName"],
+        "MultiLanguageProperty": ["value"],
+        "DataSpecificationIec61360": ["preferredName", "shortName", "definition"],
+    },
     all_list_item_relationships_have_index = False,
     list_item_relationships_with_index = {
         "SubmodelElementList": ["value"],

@@ -431,6 +431,7 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         # unpack the DICTS_TO_PROPERTY_LISTS
         list_of_dicts_prop_as_multiple_list_props = self.get_props_to_model_as_multiple_lists(node_labels)
         dict_prop_as_multiple_props = self.get_complex_props_to_model_as_multiple_simple_props(node_labels)
+        compact_when_single = self.get_props_to_compact_when_single_entry(node_labels)
 
         for key, value in obj.items():
             if key in self.model_config.keys_to_ignore:
@@ -448,7 +449,15 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
                     # exporter zips them back correctly.
                     dict_keys = {k: None for dict_ in value for k in dict_}
                     for dict_key in dict_keys:
-                        node_properties[f"{key}_{dict_key}"] = [dict_.get(dict_key) for dict_ in value]
+                        entries = [dict_.get(dict_key) for dict_ in value]
+                        # A one-entry array costs ~4x the same value as a scalar in Neo4j's
+                        # dynamic array store, and the property is always derived from a JSON
+                        # array — so a scalar unambiguously means one entry and the exporter
+                        # wraps it back. Only configured properties are compacted.
+                        if len(entries) == 1 and key in compact_when_single:
+                            node_properties[f"{key}_{dict_key}"] = entries[0]
+                        else:
+                            node_properties[f"{key}_{dict_key}"] = entries
             elif key in dict_prop_as_multiple_props:
                 if value:
                     child_nodes, child_rels = self._process_dict(value)

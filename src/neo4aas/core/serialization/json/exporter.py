@@ -49,8 +49,11 @@ class JsonFromNeo4jExporter(BaseNeo4JClient):
             if not part_attr_keys:
                 continue
 
-            # Extract lists and strip the prefix from keys
+            # Extract lists and strip the prefix from keys. A single-entry list may be stored
+            # as a scalar (Neo4jModelConfig.compact_single_entry_lists) — wrap it back so the
+            # parallel lists zip, whichever encoding the store holds.
             lists = [node_properties.pop(key) for key in part_attr_keys]
+            lists = [value if isinstance(value, list) else [value] for value in lists]
             keys = [key.removeprefix(original_prop_prefix) for key in part_attr_keys]
             node_properties[original_prop] = self._create_list_of_dicts(*lists, keys=keys)
         return node_properties

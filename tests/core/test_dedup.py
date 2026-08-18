@@ -113,7 +113,10 @@ def _count_cd(client, cd_id: str) -> int:
 
 
 def _cd_displayname(client, cd_id: str):
-    clause = "MATCH (c:ConceptDescription) WHERE c.id = $id RETURN c.displayName_text AS dn"
+    # apoc.convert.toList: a single-entry displayName is stored as a scalar
+    # (compact_single_entry_lists), so read it back as a list either way.
+    clause = ("MATCH (c:ConceptDescription) WHERE c.id = $id "
+              "RETURN apoc.convert.toList(c.displayName_text) AS dn")
     with client.driver.session() as session:
         return session.run(clause, id=cd_id).single()["dn"]
 
