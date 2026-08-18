@@ -27,6 +27,18 @@ Tier t100 — 100 AAS, 48.9 MB gzipped on disk, **24.3 MB of AAS-JSON**, 68 971 
 
 2.0x fewer nodes, 16.4x fewer relationships, 4.9x less disk.
 
+The same comparison at t1k (1 000 AAS; the undeduplicated load is measured **without**
+`resolve_references()` — at t100 it needed 129 s and produced 2.16 M edges, and the cost
+grows quadratically in the duplicate count):
+
+| t1k | nodes | relationships | node props | store |
+|---|---|---|---|---|
+| no deduplication | 1 416 501 | 1 354 650 | 5 760 080 | **718.2 MB** |
+| deduplicated (with every change below) | 542 073 | 1 060 387 | 1 700 570 | **251.8 MB** |
+
+2.6x fewer nodes, 3.4x fewer node properties, 2.9x less disk — before counting the
+`:references` explosion that the undeduplicated graph would add on resolution.
+
 The relationship blow-up is not the raw import — structurally the two graphs differ by
 almost nothing (139 829 vs 139 109 edges before resolution). It is `:references`
 resolution: without id-dedup the corpus's 5 580 ConceptDescription objects become 5 580
