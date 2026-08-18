@@ -23,7 +23,9 @@ def _run(*args: str, check: bool = True) -> str:
     return p.stdout.strip()
 
 
-def fresh(heap: str = "4G", pagecache: str = "2G") -> None:
+# The Docker VM has ~8 GiB shared with whatever else is running, and an OOM kill
+# (exit 137) mid-load looks like a driver "defunct connection", so stay modest.
+def fresh(heap: str = "2G", pagecache: str = "1G") -> None:
     _run("docker", "rm", "-f", NAME, check=False)
     _run("docker", "volume", "rm", VOLUME, check=False)
     _run(

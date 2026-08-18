@@ -9,7 +9,15 @@ class JsonFromNeo4jExporter(BaseNeo4JClient):
     def _get_node_properties(self, node: Dict) -> Dict:
         # A node may carry no scalar properties (its content lives in child nodes /
         # relationships), in which case the subgraph JSON omits the `properties` key.
-        return dict(node.get('properties', {}))
+        return self._restore_derived_props(node.get('labels', []), dict(node.get('properties', {})))
+
+    def _restore_derived_props(self, labels: List[str], properties: Dict) -> Dict:
+        """Re-add properties that are stored as node labels instead of as properties.
+
+        Base implementation: nothing is derived. Subclasses that drop a redundant property
+        on import (see AASNeo4JClient and `modelType`) restore it here.
+        """
+        return properties
 
     def _create_list_of_dicts(self, *lists: List[List[any]], keys: List[str]) -> List[Dict]:
         if len(keys) != len(lists):
