@@ -21,6 +21,10 @@ META_KEYS = ("category", "description", "displayName", "semanticId", "idShort")
 # The same header without idShort: idShort has to stay on the element itself (it is the
 # navigation key of an idShort path), so this is the variant that is actually implementable.
 META_KEYS_NO_IDSHORT = tuple(k for k in META_KEYS if k != "idShort")
+# Descriptive header only: leaves the `semanticId` edge where it is, so the validation
+# queries, the AASQL compiler and the chatbot tools that traverse `-[:semanticId]->` keep
+# working unchanged. The cheap-to-adopt variant of the same idea.
+META_KEYS_DESC_ONLY = ("category", "description", "displayName")
 
 
 def h(obj) -> str:
@@ -61,6 +65,12 @@ def walk(obj, st: Stats, parent_kind: str = "") -> None:
             st.add("meta_props", len(meta))
             st.add("meta_bytes", len(json.dumps(meta, sort_keys=True)))
             st.bytes_of["meta"][h(meta)] = len(json.dumps(meta, sort_keys=True))
+        meta_desc = {k: obj.get(k) for k in META_KEYS_DESC_ONLY if obj.get(k) is not None}
+        if meta_desc:
+            st.add("meta_desc_bearing")
+            st.uniq("meta_desc", h(meta_desc))
+            st.add("meta_desc_bytes", len(json.dumps(meta_desc, sort_keys=True)))
+            st.bytes_of["meta_desc"][h(meta_desc)] = len(json.dumps(meta_desc, sort_keys=True))
         meta_ni = {k: obj.get(k) for k in META_KEYS_NO_IDSHORT if obj.get(k) is not None}
         if meta_ni:
             st.add("meta_ni_bearing")
