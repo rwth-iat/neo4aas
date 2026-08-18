@@ -113,7 +113,10 @@ def _count_cd(client, cd_id: str) -> int:
 
 
 def _cd_displayname(client, cd_id: str):
-    clause = "MATCH (c:ConceptDescription) WHERE c.id = $id RETURN c.displayName_text AS dn"
+    # apoc.convert.toList: a single-entry displayName is stored as a scalar
+    # (compact_single_entry_lists), so read it back as a list either way.
+    clause = ("MATCH (c:ConceptDescription) WHERE c.id = $id "
+              "RETURN apoc.convert.toList(c.displayName_text) AS dn")
     with client.driver.session() as session:
         return session.run(clause, id=cd_id).single()["dn"]
 
@@ -221,3 +224,84 @@ def test_repeated_identifiable_id_across_clients(aas_client, neo4j_params):
         client2.driver.close()
 
     assert _count_identifiable(aas_client, sm_id) == 1
+
+
+# ---------------------------------------------------------------------------
+# Subtree of a duplicate Identifiable
+# ---------------------------------------------------------------------------
+
+def _cd_with_data_spec(cd_id: str) -> dict:
+    return {
+        "modelType": "ConceptDescription",
+        "id": cd_id,
+        "embeddedDataSpecifications": [{
+            "dataSpecification": {
+                "type": "ExternalReference",
+                "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/DataSpecificationTemplates/DataSpecificationIec61360/3/0"}],
+            },
+            "dataSpecificationContent": {
+                "modelType": "DataSpecificationIec61360",
+                "preferredName": [{"language": "en", "text": "Nominal voltage"}],
+            },
+        }],
+    }
+
+
+def _count_children(client, ident_id: str, rel_type: str) -> int:
+    clause = f"MATCH (n:Identifiable {{id: $id}})-[e:{rel_type}]->() RETURN count(e) AS c"
+    with client.driver.session() as session:
+        return session.run(clause, id=ident_id).single()["c"]
+
+
+def test_duplicate_identifiable_does_not_duplicate_its_children(aas_client):
+    """A repeated Identifiable id merges onto one node — its subtree must not pile up.
+
+    Before this, only the Identifiable *node* was merged: every duplicate still created its
+    whole child subtree and hung it off the surviving node. On the corpus a
+    ConceptDescription ended up with 78 identical `embeddedDataSpecifications`, which is
+    both storage waste and a broken round-trip (the export emits all 78).
+    """
+    cd_id = "0173-1#02-AAO134#002"
+    for _ in range(3):
+        aas_client.upload_json({"conceptDescriptions": [_cd_with_data_spec(cd_id)]})
+
+    assert _count_identifiable(aas_client, cd_id) == 1
+    assert _count_children(aas_client, cd_id, "embeddedDataSpecifications") == 1
+    with aas_client.driver.session() as session:
+        assert session.run(
+            "MATCH (e:EmbeddedDataSpecification) RETURN count(e) AS c").single()["c"] == 1
+        assert session.run(
+            "MATCH (d:DataSpecificationIec61360) RETURN count(d) AS c").single()["c"] == 1
+
+
+def test_duplicate_identifiables_within_one_batch_keep_one_subtree(aas_client):
+    """Two copies of the same Submodel in a *single* upload must store one subtree."""
+    sm_id = "urn:sm/batch-dup"
+    sm = _submodel(sm_id, "SM", _property_with_semantic_id("P1", "0173-A"))
+    aas_client.upload_json({"submodels": [sm, dict(sm)]})
+
+    assert _count_identifiable(aas_client, sm_id) == 1
+    assert _count_children(aas_client, sm_id, "submodelElements") == 1
+
+
+def test_duplicate_identifiable_across_clients_keeps_one_subtree(aas_client, neo4j_params):
+    """A second client (empty in-memory state) must also skip the duplicate's subtree."""
+    cd_id = "0173-1#02-XYZ111#001"
+    aas_client.upload_json({"conceptDescriptions": [_cd_with_data_spec(cd_id)]})
+    client2 = _second_client(neo4j_params)
+    try:
+        client2.upload_json({"conceptDescriptions": [_cd_with_data_spec(cd_id)]})
+    finally:
+        client2.driver.close()
+
+    assert _count_children(aas_client, cd_id, "embeddedDataSpecifications") == 1
+
+
+def test_distinct_identifiables_keep_their_own_subtrees(aas_client):
+    """Skipping duplicates must not touch a sibling Identifiable in the same batch."""
+    sm_a = _submodel("urn:sm/a", "A", _property_with_semantic_id("P1", "0173-A"))
+    sm_b = _submodel("urn:sm/b", "B", _property_with_semantic_id("P2", "0173-B"))
+    aas_client.upload_json({"submodels": [sm_a, sm_b]})
+
+    assert _count_children(aas_client, "urn:sm/a", "submodelElements") == 1
+    assert _count_children(aas_client, "urn:sm/b", "submodelElements") == 1

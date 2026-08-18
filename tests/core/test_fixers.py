@@ -245,7 +245,9 @@ def test_language_tag_fixed_on_import(aas_client):
     aas_client.upload_json(env)
 
     rows = aas_client.execute_clause(
-        "MATCH (n:MultiLanguageProperty) RETURN n.value_language AS langs"
+        # apoc.convert.toList: a single-entry flattened list is stored as a scalar
+        # (compact_single_entry_lists), so normalise before reading it as a list.
+        "MATCH (n:MultiLanguageProperty) RETURN apoc.convert.toList(n.value_language) AS langs"
     )
     langs = [l for r in rows for l in (r["langs"] or [])]
     assert "en-US" in langs
@@ -276,7 +278,8 @@ def test_fixers_off_by_default(aas_client):
     aas_client.upload_json(env)
 
     rows = aas_client.execute_clause(
-        "MATCH (n:MultiLanguageProperty {idShort:'Name'}) RETURN n.value_language AS langs"
+        "MATCH (n:MultiLanguageProperty {idShort:'Name'}) "
+        "RETURN apoc.convert.toList(n.value_language) AS langs"
     )
     langs = [l for r in rows for l in (r["langs"] or [])]
     assert "en_US" in langs  # untouched when fixing is off

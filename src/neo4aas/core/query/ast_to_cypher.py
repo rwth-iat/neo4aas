@@ -63,6 +63,7 @@ def _flattened_list_prop(mapping: dict, label: str) -> str:
     return props[0]
 
 
+from neo4aas.core.utils import cypher_as_list
 from neo4aas.core.query.ast_nodes import *  # noqa: F401,F403
 
 
@@ -243,7 +244,8 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
                     # coalesce handles both (MLP -> text list; Property -> single scalar `.value`
                     # wrapped in a list); isList makes comparisons wrap in any().
                     mlp_value = _flattened_list_prop(mapping, "MultiLanguageProperty")
-                    where_part += f"coalesce({last_root}.{_flat(mlp_value, 'text')}, [{last_root}.value])"
+                    text = cypher_as_list(f"{last_root}.{_flat(mlp_value, 'text')}")
+                    where_part += f"coalesce({text}, [{last_root}.value])"
                     isList = True
             case "externalSubjectId":
                 if "externalSubjectId" not in mapping:
@@ -291,7 +293,7 @@ def _convert_attribute_elements(attribute: str, last_root: str, mapping: dict[st
                 # MultiLanguageProperty.value is flattened to value_language[] (the `language`
                 # sub-field of MLP's configured value prop), per the threaded Neo4jModelConfig.
                 mlp_value = _flattened_list_prop(mapping, "MultiLanguageProperty")
-                where_part += f"{last_root}.{_flat(mlp_value, 'language')}"
+                where_part += cypher_as_list(f"{last_root}.{_flat(mlp_value, 'language')}")
                 isList = True
             case _ if part.startswith("keys"):
                 if part.index("[") + 1 != len(part) - 1:

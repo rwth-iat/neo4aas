@@ -95,3 +95,15 @@ def hash_dict_obj(obj: dict) -> str:
     # Sort keys to ensure deterministic hash
     json_string = json.dumps(obj, sort_keys=True)
     return hashlib.sha256(json_string.encode()).hexdigest()
+
+
+def cypher_as_list(expression: str) -> str:
+    """Wrap a flattened list-property access so Cypher sees a list whatever the encoding.
+
+    A single-entry flattened list is stored as a scalar (see
+    ``Neo4jModelConfig.compact_single_entry_lists``: a one-element array costs ~4x the same
+    value as a scalar in Neo4j's dynamic array store). ``apoc.convert.toList`` normalises
+    both encodings — scalar to ``[scalar]``, list unchanged, ``null`` to ``null`` — so a
+    store written before or after the change reads the same way.
+    """
+    return f"apoc.convert.toList({expression})"
