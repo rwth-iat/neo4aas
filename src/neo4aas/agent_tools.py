@@ -1,9 +1,8 @@
 """Shared, transport-agnostic read-only AAS tools over an ``AASNeo4JClient``.
 
-These functions are the single source of truth for the capabilities exposed both by
-the MCP server (`neo4aas/mcp_server/server.py`) and the chatbot agent
-(`neo4aas/chatbot_v2`). Each takes a client and returns a plain JSON-able dict and
-raises ``ValueError`` for user-facing errors. All are read-only.
+These functions are the single source of truth for the read-only capabilities exposed
+by the chatbot agent (:mod:`neo4aas.chatbot`). Each takes a client and returns a plain
+JSON-able dict and raises ``ValueError`` for user-facing errors. All are read-only.
 """
 
 import re

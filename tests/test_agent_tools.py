@@ -1,4 +1,4 @@
-"""Shared agent_tools — the single source of truth behind the MCP server and chatbot."""
+"""Shared agent_tools — the single source of truth behind the chatbot tools."""
 
 from unittest.mock import MagicMock
 

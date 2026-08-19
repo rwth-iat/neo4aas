@@ -1,9 +1,9 @@
 """LangChain tool registry for chatbot_v2.
 
 One in-process registry, read-only. The Neo4j tools are thin wrappers over the shared
-``neo4aas.agent_tools`` functions (the single source of truth that
-also backs the MCP server), so behaviour matches the MCP surface exactly. ``aasql_query``
-and ``repo_read`` talk to the AAS Repository REST API.
+``neo4aas.agent_tools`` functions (the single source of truth for the read-only
+capabilities over the graph). ``aasql_query`` and ``repo_read`` talk to the AAS
+Repository REST API.
 """
 
 import base64

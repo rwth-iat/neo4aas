@@ -6,10 +6,9 @@ A library for mapping [Asset Administration Shell (AAS)](https://industrialdigit
 
 ## Architecture
 
-The distribution is one library plus three apps. `neo4aas.core` depends on the Neo4j
+The distribution is one library plus its apps. `neo4aas.core` depends on the Neo4j
 driver and nothing else; everything that touches the basyx SDK is confined to
-`basyx_ext/` and `eclass/`, so `neo4aas[mcp]` and `neo4aas[chatbot]` install without
-it. `tests/test_layering.py` and the `core-without-basyx` CI job enforce this.
+`basyx_ext/` and `eclass/`, so `neo4aas[chatbot]` installs without it. `tests/test_layering.py` and the `core-without-basyx` CI job enforce this.
 
 ```
 src/neo4aas/
@@ -29,12 +28,11 @@ src/neo4aas/
 │       ├── ast_nodes.py         # AST node type definitions
 │       ├── ast_to_cypher.py     # AST → Cypher (compiler)
 │       └── aasql_to_cypher.py   # Entry point: convert_aasql_to_cypher()
-├── agent_tools.py               # Read-only LLM-facing tools over core (mcp + chatbot)
+├── agent_tools.py               # Read-only LLM-facing tools over core (chatbot)
 ├── basyx_ext/                   # basyx-python-sdk integration  [extra: basyx]
 │   ├── object_store.py          # Neo4jObjectStore (AbstractObjectStore)
 │   └── server/                  # AAS Repository server        [extra: server]
 ├── eclass/                      # ECLASS dictionary -> ConceptDescriptions [extra: eclass]
-├── mcp/                         # MCP server app               [extra: mcp]
 └── chatbot/                     # LangGraph chatbot app        [extra: chatbot]
 
 tests/                           # mirrors src/neo4aas/; fixtures in tests/data/
@@ -344,76 +342,6 @@ print(report.summary())
 | AASd-131 | `AssetInformation` must have `globalAssetId` or at least one `specificAssetId` |
 | AASd-133 | `SpecificAssetId.externalSubjectId` must be an `ExternalReference` |
 | AASd-134 | Operation variable `idShort`s must be unique across in/out/inout |
-
----
-
-## MCP Server
-
-A read-only [Model Context Protocol](https://modelcontextprotocol.io/) server exposes the Neo4j-backed graph to MCP clients (Claude Desktop, Claude Code, ...), so the data can be read, queried and validated in natural language.
-
-### Install
-
-```bash
-pip install ".[mcp]"
-```
-
-### Run
-
-```bash
-python -m neo4aas.mcp      # or: neo4aas-mcp
-```
-
-Connection is configured via environment variables (defaults shown):
-
-| Variable | Default |
-|---|---|
-| `NEO4J_URI` | `bolt://localhost:7687` |
-| `NEO4J_USER` | `neo4j` |
-| `NEO4J_PASSWORD` | `12345678` |
-
-### Tools
-
-| Tool | Description |
-|---|---|
-| `count_stats` | Count of AssetAdministrationShells / Submodels / ConceptDescriptions (health check) |
-| `get_identifiable` | Fetch an AAS / Submodel / ConceptDescription by `id` |
-| `get_referable` | Fetch a Referable by parent `id` + `idShortPath` |
-| `validate_constraints` | Run AAS spec constraint validation, returning a report |
-| `list_submodel_types` | Distinct Submodel types (idShort + semanticId) with instance count each |
-| `list_submodel_types_by_semantic_id` | Distinct Submodel semanticIds (idShort ignored) with instance count each |
-| `abstract_submodel` | Build a Template-kind structural union from all Submodels of a given type |
-
-All tools are read-only; none mutate the graph.
-
-#### `abstract_submodel` — type matching and output format
-
-`submodel_type` is matched against `idShort` by default. If the value contains `://` or starts with `urn:`, it is matched against the Submodel's `semanticId` instead:
-
-```
-abstract_submodel("DigitalNameplate")
-abstract_submodel("https://admin-shell.io/zvei/nameplate/2/0/Nameplate")
-abstract_submodel("DigitalNameplate", output_format="yaml")
-```
-
-### Claude Desktop config
-
-Add to `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "neo4aas": {
-      "command": "python",
-      "args": ["-m", "neo4aas.mcp"],
-      "env": {
-        "NEO4J_URI": "bolt://localhost:7687",
-        "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "12345678"
-      }
-    }
-  }
-}
-```
 
 ---
 

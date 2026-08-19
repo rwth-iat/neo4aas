@@ -13,7 +13,7 @@ requires-python = ">=3.12"
 # `neo4aas.core` maps AAS JSON/XML/AASX to Neo4j and compiles AASQL to Cypher using
 # nothing but the driver. Everything that touches the basyx SDK lives in
 # `neo4aas.basyx_ext` / `neo4aas.eclass`, so basyx is an extra, not a base dependency —
-# `neo4aas[mcp]` and `neo4aas[chatbot]` install without it. Enforced by
+# `neo4aas[chatbot]` installs without it. Enforced by
 # tests/test_layering.py.
 dependencies = [
     "neo4j",
@@ -29,10 +29,6 @@ server = [
 ]
 eclass = [
     "neo4aas[basyx]",
-]
-mcp = [
-    "mcp[cli]>=1.2",
-    "pyyaml>=6.0",
 ]
 chatbot = [
     "langgraph>=0.2",
@@ -50,9 +46,6 @@ test = [
     "jsonschema>=4.0",
     "testcontainers[neo4j]>=4.0",
 ]
-
-[project.scripts]
-neo4aas-mcp = "neo4aas.mcp.server:main"
 
 # Tooling, not a shipped extra: `uv sync` installs this group by default, so
 # `make lint` and CI get ruff without it appearing in the distribution metadata.
