@@ -12,8 +12,6 @@ from typing import Any
 
 from neo4aas.core.io import read_bytes
 
-AAS_NS = "https://admin-shell.io/aas/3/0"
-
 # Elements whose direct children form a list value.
 LIST_CONTAINER_TAGS: frozenset[str] = frozenset({
     "assetAdministrationShells",
