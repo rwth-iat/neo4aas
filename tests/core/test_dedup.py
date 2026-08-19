@@ -305,3 +305,42 @@ def test_distinct_identifiables_keep_their_own_subtrees(aas_client):
 
     assert _count_children(aas_client, "urn:sm/a", "submodelElements") == 1
     assert _count_children(aas_client, "urn:sm/b", "submodelElements") == 1
+
+
+def _reference_with_referred_semantic_id(value: str, referred: str) -> dict:
+    return {
+        "type": "ModelReference",
+        "keys": [{"type": "Submodel", "value": value}],
+        "referredSemanticId": {
+            "type": "ExternalReference",
+            "keys": [{"type": "GlobalReference", "value": referred}],
+        },
+    }
+
+
+def test_edge_out_of_a_reused_reference_is_not_duplicated(aas_client, neo4j_params):
+    """A hash-merged Reference reused by a second import keeps a single outgoing edge.
+
+    Relationships are CREATEd, not MERGEd — a node created in the batch cannot already
+    carry the edge, and MERGE on a relationship costs several times a CREATE. The one case
+    where the source node *can* already exist with its edge is a Reference reused through
+    its content hash, so its outgoing `referredSemanticId` must still be MERGEd. Two
+    clients (the second with empty in-memory dedup state) prove the database-level path.
+    """
+    sm = {
+        "modelType": "Submodel",
+        "id": "urn:sm/referred-1",
+        "idShort": "SMR1",
+        "semanticId": _reference_with_referred_semantic_id("urn:target", "0173-REF"),
+    }
+    aas_client.upload_json({"submodels": [sm]})
+    client2 = _second_client(neo4j_params)
+    try:
+        client2.upload_json({"submodels": [dict(sm, id="urn:sm/referred-2", idShort="SMR2")]})
+    finally:
+        client2.driver.close()
+
+    with aas_client.driver.session() as session:
+        assert session.run(
+            "MATCH (r:Reference)-[e:referredSemanticId]->() RETURN count(e) AS c"
+        ).single()["c"] == 1
