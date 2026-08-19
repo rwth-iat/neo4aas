@@ -20,7 +20,7 @@ import pytest
 SRC = Path(__file__).resolve().parent.parent / "src" / "neo4aas"
 
 #: Packages that may depend on core but never on each other.
-APPS = ("basyx_ext", "eclass", "mcp", "chatbot")
+APPS = ("basyx_ext", "eclass", "chatbot")
 
 #: Layers that must stay free of basyx and of every app.
 BASYX_FREE = ("core", "agent_tools")

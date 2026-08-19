@@ -11,7 +11,7 @@ LangGraph agent chatbot for the AAS repository (port 8091).
 - **Claude-Code-style UI** — single-column transcript; every tool call is an inline
   collapsible card (name + args → expandable per-type result); the answer streams below.
 - **One tool registry** — in-process LangChain `@tool` wrappers over the shared
-  `neo4aas/aas_neo4j_adapter/agent_tools.py` (same surface as the MCP server).
+  `neo4aas/agent_tools.py`.
 - **RAG field discovery** (`find_relevant_fields`) — FAISS index over the repository's real
   field names/semanticIds (`qwen3-embedding-8b`), bridging user vocabulary to actual idShorts.
   **HyDE** (`HYDE=1`, default on): generates hypothetical field names from the original

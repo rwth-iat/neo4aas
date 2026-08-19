@@ -4,11 +4,10 @@ Layout::
 
     neo4aas.core         AAS <-> Neo4j mapping and the AASQL -> Cypher compiler.
                          Depends on the neo4j driver and nothing else.
-    neo4aas.agent_tools  Read-only, LLM-facing tools over core (shared by mcp/chatbot).
+    neo4aas.agent_tools  Read-only, LLM-facing tools over core (used by the chatbot).
     neo4aas.basyx_ext    basyx-python-sdk integration: Neo4jObjectStore + the
                          Repository server. Needs `neo4aas[basyx]`.
     neo4aas.eclass       ECLASS dictionary -> ConceptDescription ingestion.
-    neo4aas.mcp          MCP server app.
     neo4aas.chatbot      LangGraph chatbot app.
 
 Only *core* symbols are re-exported here. ``Neo4jObjectStore`` deliberately is not:
