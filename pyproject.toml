@@ -1,28 +1,104 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+# >=77 for PEP 639 (`license` as an SPDX string + `license-files`).
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "aas4graph"
+name = "neo4aas"
 version = "0.1.0"
 readme = "README.md"
-requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+# `neo4aas.core` maps AAS JSON/XML/AASX to Neo4j and compiles AASQL to Cypher using
+# nothing but the driver. Everything that touches the basyx SDK lives in
+# `neo4aas.basyx_ext` / `neo4aas.eclass`, so basyx is an extra, not a base dependency —
+# `neo4aas[chatbot]` installs without it. Enforced by
+# tests/test_layering.py.
 dependencies = [
     "neo4j",
-    "basyx-python-sdk"
 ]
 
 [project.optional-dependencies]
+basyx = [
+    "basyx-python-sdk",
+]
+server = [
+    "neo4aas[basyx]",
+    "gunicorn",
+]
+eclass = [
+    "neo4aas[basyx]",
+]
+chatbot = [
+    "langgraph>=0.2",
+    "langchain-openai>=0.2",
+    "langchain-core>=0.3",
+    "langchain-community>=0.3",
+    "faiss-cpu>=1.8",
+    "langfuse>=2.0",
+    "flask>=3.0",
+    "requests>=2.31",
+]
 test = [
+    "neo4aas[basyx]",
     "pytest>=7.0",
     "jsonschema>=4.0",
+    "testcontainers[neo4j]>=4.0",
+]
+
+# Tooling, not a shipped extra: `uv sync` installs this group by default, so
+# `make lint` and CI get ruff without it appearing in the distribution metadata.
+[dependency-groups]
+dev = [
+    "ruff>=0.9",
+    "pre-commit>=4.0",
 ]
 
 [tool.setuptools.packages.find]
-include = ["aas_mapping*"]
+where = ["src"]
+include = ["neo4aas*"]
+
+[tool.setuptools.package-data]
+# The chatbot serves its UI from the installed package (Flask static_folder="static"),
+# so the assets must ship in the wheel — the image no longer COPYs them separately.
+"neo4aas.chatbot" = ["static/*", "static/**/*"]
+"neo4aas.core.query" = ["spec/*.json"]
 
 [tool.pytest.ini_options]
-testpaths = ["aas_mapping/test"]
+testpaths = ["tests"]
 markers = [
     "integration: tests that require a live Neo4j instance",
 ]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# The codebase predates linting: a full `select` reports 512 findings, ~470 of them
+# formatting-era noise (line length, PEP-585/604 annotation style, import order).
+# Enforcing those now would bury real defects in a diff nobody reads, so they start
+# ignored and get burned down rule by rule — each removal from this list is a small,
+# reviewable PR. Everything NOT listed here is enforced from day one, which is what
+# makes the gate worth having.
+ignore = [
+    "E501",   # line-too-long (187)
+    "UP006",  # non-pep585-annotation, e.g. Dict -> dict (123)
+    "UP045",  # Optional[X] -> X | None (38)
+    "UP035",  # deprecated typing imports (24)
+    "I001",   # unsorted imports (37) — enable together with ruff-format
+    "F403",   # `from ast_nodes import *` in the AASQL compiler
+    "F405",   # ... and the 68 names it provides
+    "B904",   # raise ... from err inside except (4) — touches error paths
+    "B905",   # zip(strict=) (3) — changes behaviour on unequal lengths
+    "B007",   # unused loop control variable (1)
+    "B024",   # ABC without abstract methods (1)
+    "E701", "E702", "E402", "E741",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Re-exports, not dead code.
+"src/neo4aas/__init__.py" = ["F401"]
+"src/neo4aas/basyx_ext/__init__.py" = ["F401"]

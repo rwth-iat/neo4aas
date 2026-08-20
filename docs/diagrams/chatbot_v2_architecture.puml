@@ -1,0 +1,69 @@
+@startuml chatbot_v2_architecture
+title How the AAS Chatbot Works
+
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 15
+skinparam ArrowColor #555555
+skinparam ArrowFontSize 13
+skinparam roundCorner 14
+
+skinparam actor {
+  BorderColor #1A1A2E
+  Color       #1A1A2E
+}
+skinparam rectangle {
+  BorderColor #1A1A2E
+  FontColor   #FFFFFF
+}
+skinparam database {
+  BorderColor #018BFF
+  FontColor   #FFFFFF
+}
+skinparam cloud {
+  FontColor #FFFFFF
+}
+
+actor "User" as user
+
+rectangle "**AI Agent**\nplans steps,\npicks tools" as agent #007A66
+
+cloud "**KIConnect (RWTH)**\nLLM gpt-oss-120b" as ki #7B2FBE
+
+package "Convenience Tools" #F4F6F9 {
+  rectangle "**Query & Search**\naasql_query\nfind_relevant_fields" as t_q #007A66
+  rectangle "**Graph Analytics**\naggregate_field · property_values\nassets_missing · asset_components\ncypher_read" as t_g #D45F00
+  rectangle "**ECLASS Semantics**\nexplain_property\nfind_by_eclass_concept" as t_e #7B2FBE
+  rectangle "**AAS Data & REST**\nrepo_read · get_identifiable\nget_referable · abstract_submodel\nvalidate_constraints" as t_r #006AB0
+  rectangle "**Repository Overview**\nrepo_overview · count_stats\nlist_submodel_types" as t_o #1A7A2E
+}
+
+node "**AAS Server**\nREST repository" as aas #006AB0
+database "**Neo4j DB**\nAAS data +\nECLASS\ndictionary" as neo #018BFF
+
+' ---- Dialog (user left) ----
+user --> agent : question
+agent -[#00D4AA]-> user : answer
+
+' ---- LLM provider ----
+agent --> ki : prompt
+ki -[#7B2FBE]-> agent : reasoning
+
+' ---- Reasoning loop ----
+agent --> t_q
+agent --> t_g
+agent --> t_e
+agent --> t_r
+agent --> t_o
+
+' ---- Data sources ----
+t_q --> neo
+t_g --> neo
+t_e --> neo
+t_o --> neo
+t_r --> aas : REST
+aas --> neo
+
+@enduml

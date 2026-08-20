@@ -1,0 +1,28 @@
+infrastructures:
+  default: basyx-python-stack
+
+  basyx-python-stack:
+    name: AAS Demonstrator Environment
+    security:
+      type: none
+    components:
+      aasDiscovery:
+        baseUrl: "http://localhost:8083/api/v3.1"
+
+      aasRegistry:
+        baseUrl: "http://localhost:8082/api/v3.1"
+        hasDiscoveryIntegration: false
+
+      submodelRegistry:
+        baseUrl: "http://localhost:8082/api/v3.1"
+
+      aasRepository:
+        baseUrl: "http://localhost:8081/api/v3.1"
+        hasRegistryIntegration: false
+
+      submodelRepository:
+        baseUrl: "http://localhost:8081/api/v3.1"
+        hasRegistryIntegration: false
+
+      conceptDescriptionRepository:
+        baseUrl: "http://localhost:8081/api/v3.1"

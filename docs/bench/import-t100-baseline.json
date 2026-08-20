@@ -1,0 +1,31 @@
+{
+  "tier": "t100",
+  "limit": null,
+  "batch_envs": 50,
+  "db_batch_size": 10000,
+  "environments": 100,
+  "source_bytes_json": 24291459,
+  "load_seconds": 17.0,
+  "aas_per_second": 5.87,
+  "decode_seconds": 1.0,
+  "upload_seconds": 15.5,
+  "resolve_seconds": 0.4,
+  "reference_edges": 1108,
+  "cypher_queries": 34,
+  "phase_seconds": {
+    "_drop_duplicate_identifiable_subtrees": 0.6,
+    "_process_json_data": 0.5,
+    "_deduplicate_rels": 0.3,
+    "_deduplicate_nodes": 0.2,
+    "_group_nodes_by_label": 0.1
+  },
+  "phase_calls": {
+    "_process_json_data": 100,
+    "_drop_duplicate_identifiable_subtrees": 2,
+    "_group_nodes_by_label": 2,
+    "_deduplicate_nodes": 2,
+    "_deduplicate_rels": 2
+  },
+  "nodes": 60252,
+  "rels": 114776
+}

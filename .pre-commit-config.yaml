@@ -1,0 +1,21 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      # The repo tracks ~20 MB of golden AAS fixtures under tests/data, so the
+      # limit sits above the largest of them (the 481 KB IDTA template) rather
+      # than the 500 KB default, and only guards against genuinely new blobs.
+      - id: check-added-large-files
+        args: [--maxkb=600]
+      - id: check-case-conflict

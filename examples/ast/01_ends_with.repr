@@ -1,0 +1,1 @@
+Condition(EndsWith(Field("$sme.ProductCode#value"), StringValue("-XYZ")))

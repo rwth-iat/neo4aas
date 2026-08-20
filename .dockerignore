@@ -1,7 +1,18 @@
 .venv/
-aas_mapping/examples/real_aas/
-aas_mapping/test/test_data/
 *.pyc
 __pycache__/
 *.egg-info/
 .git/
+.pytest_cache/
+
+# Bulk data and fixtures — never needed to build an image (the 53 GB real_aas
+# symlink lives under data/, the ~20 MB golden corpora under tests/data/).
+data/
+tests/
+examples/cypher/
+docs/
+
+# Runtime state and host-only material
+aas_demonstrator/
+.env
+*.aasx

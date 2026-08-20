@@ -1,0 +1,1 @@
+Condition(And([Eq(Field("$aas#idShort"), StringValue("MyShell")), Eq(Field("$sme.ProductClassifications.ProductClassificationItem.ProductClassId#value"), StringValue("27-37-09-05"))]))

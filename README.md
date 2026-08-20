@@ -1,36 +1,55 @@
-# aas4graph
+# neo4aas
 
-A proof-of-concept library for mapping [Asset Administration Shell (AAS)](https://industrialdigitaltwin.org/content-hub/aasspecifications) data to a [Neo4j](https://neo4j.com/) graph database, including bidirectional serialization and a query language compiler (AASQL → Cypher).
+A library for mapping [Asset Administration Shell (AAS)](https://industrialdigitaltwin.org/content-hub/aasspecifications) data to a [Neo4j](https://neo4j.com/) graph database, including bidirectional serialization and a query language compiler (AASQL → Cypher).
 
 ---
 
 ## Architecture
 
+The distribution is one library plus its apps. `neo4aas.core` depends on the Neo4j
+driver and nothing else; everything that touches the basyx SDK is confined to
+`basyx_ext/` and `eclass/`, so `neo4aas[chatbot]` installs without it. `tests/test_layering.py` and the `core-without-basyx` CI job enforce this.
+
 ```
-aas_mapping/
-├── aas_neo4j_adapter/
-│   ├── aas_neo4j_client.py      # Main API: AASNeo4JClient
+src/neo4aas/
+├── core/                        # THE LIBRARY — neo4j driver only
+│   ├── client.py                # Main API: AASNeo4JClient
 │   ├── base.py                  # BaseNeo4JClient, Neo4jModelConfig
-│   ├── utils.py                 # UploadStats, hash helpers
+│   ├── utils.py                 # UploadStats, hash/IRDI helpers
+│   ├── fixers.py                # Import-time repair of non-conformant AAS data
 │   ├── validation.py            # AASConstraintChecker — spec constraint validation
-│   ├── neo_aas_object_store.py  # basyx-sdk AbstractObjectStore for Neo4j
-│   ├── jsonification/
-│   │   ├── neo4j_import.py      # JSON → Neo4j (JsonToNeo4jImporter)
-│   │   └── neo4j_export.py      # Neo4j → JSON (JsonFromNeo4jExporter)
-│   └── querification/
+│   ├── abstract.py              # Template-submodel merge logic
+│   ├── serialization/           # every AAS format <-> Neo4j path
+│   │   ├── json/{importer,exporter}.py
+│   │   ├── xml/{importer,xml_to_json}.py
+│   │   └── aasx.py              # AASX (zip) ingestion, wraps the XML importer
+│   └── query/                   # AASQL -> Cypher
 │       ├── aasql_to_ast.py      # AASQL JSON → AST (parser)
 │       ├── ast_nodes.py         # AST node type definitions
 │       ├── ast_to_cypher.py     # AST → Cypher (compiler)
 │       └── aasql_to_cypher.py   # Entry point: convert_aasql_to_cypher()
-├── examples/
-│   ├── queries/                 # Example AASQL queries (JSON)
-│   ├── ast/                     # Expected AST representations
-│   ├── cypher/                  # Generated Cypher scripts
-│   └── submodels/               # IDTA template submodel JSON files
-└── test/
-    ├── test_aasql2ast.py        # Unit tests for AASQL → AST parsing
-    ├── test_roundtrip.py        # Integration: JSON and XML ↔ Neo4j round-trip tests
-    └── test_constraint_checker.py  # Unit + integration tests for AASConstraintChecker
+├── agent_tools.py               # Read-only LLM-facing tools over core (chatbot)
+├── basyx_ext/                   # basyx-python-sdk integration  [extra: basyx]
+│   ├── object_store.py          # Neo4jObjectStore (AbstractObjectStore)
+│   └── server/                  # AAS Repository server        [extra: server]
+├── eclass/                      # ECLASS dictionary -> ConceptDescriptions [extra: eclass]
+└── chatbot/                     # LangGraph chatbot app        [extra: chatbot]
+
+tests/                           # mirrors src/neo4aas/; fixtures in tests/data/
+examples/                        # AASQL queries, expected ASTs/Cypher, IDTA submodels
+deploy/                          # docker/ images; demonstrator/ + lieferanten/ stacks
+scripts/                         # operational simulator, eval harnesses, helpers
+docs/                            # notes and diagrams
+data/                            # gitignored: AAS corpora, ECLASS exports, samples
+```
+
+Install just what you need:
+
+```bash
+pip install neo4aas                # core: mapping + AASQL, neo4j driver only
+pip install "neo4aas[basyx]"       # + Neo4jObjectStore
+pip install "neo4aas[server]"      # + AAS Repository server
+pip install "neo4aas[chatbot]"     # + the LangGraph chatbot (no basyx)
 ```
 
 ---
@@ -44,7 +63,7 @@ AAS JSON file
     └─→ AASNeo4JClient.upload_json_file()
             └─→ JsonToNeo4jImporter._process_dict()
                     ├─→ Scalars become node properties
-                    ├─→ Dicts become child nodes (CHILD relationship)
+                    ├─→ Dicts become child nodes (edge named after the attribute)
                     └─→ Lists become multiple nodes with list_index tracking
                             └─→ APOC batch create nodes + relationships
 ```
@@ -76,8 +95,8 @@ AASQL JSON query
 |---|---|
 | `Referable` | Node |
 | `AssetInformation` | Node |
-| Containment (Referable → Referable) | `CHILD` relationship |
-| `Reference` | `REFERENCES` relationship |
+| Containment (Referable → Referable) | semantic edge named after the attribute (`:value`, `:submodelElements`, `:statements`, …); list members carry `list_index` |
+| `Reference` | `:references` edge (materialized by `resolve_references()`) |
 | Scalar property | Node property |
 
 ### Multi-label Inheritance
@@ -103,7 +122,28 @@ The shared positional index enables reconstruction during export.
 
 ### Deduplication
 
-`Reference` and `ConceptDescription` nodes are deduplicated using SHA256 hashing of their properties. This prevents duplicate semantic identifiers across multiple AAS imports.
+`Reference` and `ConceptDescription` nodes are deduplicated using SHA256 hashing of their properties. This prevents duplicate semantic identifiers across multiple AAS imports. Dedup is enforced at the database level: such nodes are MERGEd on their `hash` (and relationships are MERGEd too), so identical nodes imported by separate client instances/processes converge to one canonical node instead of being duplicated.
+
+### Reference Resolution
+
+A `ModelReference` stores its target only as key values (e.g. `keys_value = ["urn:sm/1", "Color"]`), not as a graph edge. To let queries *follow* a reference (for example "all AAS whose submodel matches …"), the adapter materializes a `:references` edge from each `ModelReference` node to the **target Referable** it points at — `keys_value[0]` selects the entry `Identifiable` by `id`, then the remaining keys descend to the actual target:
+
+```
+(:Reference {type:'ModelReference'})-[:references]->(:Referable)
+```
+
+This is driven from the application layer (the chosen approach), idempotent and order-independent (a reference added before its target is linked once the target appears):
+
+- `AASNeo4JClient.resolve_references()` rebuilds **all** edges — use it once after a bulk import that bypasses the object store.
+- `AASNeo4JClient.resolve_references_for(id)` is **incremental** — it re-resolves only references inside that Identifiable's subgraph plus references *targeting* it (found via an indexed `target_id == keys_value[0]` lookup). `Neo4jObjectStore.add` / `commit` call this. `discard` / `remove` need no resolution because `DETACH DELETE` drops every `:references` edge into the deleted subtree.
+
+The full key chain is followed, so a `ModelReference` resolves to its actual target Referable — not just the top-level Identifiable. Each descending key is matched as an `idShort` (under a `SubmodelElementCollection` / `Submodel`) **or** as a 0-based list index (under a `SubmodelElementList`):
+
+```
+child.idShort = key  OR  edge.list_index = toInteger(key)
+```
+
+> **Alternative — APOC triggers.** The same resolution Cypher could instead run inside a DB-native `apoc.trigger` so that *out-of-band* writes (e.g. edits via the Neo4j Browser) are also maintained automatically. That requires `apoc.trigger.enabled=true` in `neo4j.conf` and is harder to test, so the application-layer approach is used here.
 
 ---
 
@@ -127,6 +167,26 @@ $<root>#<attribute>[.<nested>]
 ```
 
 Examples: `$aas#idShort`, `$aas#assetInformation.assetType`, `$sme.Color#value`
+
+A `$sme` with **no idShort path** (e.g. `$sme#value`) searches **all** SubmodelElements at any depth (recursive traversal over the containment edges), per the spec.
+
+> The recursive form currently expands from each Submodel before filtering. For large graphs this may later be optimized to start from the matching SubmodelElement and walk back up (see Improvements.md #9).
+
+### MultiLanguageProperty
+
+`#value` works for both `Property` and `MultiLanguageProperty`. A `Property` stores a scalar value; an MLP stores text per language. `#value` matches the text in **any** language (`$sme.Note#value $contains "Hal"`), and `#language` filters by language code (`$sme.Note#language $eq "nl"`). All operators (`$eq`, `$contains`, `$starts-with`, `$regex`, …) apply.
+
+> **Note:** combining `#value` and `#language` in a `$match` is **not** correlated to the same language entry yet — it matches if some text *and* some language satisfy the conditions independently.
+
+### Cross-root queries ($aas + $sm/$sme)
+
+A query may combine roots. When `$aas` is mixed with `$sm`/`$sme`, the compiler scopes the submodel conditions to the matching AAS's submodels by bridging through the `:references` edge (see [Reference Resolution](#reference-resolution)):
+
+```cypher
+MATCH (aas)-[:submodels]->(:Reference)-[:references]->(sm)
+```
+
+so the query returns "all AAS whose (referenced) submodel satisfies the condition" — not a cartesian product. The `RETURN` variable defaults to the outermost root (precedence `aas > sm > cd`, so an `$aas`+`$sme` query returns the AAS). Pass `convert_aasql_to_cypher(query, target="sm")` to force the returned type for a given endpoint (e.g. a Submodel repository).
 
 ### Supported operators
 
@@ -168,15 +228,17 @@ RETURN sme_Color, sme_Size
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.12+
 - Neo4j Community Edition (tested with 5.26.x)
 - [APOC plugin](https://neo4j.com/labs/apoc/) enabled in Neo4j
 
 ### Install
 
 ```bash
-pip install .
+uv sync --all-extras      # or: make install
 ```
+
+`make help` lists the common tasks (test, lint, build, up/down for the demonstrator stack).
 
 ### Start Neo4j
 
@@ -193,7 +255,7 @@ Default bolt URI: `bolt://localhost:7687`
 ### Import an AAS file
 
 ```python
-from aas_mapping.aas_neo4j_adapter.aas_neo4j_client import AASNeo4JClient, AAS_NEO4J_MODEL_CONFIG
+from neo4aas.core.client import AASNeo4JClient, AAS_NEO4J_MODEL_CONFIG
 
 client = AASNeo4JClient(
     uri="bolt://localhost:7687",
@@ -213,7 +275,7 @@ MATCH (n) RETURN n;
 ### Translate an AASQL query
 
 ```python
-from aas_mapping.aas_neo4j_adapter.querification.aasql_to_cypher import convert_aasql_to_cypher
+from neo4aas.core.query.aasql_to_cypher import convert_aasql_to_cypher
 
 query = {
     "$condition": {
@@ -229,10 +291,17 @@ print(cypher)
 ## Testing
 
 ```bash
-uv run pytest aas_mapping/test/
+make test-unit           # no database needed
+make test                # everything
+make test-integration    # only the tests that need Neo4j
 ```
 
-Integration tests require a live Neo4j instance (`bolt://localhost:7687`, user `neo4j`, password `12345678`). They are skipped automatically if Neo4j is unreachable.
+`tests/` mirrors `src/neo4aas/`, so a subtree runs on its own: `uv run pytest tests/core/query`.
+
+Integration tests are marked `@pytest.mark.integration`. By default they start a
+disposable `neo4j:5` container (testcontainers); set `NEO4J_URI` to run against an
+existing instance instead — the fixtures wipe that database, so point it only at a
+throwaway.
 
 ---
 
@@ -241,7 +310,7 @@ Integration tests require a live Neo4j instance (`bolt://localhost:7687`, user `
 `AASConstraintChecker` validates AAS data already loaded in Neo4j against the AAS specification constraints. It runs Cypher queries and returns structured `ConstraintViolation` records grouped in a `ConstraintReport`.
 
 ```python
-from aas_mapping.aas_neo4j_adapter.validation import AASConstraintChecker
+from neo4aas.core.validation import AASConstraintChecker
 
 checker = AASConstraintChecker(
     uri="bolt://localhost:7687",
