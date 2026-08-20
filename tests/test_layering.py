@@ -2,8 +2,12 @@
 
 Three properties, checked by walking the source AST (no imports executed):
 
-1. ``neo4aas.core`` and ``neo4aas.agent_tools`` import neither ``basyx`` nor any app
-   package. This is what lets pyproject declare ``neo4j`` as the only base dependency.
+1. ``neo4aas.core``, ``neo4aas.agent_tools`` and ``neo4aas.vocabulary`` import
+   neither ``basyx`` nor any app package. This is what lets pyproject declare
+   ``neo4j`` as the only base dependency. ``vocabulary`` reaches into
+   :mod:`neo4aas.eclass` for one thing only — the OntoML parser and its
+   dataclasses, which are themselves basyx-free — and that exception is named in
+   :data:`ECLASS_PARSER_MODULES` and checked rather than waived.
 2. No app package imports another app package.
 3. ``import neo4aas`` succeeds with basyx absent — the property a static check cannot
    see (a re-export added to ``neo4aas/__init__.py`` would silently reintroduce the
@@ -23,7 +27,15 @@ SRC = Path(__file__).resolve().parent.parent / "src" / "neo4aas"
 APPS = ("basyx_ext", "eclass", "chatbot")
 
 #: Layers that must stay free of basyx and of every app.
-BASYX_FREE = ("core", "agent_tools")
+BASYX_FREE = ("core", "agent_tools", "vocabulary")
+
+#: The one cross-package import a basyx-free layer may make: parsing ECLASS OntoML
+#: XML into dataclasses. It needs no SDK, and duplicating a 250-line streaming
+#: parser to satisfy a directory boundary would be the worse trade. Both modules
+#: are asserted basyx-free below, so the allowance cannot become a back door —
+#: and ``neo4aas/eclass/__init__.py`` resolves its basyx-dependent re-exports
+#: lazily (PEP 562) so that importing a submodule does not execute them.
+ECLASS_PARSER_MODULES = ("neo4aas.eclass.models", "neo4aas.eclass.ontoml_parser")
 
 
 def _module_files(name: str) -> list[Path]:
@@ -72,8 +84,20 @@ def test_layer_does_not_import_basyx(layer):
 def test_layer_does_not_import_apps(layer):
     """Dependencies point inward: an app may use core, never the reverse."""
     forbidden = tuple(f"neo4aas.{app}" for app in APPS)
-    bad = _files_importing(_module_files(layer), lambda m: m.startswith(forbidden))
+    bad = _files_importing(
+        _module_files(layer),
+        lambda m: m.startswith(forbidden) and m not in ECLASS_PARSER_MODULES,
+    )
     assert not bad, f"{layer} must not depend on an app package:\n" + "\n".join(bad)
+
+
+def test_the_eclass_parser_exception_is_itself_basyx_free():
+    """The allowance above is only sound while these two modules need no SDK."""
+    bad = _files_importing(
+        [SRC / "eclass" / f"{name.rsplit('.', 1)[-1]}.py" for name in ECLASS_PARSER_MODULES],
+        lambda m: m == "basyx" or m.startswith("basyx."),
+    )
+    assert not bad, "the ECLASS parser stopped being basyx-free:\n" + "\n".join(bad)
 
 
 @pytest.mark.parametrize("app", APPS)
@@ -109,6 +133,15 @@ for mod in [m for m in sys.modules if m == "basyx" or m.startswith("basyx.")]:
 import neo4aas
 assert neo4aas.AASNeo4JClient is not None
 assert neo4aas.convert_aasql_to_cypher is not None
+
+# The vocabulary importer, its CLI and the ECLASS parser it borrows must all come
+# up without the SDK: `neo4aas vocab import` is the entry point a bare install runs.
+import neo4aas.vocabulary
+import neo4aas.vocabulary.cli
+import neo4aas.vocabulary.concepts
+from neo4aas.eclass.ontoml_parser import EclassOntomlParser
+assert EclassOntomlParser is not None
+assert neo4aas.vocabulary.shape_key("a", None, "P", None)
 print("OK")
 """
     result = subprocess.run(

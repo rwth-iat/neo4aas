@@ -10,6 +10,7 @@ parametrize over the files in a directory, which happens at collection time,
 before fixtures exist.
 """
 
+import os
 from pathlib import Path
 
 TESTS_DIR = Path(__file__).resolve().parent
@@ -25,3 +26,13 @@ EXAMPLES_DIR = REPO_ROOT / "examples"
 QUERIES_DIR = EXAMPLES_DIR / "queries"
 AST_DIR = EXAMPLES_DIR / "ast"
 SUBMODELS_DIR = EXAMPLES_DIR / "submodels"
+
+#: The reference AAS corpus, a sibling checkout (``AAS_CORPUS_DIR`` overrides).
+#: It is 53 GB of real vendor data and is deliberately *not* vendored here — the
+#: vocabulary tests read from it when it is present and skip when it is not,
+#: because "run against real files, including malformed ones" is the only way to
+#: test an importer whose whole job is surviving real data.
+CORPUS_DIR = Path(os.environ.get("AAS_CORPUS_DIR", REPO_ROOT.parent / "aas-corpus"))
+CORPUS_INSTANCES_DIR = CORPUS_DIR / "instances" / "vendors"
+CORPUS_TEMPLATES_DIR = CORPUS_DIR / "specs" / "submodel-templates"
+CORPUS_ECLASS_DIR = CORPUS_DIR / "dictionaries" / "eclass"

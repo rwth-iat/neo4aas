@@ -2,6 +2,13 @@
 
 A library for mapping [Asset Administration Shell (AAS)](https://industrialdigitaltwin.org/content-hub/aasspecifications) data to a [Neo4j](https://neo4j.com/) graph database, including bidirectional serialization and a query language compiler (AASQL → Cypher).
 
+It ships **two** importers. `neo4aas.core` stores AAS *instances* — shells, submodels,
+elements — with full round-trip fidelity. `neo4aas.vocabulary` stores what a corpus *says*:
+element shapes, submodel structures, semantic concepts, IDTA templates and vendors, and **no
+instances at all**, so its size tracks the corpus's vocabulary rather than its volume
+(~360 000 nodes whether the corpus holds 3 000 shells or 300 000). See
+[docs/vocabulary-graph.md](docs/vocabulary-graph.md).
+
 ---
 
 ## Architecture
@@ -28,7 +35,16 @@ src/neo4aas/
 │       ├── ast_nodes.py         # AST node type definitions
 │       ├── ast_to_cypher.py     # AST → Cypher (compiler)
 │       └── aasql_to_cypher.py   # Entry point: convert_aasql_to_cypher()
+├── vocabulary/                  # THE SECOND IMPORTER — neo4j driver only
+│   ├── extract.py               # documents -> shape/structure/vendor records (pure)
+│   ├── concepts.py              # ECLASS + embedded ConceptDescriptions -> :Concept
+│   ├── templates.py             # IDTA submodel templates -> :Template
+│   ├── schema.py                # constraints and indexes
+│   ├── load.py                  # batched MERGE
+│   ├── report.py                # the run report
+│   └── cli.py                   # neo4aas vocab import|stats|clear
 ├── agent_tools.py               # Read-only LLM-facing tools over core (chatbot)
+├── cli.py                       # `neo4aas` console script
 ├── basyx_ext/                   # basyx-python-sdk integration  [extra: basyx]
 │   ├── object_store.py          # Neo4jObjectStore (AbstractObjectStore)
 │   └── server/                  # AAS Repository server        [extra: server]

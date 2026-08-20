@@ -1,0 +1,96 @@
+========================================================================
+vocabulary import
+========================================================================
+wall clock                15.5 s
+files                    1,000
+documents parsed         1,000
+documents failed             0
+shells seen              1,000
+submodels seen           4,790
+elements seen          853,035
+vendors               abb, buerkert, festo, harting, phoenix_contact, r_stahl, sick, wago
+
+NODES
+  Shape                   3,535
+  SemanticId              1,421
+  Concept                   874
+  Structure                 800
+  Vendor                      8
+  Template                    0
+  TOTAL                   6,638   (128.5 elements per node)
+
+EDGES
+  HAS_SLOT              354,900
+  USES                    3,859
+  DECLARES                3,529
+  RESOLVES_TO             1,028
+  SHIPS                     801
+  BROADER                     0
+  DECLARES_SHAPE              0
+
+SEMANTIC ID RESOLUTION
+  955 of 1,421 resolve into the dictionary (67.2 %)
+  466 resolve nowhere — listed below, not hidden
+  of those a vendor actually ships: 955 of 1,421 (67.2 %)
+      125 shapes  https://admin-shell.io/idta/nameplate/3/0/Nameplate
+       61 shapes  0173-1#02-AAQ683#013
+       60 shapes  0173-1#02-AAQ675#008
+       56 shapes  0173-1#02-AAQ672#013
+       25 shapes  https://admin-shell.io/idta/HierarchicalStructures/HasPart/1/0
+       15 shapes  0173-1#02-AAQ661#013
+       14 shapes  https://admin-shell.io
+        8 shapes  0173-1#02-AAQ680#012
+        7 shapes  0173-1#02-AAQ680#010
+        7 shapes  https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel
+        6 shapes  0173-1#02-AAQ671#011
+        6 shapes  0173-1#02-AAQ673#013
+        5 shapes  0173-1#02-AAC341#006
+        5 shapes  0173-1#02-AAQ535#007
+        5 shapes  0173-1#02-AAQ665#006
+        5 shapes  0173-1#02-AAQ669#013
+        5 shapes  0173-1#02-AAQ676#011
+        5 shapes  https://admin-shell.io/ZVEI/TechnicalData/ProductImage/1/1
+        5 shapes  https://example.com/ids/ConceptDescription/4353_1815_4842_4689
+        3 shapes  0173-1#02-AAG644#012
+        3 shapes  https://admin-shell.io/zvei/nameplate/1/0/ContactInformation
+        2 shapes  0173-1#02-ABK126#002
+        2 shapes  0173-1#02-ABK163#002
+        2 shapes  https://admin-shell.io/sandbox/idta/handover/MCAD/0/1/
+        1 shapes  0112/2///61360_7#AAS006#001
+
+SEMANTIC IDS BY :DECLARES IN-DEGREE  (junk detection)
+    616 shapes  0173-1#02-ABI500#001/0173-1#01-AHF579#001*01
+    220 shapes  https://admin-shell.io/idta/HierarchicalStructures/Node/1/0
+    154 shapes  0173-1#02-AAY811#001
+    126 shapes  0173-1#01-AHX837#002
+    125 shapes  0173-1#02-AAQ837#005
+    125 shapes  https://admin-shell.io/idta/nameplate/3/0/Nameplate
+    116 shapes  0173-1#01-AHF578#003
+    109 shapes  https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation
+     61 shapes  0173-1#02-AAQ683#013
+     60 shapes  0173-1#02-AAQ675#008
+
+TOP-DEGREE NODES
+    14,699  :Shape        DocumentDomainId
+    14,696  :Shape        ClassificationSystem
+    14,696  :Shape        ValueId
+    14,693  :Shape        ClassId
+    14,689  :Shape        Title
+    14,689  :Shape        OrganizationName
+    14,689  :Shape        Summary
+    14,689  :Shape        OrganizationOfficialName
+    14,688  :Shape        StatusValue
+    14,688  :Shape        ClassName
+
+WRITES
+  Shape                     3,535 rows     0.08 s
+  USES                      3,859 rows     0.06 s
+  DECLARES                  3,529 rows     0.05 s
+  Concept                     874 rows     0.05 s
+  SemanticId                1,421 rows     0.04 s
+  SHIPS                       801 rows     0.02 s
+  Structure                   800 rows     0.02 s
+  RESOLVES_TO                   0 rows     0.01 s
+  Shape.occurrences             0 rows     0.01 s
+  Structure.occurrences          0 rows     0.00 s
+========================================================================

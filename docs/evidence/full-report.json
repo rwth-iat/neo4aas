@@ -1,0 +1,325 @@
+{
+  "started": 1787268932.464771,
+  "seconds": 140.7362018749991,
+  "files": 0,
+  "documents": 0,
+  "failed_documents": 0,
+  "failures": [],
+  "shells": 0,
+  "submodels": 0,
+  "elements": 0,
+  "vendors": [],
+  "nodes": {
+    "Shape": 248325,
+    "Structure": 39168,
+    "SemanticId": 9834,
+    "Concept": 121014,
+    "Template": 194,
+    "Vendor": 8
+  },
+  "relationships": {
+    "DECLARES": 248160,
+    "RESOLVES_TO": 8653,
+    "BROADER": 5098901,
+    "HAS_SLOT": 7085871,
+    "DECLARES_SHAPE": 8664,
+    "USES": 245681,
+    "SHIPS": 39170
+  },
+  "resolution": {
+    "total": 9834,
+    "resolved": 6856
+  },
+  "resolution_used": {
+    "total": 7099,
+    "resolved": 6771
+  },
+  "quality": {
+    "shapes": 248325,
+    "singletons": 214113,
+    "numbered": 241692,
+    "plain": 6633
+  },
+  "numbered_by_vendor": [
+    {
+      "vendor": "sick",
+      "shapes": 211363,
+      "numbered": 210988,
+      "pct": 99
+    },
+    {
+      "vendor": "harting",
+      "shapes": 23475,
+      "numbered": 22343,
+      "pct": 95
+    },
+    {
+      "vendor": "phoenix_contact",
+      "shapes": 5496,
+      "numbered": 5441,
+      "pct": 98
+    },
+    {
+      "vendor": "festo",
+      "shapes": 3145,
+      "numbered": 1339,
+      "pct": 42
+    },
+    {
+      "vendor": "r_stahl",
+      "shapes": 881,
+      "numbered": 802,
+      "pct": 91
+    },
+    {
+      "vendor": "abb",
+      "shapes": 727,
+      "numbered": 689,
+      "pct": 94
+    },
+    {
+      "vendor": "buerkert",
+      "shapes": 322,
+      "numbered": 22,
+      "pct": 6
+    },
+    {
+      "vendor": "wago",
+      "shapes": 272,
+      "numbered": 14,
+      "pct": 5
+    }
+  ],
+  "unresolved": [
+    {
+      "value": "0173-1#02-AAQ661#013",
+      "shapes": 146
+    },
+    {
+      "value": "0173-1#02-AAQ672#013",
+      "shapes": 130
+    },
+    {
+      "value": "0173-1#02-AAQ680#012",
+      "shapes": 128
+    },
+    {
+      "value": "0173-1#02-AAQ683#013",
+      "shapes": 96
+    },
+    {
+      "value": "0173-1#02-AAQ669#013",
+      "shapes": 69
+    },
+    {
+      "value": "0173-1#02-AAQ675#008",
+      "shapes": 60
+    },
+    {
+      "value": "0173-1#02-AAQ676#011",
+      "shapes": 51
+    },
+    {
+      "value": "0173-1#02-AAS425#008",
+      "shapes": 35
+    },
+    {
+      "value": "0173-1#02-AAQ535#007",
+      "shapes": 34
+    },
+    {
+      "value": "0173-1#02-AAQ688#012",
+      "shapes": 33
+    },
+    {
+      "value": "http://admin-shell.io/dexpi/1/0/SubTagMapping",
+      "shapes": 31
+    },
+    {
+      "value": "0173-1#02-AAQ671#011",
+      "shapes": 29
+    },
+    {
+      "value": "0173-1#02-AAS431#005",
+      "shapes": 29
+    },
+    {
+      "value": "0173-1#02-AAS435#006",
+      "shapes": 29
+    },
+    {
+      "value": "0173-1#02-ABI459#003",
+      "shapes": 27
+    },
+    {
+      "value": "https://admin-shell.io/idta/cds/attributeContainer/1",
+      "shapes": 21
+    },
+    {
+      "value": "0173-1#02-AAQ408#010",
+      "shapes": 20
+    },
+    {
+      "value": "0173-1#02-AAZ762#006",
+      "shapes": 15
+    },
+    {
+      "value": "https://admin-shell.io",
+      "shapes": 15
+    },
+    {
+      "value": "0173-1#02-AAQ673#013",
+      "shapes": 14
+    },
+    {
+      "value": "0173-1#02-AAQ536#007",
+      "shapes": 13
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+      "shapes": 13
+    },
+    {
+      "value": "http://admin-shell.io/DEXPI/1/0/TagMapping",
+      "shapes": 12
+    },
+    {
+      "value": "0173-1#02-AAQ680#010",
+      "shapes": 11
+    },
+    {
+      "value": "0173-1#02-AAZ760#004",
+      "shapes": 11
+    }
+  ],
+  "top_degree": [
+    {
+      "labels": [
+        "Vendor"
+      ],
+      "key": "sick",
+      "degree": 212761
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "AAQ373-Manufacturer",
+      "degree": 134056
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "AAO676-Internal_article_number",
+      "degree": 134054
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "AAW338-Manufacturer_product_designation",
+      "degree": 133704
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "AAN350-Part_relation_to_the_main_device",
+      "degree": 128009
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "AAO663-GTIN__EAN__code",
+      "degree": 125437
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "AAO677-Manufacturer_name",
+      "degree": 103754
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "AAN475-Number_of_parts_relations",
+      "degree": 89865
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "AAO057-Product_type",
+      "degree": 76666
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "AAN406-number_of_the_more-wire_conductors",
+      "degree": 75937
+    }
+  ],
+  "top_declares": [
+    {
+      "value": "https://admin-shell.io/idta/nameplate/3/0/Nameplate",
+      "shapes": 54035
+    },
+    {
+      "value": "0173-1#01-AHX837#002",
+      "shapes": 54034
+    },
+    {
+      "value": "0173-1#02-AAQ837#005",
+      "shapes": 54033
+    },
+    {
+      "value": "0173-1#01-AHF578#003",
+      "shapes": 48883
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/Node/1/0",
+      "shapes": 22274
+    },
+    {
+      "value": "0173-1#02-ABI500#001/0173-1#01-AHF579#001*01",
+      "shapes": 1804
+    },
+    {
+      "value": "0173-1#02-AAY811#001",
+      "shapes": 276
+    },
+    {
+      "value": "0173-1#02-AAQ661#013",
+      "shapes": 146
+    },
+    {
+      "value": "0173-1#02-ABI500#001/0173-1#01-AHF579#001",
+      "shapes": 138
+    },
+    {
+      "value": "0173-1#02-AAQ672#013",
+      "shapes": 130
+    }
+  ],
+  "write_seconds": {
+    "Concept": 7.437493666977389,
+    "BROADER(prefix)": 1.4715108340024017,
+    "BROADER(property)": 107.66813108400675,
+    "RESOLVES_TO": 0.17355237502488308,
+    "Shape.occurrences": 0.6232257920200936,
+    "Structure.occurrences": 0.05562575001385994
+  },
+  "rows_written": {
+    "Concept": 124803,
+    "BROADER(prefix)": 48261,
+    "BROADER(property)": 2706281,
+    "RESOLVES_TO": 0,
+    "Shape.occurrences": 0,
+    "Structure.occurrences": 0
+  }
+}

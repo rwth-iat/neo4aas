@@ -1,0 +1,19 @@
+NODES
+  Shape                   3,535
+  SemanticId              1,421
+  Concept                   874
+  Structure                 800
+  Vendor                      8
+  Template                    0
+  TOTAL                   6,638   (128.5 elements per node)
+
+EDGES
+  HAS_SLOT              354,900
+  USES                    3,859
+  DECLARES                3,529
+  RESOLVES_TO             1,028
+  SHIPS                     801
+  BROADER                     0
+  DECLARES_SHAPE              0
+
+SEMANTIC ID RESOLUTION

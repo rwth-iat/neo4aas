@@ -1,0 +1,103 @@
+========================================================================
+vocabulary import
+========================================================================
+wall clock               140.7 s
+files                        0
+documents parsed             0
+documents failed             0
+shells seen                  0
+submodels seen               0
+elements seen                0
+
+NODES
+  Shape                 248,325
+  Concept               121,014
+  Structure              39,168
+  SemanticId              9,834
+  Template                  194
+  Vendor                      8
+
+EDGES
+  HAS_SLOT            7,085,871
+  BROADER             5,098,901
+  DECLARES              248,160
+  USES                  245,681
+  SHIPS                  39,170
+  DECLARES_SHAPE          8,664
+  RESOLVES_TO             8,653
+
+SEMANTIC ID RESOLUTION
+  6,856 of 9,834 resolve into the dictionary (69.7 %)
+  2,978 resolve nowhere — listed below, not hidden
+  of those a vendor actually ships: 6,771 of 7,099 (95.4 %)
+      146 shapes  0173-1#02-AAQ661#013
+      130 shapes  0173-1#02-AAQ672#013
+      128 shapes  0173-1#02-AAQ680#012
+       96 shapes  0173-1#02-AAQ683#013
+       69 shapes  0173-1#02-AAQ669#013
+       60 shapes  0173-1#02-AAQ675#008
+       51 shapes  0173-1#02-AAQ676#011
+       35 shapes  0173-1#02-AAS425#008
+       34 shapes  0173-1#02-AAQ535#007
+       33 shapes  0173-1#02-AAQ688#012
+       31 shapes  http://admin-shell.io/dexpi/1/0/SubTagMapping
+       29 shapes  0173-1#02-AAQ671#011
+       29 shapes  0173-1#02-AAS431#005
+       29 shapes  0173-1#02-AAS435#006
+       27 shapes  0173-1#02-ABI459#003
+       21 shapes  https://admin-shell.io/idta/cds/attributeContainer/1
+       20 shapes  0173-1#02-AAQ408#010
+       15 shapes  0173-1#02-AAZ762#006
+       15 shapes  https://admin-shell.io
+       14 shapes  0173-1#02-AAQ673#013
+       13 shapes  0173-1#02-AAQ536#007
+       13 shapes  https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel
+       12 shapes  http://admin-shell.io/DEXPI/1/0/TagMapping
+       11 shapes  0173-1#02-AAQ680#010
+       11 shapes  0173-1#02-AAZ760#004
+
+HOW MUCH OF THE VOCABULARY IS REALLY PER-PRODUCT IDENTITY
+  6,633 of 248,325 shapes have an idShort with no 2+ digit run (2.7 %)
+  241,692 carry a number — OrdNo_1234567, Document07, ZMN codes: product data written into the idShort
+  214,113 occur exactly once in the whole corpus
+    sick                211,363 shapes,  99 % numbered
+    harting              23,475 shapes,  95 % numbered
+    phoenix_contact       5,496 shapes,  98 % numbered
+    festo                 3,145 shapes,  42 % numbered
+    r_stahl                 881 shapes,  91 % numbered
+    abb                     727 shapes,  94 % numbered
+    buerkert                322 shapes,   6 % numbered
+    wago                    272 shapes,   5 % numbered
+
+SEMANTIC IDS BY :DECLARES IN-DEGREE  (junk detection)
+  54035 shapes  https://admin-shell.io/idta/nameplate/3/0/Nameplate
+  54034 shapes  0173-1#01-AHX837#002
+  54033 shapes  0173-1#02-AAQ837#005
+  48883 shapes  0173-1#01-AHF578#003
+  22274 shapes  https://admin-shell.io/idta/HierarchicalStructures/Node/1/0
+   1804 shapes  0173-1#02-ABI500#001/0173-1#01-AHF579#001*01
+    276 shapes  0173-1#02-AAY811#001
+    146 shapes  0173-1#02-AAQ661#013
+    138 shapes  0173-1#02-ABI500#001/0173-1#01-AHF579#001
+    130 shapes  0173-1#02-AAQ672#013
+
+TOP-DEGREE NODES
+   212,761  :Vendor       sick
+   134,056  :Shape        AAQ373-Manufacturer
+   134,054  :Shape        AAO676-Internal_article_number
+   133,704  :Shape        AAW338-Manufacturer_product_designation
+   128,009  :Shape        AAN350-Part_relation_to_the_main_device
+   125,437  :Shape        AAO663-GTIN__EAN__code
+   103,754  :Shape        AAO677-Manufacturer_name
+    89,865  :Shape        AAN475-Number_of_parts_relations
+    76,666  :Shape        AAO057-Product_type
+    75,937  :Shape        AAN406-number_of_the_more-wire_conductors
+
+WRITES
+  BROADER(property)     2,706,281 rows   107.67 s
+  Concept                 124,803 rows     7.44 s
+  BROADER(prefix)          48,261 rows     1.47 s
+  Shape.occurrences             0 rows     0.62 s
+  RESOLVES_TO                   0 rows     0.17 s
+  Structure.occurrences          0 rows     0.06 s
+========================================================================

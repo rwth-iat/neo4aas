@@ -124,7 +124,13 @@ class AasxToNeo4jImporter:
         aasx.upload_aasx_file("path/to/file.aasx")
     """
 
-    def __init__(self, xml_importer: XmlToNeo4jImporter):
+    def __init__(self, xml_importer: XmlToNeo4jImporter | None = None):
+        """``xml_importer`` is what the *upload* methods delegate to.
+
+        It is optional because :meth:`iter_environments` only reads the package —
+        it needs no database at all, and the vocabulary importer
+        (:mod:`neo4aas.vocabulary`) reuses it that way.
+        """
         self.xml_importer = xml_importer
 
     def iter_environments(self, source: str | os.PathLike | io.IOBase) -> Iterator[Dict[str, Any]]:
