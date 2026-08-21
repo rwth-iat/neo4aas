@@ -136,7 +136,7 @@ class ShapeUse:
 
 @dataclass
 class SubmodelWalk:
-    """What one submodel contributes: shapes, roots, containment, adjacency.
+    """What one submodel contributes: shapes, roots and containment.
 
     Containment is counted *per submodel* so that ``:CONTAINS`` can carry two
     different supports — total occurrences, and the number of submodels the pair
@@ -151,8 +151,6 @@ class SubmodelWalk:
     roots: Counter = field(default_factory=Counter)
     #: ``(parent_shape_key, child_shape_key) -> occurrences in this submodel``.
     contains: Counter = field(default_factory=Counter)
-    #: ``(shape_key, next_shape_key) -> occurrences`` between adjacent siblings.
-    precedes: Counter = field(default_factory=Counter)
     elements: int = 0
 
 
@@ -214,8 +212,6 @@ class VocabularyRecords:
     contains: Counter = field(default_factory=Counter)
     #: ``(vendor, parent_key, child_key) -> submodels the pair was seen in``.
     contains_submodels: Counter = field(default_factory=Counter)
-    #: ``(vendor, key, next_key) -> occurrences`` — ``:PRECEDES`` support.
-    precedes: Counter = field(default_factory=Counter)
     #: ``(parent_key, child_key)`` pairs an IDTA template declares. No vendor: a
     #: template is not shipped by anyone, it is what shipping is measured against.
     template_contains: set = field(default_factory=set)
@@ -249,7 +245,6 @@ class VocabularyRecords:
         self.vendor_roots.update(other.vendor_roots)
         self.contains.update(other.contains)
         self.contains_submodels.update(other.contains_submodels)
-        self.precedes.update(other.precedes)
         self.template_contains |= other.template_contains
         self.vendors |= other.vendors
         self.documents += other.documents
@@ -282,7 +277,7 @@ class VocabularyRecords:
         if ref_type:
             rec.ref_types.add(ref_type)
 
-    def add_walk(self, walk: SubmodelWalk, vendor: str, *, with_precedes: bool = False) -> None:
+    def add_walk(self, walk: SubmodelWalk, vendor: str) -> None:
         """Fold one submodel's walk in under ``vendor``."""
         for use in walk.uses:
             self.add_shape(use.shape, vendor, use.category)
@@ -293,9 +288,6 @@ class VocabularyRecords:
         for pair, count in walk.contains.items():
             self.contains[(vendor, *pair)] += count
             self.contains_submodels[(vendor, *pair)] += 1
-        if with_precedes:
-            for pair, count in walk.precedes.items():
-                self.precedes[(vendor, *pair)] += count
         self.submodels += 1
         self.elements += walk.elements
 
@@ -376,7 +368,7 @@ def _child_elements(element: dict) -> Iterator[dict]:
 
 
 def walk_submodel(submodel: dict) -> SubmodelWalk:
-    """Walk a Submodel into shapes, roots, containment pairs and sibling adjacency.
+    """Walk a Submodel into shapes, roots and containment pairs.
 
     One pass produces everything the fold needs — this is the extractor's hot loop
     and the corpus is 150 000 documents.
@@ -399,23 +391,14 @@ def walk_submodel(submodel: dict) -> SubmodelWalk:
     def visit(element: dict) -> Shape:
         shape = record(element)
         walk.elements += 1
-        previous: Shape | None = None
         for child in _child_elements(element):
             child_shape = visit(child)
             walk.contains[(shape.key, child_shape.key)] += 1
-            if previous is not None:
-                walk.precedes[(previous.key, child_shape.key)] += 1
-            previous = child_shape
         return shape
 
     record(submodel, "Submodel")
-    previous: Shape | None = None
     for element in _child_elements(submodel):
-        shape = visit(element)
-        walk.roots[shape.key] += 1
-        if previous is not None:
-            walk.precedes[(previous.key, shape.key)] += 1
-        previous = shape
+        walk.roots[visit(element).key] += 1
     return walk
 
 
@@ -446,8 +429,7 @@ def iter_environments(path: Path) -> Iterator[dict]:
 # -- extraction ----------------------------------------------------------------
 
 
-def extract_environment(env: dict, vendor: str, into: VocabularyRecords, *,
-                        with_precedes: bool = False) -> None:
+def extract_environment(env: dict, vendor: str, into: VocabularyRecords) -> None:
     """Fold one Environment into ``into``. Only vocabulary comes out."""
     from neo4aas.vocabulary.concepts import concept_from_description
 
@@ -458,7 +440,7 @@ def extract_environment(env: dict, vendor: str, into: VocabularyRecords, *,
 
     for submodel in _as_list(env.get(ENV_SUBMODELS)):
         if isinstance(submodel, dict):
-            into.add_walk(walk_submodel(submodel), vendor, with_precedes=with_precedes)
+            into.add_walk(walk_submodel(submodel), vendor)
 
     for description in _as_list(env.get(ENV_CONCEPT_DESCRIPTIONS)):
         concept = concept_from_description(description)
@@ -468,7 +450,7 @@ def extract_environment(env: dict, vendor: str, into: VocabularyRecords, *,
     into.vendors.add(vendor)
 
 
-def extract_file(path: Path, vendor: str, *, with_precedes: bool = False) -> VocabularyRecords:
+def extract_file(path: Path, vendor: str) -> VocabularyRecords:
     """Fold one source file. A document that will not parse is reported, not raised."""
     records = VocabularyRecords()
     try:
@@ -478,7 +460,7 @@ def extract_file(path: Path, vendor: str, *, with_precedes: bool = False) -> Voc
         return records
     for env in environments:
         try:
-            extract_environment(env, vendor, records, with_precedes=with_precedes)
+            extract_environment(env, vendor, records)
         except Exception as exc:                                # noqa: BLE001 — boundary
             records.failures.append((str(path), f"{type(exc).__name__}: {exc}"))
     records.documents += 1
@@ -547,7 +529,6 @@ def _round_robin(files: list[tuple[Path, Path]]) -> list[tuple[Path, Path]]:
 def extract_paths(paths: Iterable[str | Path], *, vendor_from_dir: bool = False,
                   vendor: str = "unknown", limit: int | None = None,
                   workers: int = 1, stratify: bool = False,
-                  with_precedes: bool = False,
                   progress: Any = None) -> VocabularyRecords:
     """Fold every AAS source file under ``paths`` into one :class:`VocabularyRecords`.
 
@@ -559,31 +540,28 @@ def extract_paths(paths: Iterable[str | Path], *, vendor_from_dir: bool = False,
     """
     files = collect_files(paths, limit, stratify)
     if workers > 1 and len(files) > 1:
-        return _extract_parallel(files, vendor_from_dir, vendor, workers,
-                                 with_precedes, progress)
+        return _extract_parallel(files, vendor_from_dir, vendor, workers, progress)
 
     total = VocabularyRecords()
     for root, path in files:
-        total.merge(extract_file(path, vendor_of(path, root, vendor_from_dir, vendor),
-                                 with_precedes=with_precedes))
+        total.merge(extract_file(path, vendor_of(path, root, vendor_from_dir, vendor)))
         if progress:
             progress(total)
     return total
 
 
-def _extract_one(job: tuple[str, str, bool, str, bool]) -> VocabularyRecords:
+def _extract_one(job: tuple[str, str, bool, str]) -> VocabularyRecords:
     """Worker entry point. Module-level so it pickles."""
-    root, path, vendor_from_dir, fallback, with_precedes = job
+    root, path, vendor_from_dir, fallback = job
     file_path = Path(path)
-    return extract_file(file_path, vendor_of(file_path, Path(root), vendor_from_dir, fallback),
-                        with_precedes=with_precedes)
+    return extract_file(file_path, vendor_of(file_path, Path(root), vendor_from_dir, fallback))
 
 
 def _extract_parallel(files: list[tuple[Path, Path]], vendor_from_dir: bool, vendor: str,
-                      workers: int, with_precedes: bool, progress: Any) -> VocabularyRecords:
+                      workers: int, progress: Any) -> VocabularyRecords:
     from concurrent.futures import ProcessPoolExecutor
 
-    jobs = [(str(root), str(path), vendor_from_dir, vendor, with_precedes)
+    jobs = [(str(root), str(path), vendor_from_dir, vendor)
             for root, path in files]
     total = VocabularyRecords()
     chunk = max(1, min(256, len(jobs) // (workers * 8) or 1))

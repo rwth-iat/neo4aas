@@ -77,7 +77,7 @@ full() {
 
     echo "--- instances: $(find "$INSTANCES" -type f | wc -l | tr -d ' ') files ---"
     time "${VOCAB[@]}" import --uri "$URI" --vendor-from-dir --workers "$WORKERS" \
-        --precedes --report-json "$OUT/full-instances.json" "$INSTANCES" \
+        --report-json "$OUT/full-instances.json" "$INSTANCES" \
         2>"$OUT/full-progress.txt" > "$OUT/full-instances.txt"
     tail -32 "$OUT/full-instances.txt"
 

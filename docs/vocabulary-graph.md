@@ -37,7 +37,6 @@ Layout is **edges between shapes**, not a node per layout.
 
 (:Shape)-[:CONTAINS {vendor_names[], vendor_occurrences[], vendor_submodels[],
                      occurrences, submodels, vendors, in_template}]->(:Shape)
-(:Shape)-[:PRECEDES {vendor_names[], vendor_occurrences[], occurrences}]->(:Shape)
 ```
 
 ### Layout is a merge, and the merge is lossy
@@ -117,10 +116,6 @@ finding, not an ingest error. The report lists them.
 parent give it; materialising it is 1.9 **billion** pairs (`Σ n²`) on the 5 000-file load
 alone.
 
-**`:PRECEDES` is opt-in** (`--precedes`). Sibling adjacency with the same per-vendor
-support — it keeps *ordering* answerable at the schema level once the per-layout ordering
-is gone. Roughly the same edge count as `:CONTAINS`.
-
 **A property concept also gets a `:BROADER` edge to the ECLASS class that describes it.**
 The sketch defines `:BROADER` as CodedName prefix containment, which only relates
 *classes*. But most semanticIds in the corpus resolve to a *property*, and a property with
@@ -157,10 +152,6 @@ neo4aas vocab stats
 neo4aas vocab clear            # asks; --yes to skip
 ```
 
-Add `--precedes` to the instance load to record sibling order as
-`(:Shape)-[:PRECEDES]->(:Shape)` alongside containment — same walk, same per-vendor support,
-roughly the same edge count, off by default.
-
 Three loaders, each runnable alone and each idempotent. `--limit N` takes the first N files
 in path order; add `--stratify` to spread those N round-robin across vendors, which is what
 the growth measurements below use — 92 % of shapes are vendor-private, so the first N files
@@ -174,6 +165,12 @@ is reported and skipped — ingestion never crashes on bad input.
 ---
 
 ## Acceptance
+
+The runs pasted below were captured **before `:PRECEDES` was removed** and are kept as the
+historical record rather than hand-edited. The instance load in them ran with the then-existing
+`--precedes` flag, so every report still lists a `:PRECEDES` edge count and its write time; read
+the current model by subtracting those lines. Nothing else moves — `:PRECEDES` was a separate
+edge type written from the same walk, and it fed nothing.
 
 Reproduce with `scripts/bench/vocab_acceptance.sh {idempotence|tiers|full|traversals}`
 against a throwaway Neo4j 5 (`URI` overrides the default `bolt://localhost:7688`). The runs
@@ -551,14 +548,14 @@ What they show, in one line each:
 
 153 853 files / 153 852 shells / 724 204 submodels / **85 025 569 elements**, plus 194 IDTA
 templates and ECLASS 15.0 BASIC DE (all 40 segments), in **16 min 14 s** end to end
-(851 s + 2 s + 121 s across the three loaders), with `--precedes` on:
+(851 s + 2 s + 121 s across the three loaders):
 
 | | this model | the `:Structure` model |
 |---|---:|---:|
 | nodes | **379 375** | 418 543 |
-| edges | **5 720 148** | 12 735 100 |
-| layout edges | **51 665** `:CONTAINS` + 58 424 `:PRECEDES` | 7 085 871 `:HAS_SLOT` |
-| layout write time | **1.5 s** + 1.6 s | 137.3 s |
+| edges | **5 661 724** (5 720 148 as captured, less the 58 424 `:PRECEDES`) | 12 735 100 |
+| layout edges | **51 665** `:CONTAINS` | 7 085 871 `:HAS_SLOT` |
+| layout write time | **1.5 s** | 137.3 s |
 | documents that failed to parse | **1** | 1 |
 
 **The layout write went from 137 seconds to one and a half.** Nothing else in the instance
@@ -589,7 +586,7 @@ the other 153 852 loaded. That is the contract: ingestion never crashes on bad i
 ```
 ===== 3. FULL CORPUS =====
 
---- instances (--precedes): 153 853 files, wall clock 853.1 s ---
+--- instances: 153 853 files, wall clock 853.1 s ---
 
 ========================================================================
 vocabulary import

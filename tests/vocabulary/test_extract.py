@@ -168,19 +168,6 @@ def test_containment_records_both_supports():
     assert records.contains_submodels[key] == 2
 
 
-def test_precedes_is_opt_in():
-    from neo4aas.vocabulary.extract import extract_environment
-
-    env = {"submodels": [{"modelType": "Submodel", "idShort": "S", "submodelElements": [
-        {"modelType": "Property", "idShort": "A", "valueType": "xs:string"},
-        {"modelType": "Property", "idShort": "B", "valueType": "xs:string"}]}]}
-    off, on = VocabularyRecords(), VocabularyRecords()
-    extract_environment(env, "v", off)
-    extract_environment(env, "v", on, with_precedes=True)
-    assert not off.precedes
-    assert len(on.precedes) == 1
-
-
 def test_merge_is_associative_over_counters():
     env = {"submodels": [{"modelType": "Submodel", "idShort": "S",
                           "submodelElements": [PROPERTY]}]}

@@ -50,17 +50,18 @@ VOCABULARY_LABELS: tuple[str, ...] = (
 
 #: Relationship types this importer owns, for reporting and for ``clear``.
 VOCABULARY_RELATIONSHIPS: tuple[str, ...] = (
-    "DECLARES", "RESOLVES_TO", "BROADER", "CONTAINS", "PRECEDES",
+    "DECLARES", "RESOLVES_TO", "BROADER", "CONTAINS",
     "DECLARES_SHAPE", "USES",
 )
 
 
-#: Labels and relationship types this importer used to own. ``vocab clear`` removes
-#: them too, so upgrading a database written by the ``:Structure`` version is one
-#: ``clear`` and one re-import rather than a manual cleanup. Nothing else refers to
-#: them — they are not reported and never written.
+#: Labels and relationship types this importer used to own — the ``:Structure``
+#: layout model, and ``:PRECEDES`` sibling adjacency. ``vocab clear`` removes them
+#: too, so upgrading a database written by an earlier version is one ``clear`` and
+#: one re-import rather than a manual cleanup. Nothing else refers to them — they
+#: are not reported and never written.
 LEGACY_LABELS: tuple[str, ...] = ("Structure",)
-LEGACY_RELATIONSHIPS: tuple[str, ...] = ("HAS_SLOT", "SHIPS")
+LEGACY_RELATIONSHIPS: tuple[str, ...] = ("HAS_SLOT", "SHIPS", "PRECEDES")
 
 
 def constraint_statements() -> list[str]:

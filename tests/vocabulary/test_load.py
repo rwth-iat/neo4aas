@@ -284,17 +284,6 @@ def test_submodel_support_is_not_the_occurrence_count(loader, corpus_records):
     assert row["edges"] > 0 and row["repeated"] > 0
 
 
-def test_precedes_is_written_only_when_asked(loader, json_files):
-    plain = extract_paths(json_files, vendor="v")
-    loader.load_records(plain)
-    assert loader.run("MATCH ()-[r:PRECEDES]->() RETURN count(r) AS c")[0]["c"] == 0
-
-    ordered = extract_paths(json_files, vendor="v", with_precedes=True)
-    loader.load_records(ordered)
-    loader.finalize()
-    assert loader.run("MATCH ()-[r:PRECEDES]->() RETURN count(r) AS c")[0]["c"] > 0
-
-
 def test_top_level_shapes_are_counted_not_edged(loader, corpus_records):
     """Containment has no node to hang the top level off, so roots are a count."""
     loader.load_records(corpus_records)

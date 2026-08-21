@@ -13,7 +13,7 @@ super-node this design exists to avoid. But a counter and idempotence pull
 against each other: ``SET c = c + n`` doubles on re-import.
 
 ``:USES`` is easy, because there is one edge per vendor: the run *replaces* what
-that vendor's edge says. ``:CONTAINS`` and ``:PRECEDES`` are not — a single edge
+that vendor's edge says. ``:CONTAINS`` is not — a single edge
 is shared by every vendor that ships the pair, so a run cannot add to a number it
 has no way of telling apart from history, and it cannot replace the whole number
 either without erasing the other vendors.
@@ -365,7 +365,7 @@ class VocabularyLoader:
         self._write("USES", MERGE_VENDOR_USES % (occurrences, top_level), rows)
 
     def load_containment(self, records: VocabularyRecords) -> None:
-        """``:CONTAINS`` (and ``:PRECEDES`` when the fold carries it).
+        """``:CONTAINS``, the merged layout.
 
         This is the layout, merged over every submodel in the corpus. It replaces
         the per-layout node the first version of this importer had — 78x fewer
@@ -382,15 +382,6 @@ class VocabularyLoader:
                     _vendor_slot_clause("CONTAINS", ("occurrences", "submodels"),
                                         self.mode == "accumulate"),
                     contains)
-
-        precedes = [
-            {"vendor": vendor, "source": first, "target": second, "occurrences": count}
-            for (vendor, first, second), count in sorted(records.precedes.items())
-        ]
-        self._write("PRECEDES",
-                    _vendor_slot_clause("PRECEDES", ("occurrences",),
-                                        self.mode == "accumulate"),
-                    precedes)
 
         template = [{"source": parent, "target": child}
                     for parent, child in sorted(records.template_contains)]
@@ -451,7 +442,6 @@ class VocabularyLoader:
             ("Shape counters", RECOMPUTE_SHAPE_COUNTERS),
             ("CONTAINS support", RECOMPUTE_EDGE_SUPPORT % "CONTAINS"),
             ("CONTAINS submodels", RECOMPUTE_CONTAINS_SUBMODELS),
-            ("PRECEDES support", RECOMPUTE_EDGE_SUPPORT % "PRECEDES"),
         ):
             started = time.perf_counter()
             with self._session() as session:
