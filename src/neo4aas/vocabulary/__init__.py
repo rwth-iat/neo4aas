@@ -17,12 +17,16 @@ What is stored instead is the corpus's *vocabulary* — the distinct things:
 node             is one distinct …                                      measured
 ===============  ====================================================  ==========
 ``:Shape``       ``(idShort, semanticId, modelType, valueType)``         4 686
-``:Structure``   ordered shape sequence of a submodel                    1 185
 ``:SemanticId``  declared semantic identifier, resolved or not           3 115
 ``:Concept``     dictionary entry (ECLASS, IEC CDD, embedded CD)       ~350 000
 ``:Template``    published/deprecated IDTA submodel template                58
 ``:Vendor``      corpus subdirectory                                          8
 ===============  ====================================================  ==========
+
+Layout is not a node. ``(:Shape)-[:CONTAINS]->(:Shape)``, merged over every
+submodel in the corpus and carrying per-vendor support, replaces the per-layout
+node an earlier version had: 78x fewer edges, at the cost of no longer being able
+to enumerate layouts. See :mod:`neo4aas.vocabulary.extract`.
 
 Those counts come from 3 000 real shells / 860 260 elements
 (``discaas/docs/findings/13-redundancy-and-the-storage-unit.md`` §10). They are
@@ -33,7 +37,7 @@ instances have leaked in and the design is broken.
 Modules
 -------
 
-``extract``    documents → shape/structure/vendor records. Pure: no driver.
+``extract``    documents → shape/containment/vendor records. Pure: no driver.
 ``concepts``   ECLASS OntoML + AAS-embedded ConceptDescriptions → ``:Concept``.
 ``templates``  IDTA submodel templates → ``:Template`` + ``:DECLARES_SHAPE``.
 ``schema``     the uniqueness constraints every ``MERGE`` needs to not be a scan.
@@ -45,21 +49,19 @@ Modules
 from neo4aas.vocabulary.extract import (
     Shape,
     ShapeUse,
-    Slot,
-    Structure,
+    SubmodelWalk,
     VocabularyRecords,
     extract_paths,
     shape_key,
-    structure_key,
+    walk_submodel,
 )
 
 __all__ = [
     "Shape",
     "ShapeUse",
-    "Slot",
-    "Structure",
+    "SubmodelWalk",
     "VocabularyRecords",
     "extract_paths",
     "shape_key",
-    "structure_key",
+    "walk_submodel",
 ]

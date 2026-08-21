@@ -83,11 +83,35 @@ TOP_DEGREE_QUERY = """
 MATCH (n)
 WHERE any(l IN labels(n) WHERE l IN $labels)
 RETURN labels(n) AS labels,
-       coalesce(n.value, n.irdi, n.name, n.template_id, n.id_short, n.shape_key,
-                n.structure_key) AS key,
+       coalesce(n.value, n.irdi, n.name, n.template_id, n.id_short, n.shape_key) AS key,
        count { (n)--() } AS degree
 ORDER BY degree DESC
 LIMIT $limit
+"""
+
+#: The layout half of the graph, and the honest accounting of what merging cost.
+#:
+#: ``:CONTAINS`` is the union of every submodel's layout, so a parent with several
+#: children cannot say which combinations of them actually co-occur. What it *can*
+#: say is how well supported each relation is, and that is what separates schema
+#: from noise: a pair seen in twelve thousand submodels is real, one seen once may
+#: be a typo. An edge with zero occurrences is declared by an IDTA template and
+#: implemented by nobody.
+CONTAINMENT_QUERY = """
+MATCH ()-[e:CONTAINS]->()
+RETURN count(e) AS edges,
+       sum(CASE WHEN coalesce(e.vendors, 0) > 1 THEN 1 ELSE 0 END) AS multi_vendor,
+       sum(CASE WHEN coalesce(e.submodels, 0) = 1 THEN 1 ELSE 0 END) AS seen_once,
+       sum(CASE WHEN coalesce(e.in_template, false) THEN 1 ELSE 0 END) AS in_template,
+       sum(CASE WHEN coalesce(e.occurrences, 0) = 0 THEN 1 ELSE 0 END) AS declared_only
+"""
+
+AMBIGUITY_QUERY = """
+MATCH (p:Shape)-[e:CONTAINS]->()
+WITH p, count(e) AS children
+RETURN count(p) AS parents,
+       sum(CASE WHEN children > 1 THEN 1 ELSE 0 END) AS branching,
+       max(children) AS widest
 """
 
 DECLARES_DEGREE_QUERY = """
@@ -117,6 +141,8 @@ class RunReport:
     resolution: dict[str, Any] = field(default_factory=dict)
     resolution_used: dict[str, Any] = field(default_factory=dict)
     quality: dict[str, Any] = field(default_factory=dict)
+    containment: dict[str, Any] = field(default_factory=dict)
+    ambiguity: dict[str, Any] = field(default_factory=dict)
     numbered_by_vendor: list[dict] = field(default_factory=list)
     unresolved: list[dict] = field(default_factory=list)
     top_degree: list[dict] = field(default_factory=list)
@@ -173,6 +199,23 @@ class RunReport:
                     f"{used_total:,} ({used_rate:.1f} %)")
             for row in self.unresolved:
                 add(f"    {row['shapes']:>5} shapes  {row['value']}")
+
+        if self.containment.get("edges"):
+            edges = self.containment["edges"]
+            add("")
+            add("CONTAINMENT — THE MERGED LAYOUT")
+            add(f"  {edges:,} :CONTAINS edges replace a node per layout")
+            add(f"  {self.containment['multi_vendor']:,} are shipped by more than one vendor")
+            add(f"  {self.containment['seen_once']:,} were seen in exactly one submodel "
+                f"— support, not schema")
+            add(f"  {self.containment['in_template']:,} are declared by an IDTA template, "
+                f"of which {self.containment['declared_only']:,} no vendor implements")
+            if self.ambiguity.get("parents"):
+                add(f"  {self.ambiguity['branching']:,} of {self.ambiguity['parents']:,} "
+                    f"parents have more than one child (widest: "
+                    f"{self.ambiguity['widest']:,}) — the merge cannot say which")
+                add("  combinations of those children actually co-occur; the support "
+                    "counters are what is left to rank them by.")
 
         if self.quality.get("shapes"):
             shapes = self.quality["shapes"]
@@ -231,6 +274,12 @@ def collect(loader, report: RunReport, *, top: int = TOP_DEGREE_LIMIT,
     if used:
         report.resolution_used = {"total": used[0]["total"],
                                   "resolved": used[0]["resolved"]}
+    containment = loader.run(CONTAINMENT_QUERY)
+    if containment:
+        report.containment = dict(containment[0])
+    ambiguity = loader.run(AMBIGUITY_QUERY)
+    if ambiguity:
+        report.ambiguity = dict(ambiguity[0])
     quality = loader.run(VOCABULARY_QUALITY_QUERY)
     if quality:
         report.quality = dict(quality[0])

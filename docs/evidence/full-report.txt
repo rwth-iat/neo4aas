@@ -1,7 +1,7 @@
 ========================================================================
 vocabulary import
 ========================================================================
-wall clock               140.7 s
+wall clock               120.8 s
 files                        0
 documents parsed             0
 documents failed             0
@@ -12,17 +12,16 @@ elements seen                0
 NODES
   Shape                 248,325
   Concept               121,014
-  Structure              39,168
   SemanticId              9,834
   Template                  194
   Vendor                      8
 
 EDGES
-  HAS_SLOT            7,085,871
   BROADER             5,098,901
   DECLARES              248,160
   USES                  245,681
-  SHIPS                  39,170
+  PRECEDES               58,424
+  CONTAINS               51,665
   DECLARES_SHAPE          8,664
   RESOLVES_TO             8,653
 
@@ -56,6 +55,14 @@ SEMANTIC ID RESOLUTION
        11 shapes  0173-1#02-AAQ680#010
        11 shapes  0173-1#02-AAZ760#004
 
+CONTAINMENT — THE MERGED LAYOUT
+  51,665 :CONTAINS edges replace a node per layout
+  200 are shipped by more than one vendor
+  4,439 were seen in exactly one submodel — support, not schema
+  4,662 are declared by an IDTA template, of which 4,489 no vendor implements
+  4,312 of 4,679 parents have more than one child (widest: 22,233) — the merge cannot say which
+  combinations of those children actually co-occur; the support counters are what is left to rank them by.
+
 HOW MUCH OF THE VOCABULARY IS REALLY PER-PRODUCT IDENTITY
   6,633 of 248,325 shapes have an idShort with no 2+ digit run (2.7 %)
   241,692 carry a number — OrdNo_1234567, Document07, ZMN codes: product data written into the idShort
@@ -82,22 +89,24 @@ SEMANTIC IDS BY :DECLARES IN-DEGREE  (junk detection)
     130 shapes  0173-1#02-AAQ672#013
 
 TOP-DEGREE NODES
-   212,761  :Vendor       sick
-   134,056  :Shape        AAQ373-Manufacturer
-   134,054  :Shape        AAO676-Internal_article_number
-   133,704  :Shape        AAW338-Manufacturer_product_designation
-   128,009  :Shape        AAN350-Part_relation_to_the_main_device
-   125,437  :Shape        AAO663-GTIN__EAN__code
-   103,754  :Shape        AAO677-Manufacturer_name
-    89,865  :Shape        AAN475-Number_of_parts_relations
-    76,666  :Shape        AAO057-Product_type
-    75,937  :Shape        AAN406-number_of_the_more-wire_conductors
+   211,363  :Vendor       sick
+    54,036  :SemanticId   https://admin-shell.io/idta/nameplate/3/0/Nameplate
+    54,035  :SemanticId   0173-1#01-AHX837#002
+    54,034  :SemanticId   0173-1#02-AAQ837#005
+    48,885  :SemanticId   0173-1#01-AHF578#003
+    41,715  :Concept      0173-1#02-AAU731#002
+    41,715  :Concept      0173-1#02-AAQ326#002
+    41,715  :Concept      0173-1#02-AAW338#001
+    41,715  :Concept      0173-1#02-AAO677#002
+    41,715  :Concept      0173-1#02-AAU731#001
 
 WRITES
-  BROADER(property)     2,706,281 rows   107.67 s
-  Concept                 124,803 rows     7.44 s
-  BROADER(prefix)          48,261 rows     1.47 s
-  Shape.occurrences             0 rows     0.62 s
-  RESOLVES_TO                   0 rows     0.17 s
-  Structure.occurrences          0 rows     0.06 s
+  BROADER(property)     2,706,281 rows    89.07 s
+  Concept                 124,803 rows     6.28 s
+  BROADER(prefix)          48,261 rows     1.21 s
+  Shape counters                0 rows     0.44 s
+  CONTAINS support              0 rows     0.14 s
+  PRECEDES support              0 rows     0.08 s
+  CONTAINS submodels            0 rows     0.08 s
+  RESOLVES_TO                   0 rows     0.08 s
 ========================================================================

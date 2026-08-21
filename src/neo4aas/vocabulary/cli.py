@@ -55,6 +55,8 @@ def build_parser() -> argparse.ArgumentParser:
     imp.add_argument("--eclass", type=Path, help="root of an ECLASS OntoML export")
     imp.add_argument("--eclass-segments", default="",
                      help="comma-separated ECLASS segment numbers, e.g. 27,13")
+    imp.add_argument("--precedes", action="store_true",
+                     help="also record (:Shape)-[:PRECEDES]->(:Shape) sibling order")
     imp.add_argument("--no-property-class-edges", action="store_true",
                      help="skip the property->class :BROADER edges from ECLASS")
     imp.add_argument("--mode", choices=("replace", "accumulate"), default="replace",
@@ -100,7 +102,7 @@ def _progress(report: RunReport, every: int = 2000):
             state["last"] = records.documents
             print(f"  … {records.documents:,} documents, "
                   f"{len(records.shapes):,} shapes, "
-                  f"{len(records.structures):,} structures", file=sys.stderr)
+                  f"{len(records.contains):,} containment pairs", file=sys.stderr)
 
     return tick
 
@@ -116,6 +118,7 @@ def command_import(args) -> int:
         records = extract_paths(args.paths, vendor_from_dir=args.vendor_from_dir,
                                 vendor=args.vendor, limit=args.limit,
                                 workers=args.workers, stratify=args.stratify,
+                                with_precedes=args.precedes,
                                 progress=_progress(report))
 
     templates = []
@@ -149,9 +152,13 @@ def command_import(args) -> int:
 
             concepts.update(row["irdi"] for row in concepts_from_eclass(eclass_result))
         report.nodes = {
-            "Shape": len(records.shapes), "Structure": len(records.structures),
+            "Shape": len(records.shapes),
             "SemanticId": len(records.semantic_ids), "Concept": len(concepts),
             "Template": len(templates), "Vendor": len(records.vendors),
+        }
+        report.relationships = {
+            "CONTAINS": len({(p, c) for _, p, c in records.contains}),
+            "PRECEDES": len({(a, b) for _, a, b in records.precedes}),
         }
         report.seconds = time.perf_counter() - started
         print(report.render())

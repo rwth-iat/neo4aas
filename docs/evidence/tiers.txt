@@ -1,6 +1,6 @@
 
 ===== 2. SUBLINEARITY — node count against file count =====
-   files    elements    Shape Shape/no#  Structure  SemanticId  seconds
-    1000      853035     3535       814        800        1421     22.7
-   10000     7055942    11468      1104       4440        3217     78.8
-   50000    28438821    48846      2256      19507        5593    291.8
+   files    elements    Shape Shape/no#   CONTAINS  SemanticId  seconds
+    1000      853035     3535       814       7112        1421     15.8
+   10000     7055942    11468      1104      12868        3217     66.3
+   50000    28438821    48846      2256      31410        5593    280.0

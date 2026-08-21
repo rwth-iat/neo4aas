@@ -1,7 +1,7 @@
 ========================================================================
 vocabulary import
 ========================================================================
-wall clock               829.2 s
+wall clock               850.5 s
 files                  153,853
 documents parsed       153,852
 documents failed             1
@@ -12,18 +12,17 @@ vendors               abb, buerkert, festo, harting, phoenix_contact, r_stahl, s
 
 NODES
   Shape                 245,231
-  Structure              39,168
   SemanticId              7,099
   Concept                 3,184
   Vendor                      8
   Template                    0
-  TOTAL                 294,690   (288.5 elements per node)
+  TOTAL                 255,522   (332.8 elements per node)
 
 EDGES
-  HAS_SLOT            7,085,871
   USES                  245,681
   DECLARES              245,132
-  SHIPS                  39,170
+  PRECEDES               58,424
+  CONTAINS               47,176
   RESOLVES_TO             4,233
   BROADER                     0
   DECLARES_SHAPE              0
@@ -58,6 +57,14 @@ SEMANTIC ID RESOLUTION
        11 shapes  0173-1#02-AAZ760#004
        10 shapes  0173-1#02-AAQ562#012
 
+CONTAINMENT — THE MERGED LAYOUT
+  47,176 :CONTAINS edges replace a node per layout
+  200 are shipped by more than one vendor
+  4,439 were seen in exactly one submodel — support, not schema
+  0 are declared by an IDTA template, of which 0 no vendor implements
+  3,601 of 3,743 parents have more than one child (widest: 22,233) — the merge cannot say which
+  combinations of those children actually co-occur; the support counters are what is left to rank them by.
+
 HOW MUCH OF THE VOCABULARY IS REALLY PER-PRODUCT IDENTITY
   3,713 of 245,231 shapes have an idShort with no 2+ digit run (1.5 %)
   241,518 carry a number — OrdNo_1234567, Document07, ZMN codes: product data written into the idShort
@@ -84,29 +91,30 @@ SEMANTIC IDS BY :DECLARES IN-DEGREE  (junk detection)
     130 shapes  0173-1#02-AAQ672#013
 
 TOP-DEGREE NODES
-   212,761  :Vendor       sick
-   134,056  :Shape        AAQ373-Manufacturer
-   134,054  :Shape        AAO676-Internal_article_number
-   133,704  :Shape        AAW338-Manufacturer_product_designation
-   128,009  :Shape        AAN350-Part_relation_to_the_main_device
-   125,437  :Shape        AAO663-GTIN__EAN__code
-   103,754  :Shape        AAO677-Manufacturer_name
-    89,865  :Shape        AAN475-Number_of_parts_relations
-    76,666  :Shape        AAO057-Product_type
-    75,937  :Shape        AAN406-number_of_the_more-wire_conductors
+   211,363  :Vendor       sick
+    54,035  :SemanticId   https://admin-shell.io/idta/nameplate/3/0/Nameplate
+    54,035  :SemanticId   0173-1#01-AHX837#002
+    54,034  :SemanticId   0173-1#02-AAQ837#005
+    48,885  :SemanticId   0173-1#01-AHF578#003
+    23,475  :Vendor       harting
+    22,275  :SemanticId   https://admin-shell.io/idta/HierarchicalStructures/Node/1/0
+    22,236  :Shape        EntryNode
+     5,496  :Vendor       phoenix_contact
+     3,301  :Shape        TechnicalProperties
 
 WRITES
-  HAS_SLOT              7,085,871 rows   137.25 s
-  Shape                   245,231 rows     5.91 s
-  USES                    245,681 rows     4.66 s
-  DECLARES                245,132 rows     3.65 s
-  Shape.occurrences             0 rows     1.41 s
-  SHIPS                    39,170 rows     0.75 s
-  Structure                39,168 rows     0.65 s
-  Structure.occurrences          0 rows     0.20 s
-  SemanticId                7,099 rows     0.18 s
-  Concept                   3,184 rows     0.14 s
-  RESOLVES_TO                   0 rows     0.04 s
+  Shape                   245,231 rows     9.44 s
+  USES                    245,681 rows     5.63 s
+  DECLARES                245,132 rows     4.37 s
+  Shape counters                0 rows     2.50 s
+  PRECEDES                 58,672 rows     1.55 s
+  CONTAINS                 47,440 rows     1.52 s
+  CONTAINS submodels            0 rows     0.92 s
+  CONTAINS support              0 rows     0.50 s
+  PRECEDES support              0 rows     0.45 s
+  SemanticId                7,099 rows     0.40 s
+  Concept                   3,184 rows     0.26 s
+  RESOLVES_TO                   0 rows     0.08 s
 
 FAILED DOCUMENTS (first 1)
   ParseError: junk after document element: line 4505, column 14

@@ -24,9 +24,8 @@ from neo4aas.vocabulary.extract import (
     iter_environments,
     semantic_id_of,
     shape_key,
-    structure_key,
-    structure_of,
     vendor_of,
+    walk_submodel,
 )
 
 PROPERTY = {"modelType": "Property", "idShort": "Voltage", "valueType": "xs:float",
@@ -54,8 +53,6 @@ def test_keys_are_pinned_to_known_digests():
     """
     assert shape_key("Voltage", None, "Property", "xs:float") == \
         "f8f80f9e7e04bdc4138711f7a625a3a3697ab7efb6e0df86f4ed9839082f336f"
-    assert structure_key(["a", "b"]) == \
-        "0473ef2dc0d324ab659d3580c1134e9d812035905c4781fdd6d529b0c6860e13"
 
 
 def test_shape_key_separates_the_components():
@@ -70,23 +67,19 @@ def test_shape_key_does_not_normalise():
     assert shape_key(" Voltage", None, "P", None) != shape_key("Voltage", None, "P", None)
 
 
-def test_structure_key_is_order_sensitive():
-    assert structure_key(["a", "b"]) != structure_key(["b", "a"])
-    assert structure_key(["a", "b"]) == structure_key(["a", "b"])
-
-
 def test_value_is_not_part_of_the_shape():
     """The one rule: nothing that varies per product enters the graph."""
     other = dict(PROPERTY, value="400")
     assert Shape.of(other).key == Shape.of(PROPERTY).key
 
 
-def test_id_and_description_are_not_part_of_the_structure():
+def test_id_and_description_are_not_part_of_the_layout():
     a = {"modelType": "Submodel", "idShort": "Nameplate", "id": "urn:a",
          "description": [{"language": "en", "text": "one"}], "submodelElements": [PROPERTY]}
     b = {"modelType": "Submodel", "idShort": "Nameplate", "id": "urn:b",
          "description": [{"language": "de", "text": "zwei"}], "submodelElements": [PROPERTY]}
-    assert structure_of(a)[0].key == structure_of(b)[0].key
+    assert walk_submodel(a).contains == walk_submodel(b).contains
+    assert walk_submodel(a).roots == walk_submodel(b).roots
 
 
 # -- walking -------------------------------------------------------------------
@@ -103,8 +96,9 @@ def test_multi_language_property_value_is_not_a_child():
     mlp = {"modelType": "MultiLanguageProperty", "idShort": "Name",
            "value": [{"language": "en", "text": "Pump"}]}
     submodel = {"modelType": "Submodel", "idShort": "N", "submodelElements": [mlp]}
-    structure, _ = structure_of(submodel)
-    assert structure.element_count == 1
+    walk = walk_submodel(submodel)
+    assert walk.elements == 1
+    assert not walk.contains
 
 
 def test_nested_containers_are_walked():
@@ -113,38 +107,78 @@ def test_nested_containers_are_walked():
                   "value": [inner]}
     entity = {"modelType": "Entity", "idShort": "E", "statements": [collection]}
     submodel = {"modelType": "Submodel", "idShort": "S", "submodelElements": [entity]}
-    structure, uses = structure_of(submodel)
-    assert [s.depth for s in structure.slots] == [0, 1, 2]
-    assert [s.parent_ord for s in structure.slots] == [None, 0, 1]
-    assert structure.element_count == 3 and structure.slot_count == 1
-    assert [use.shape.model_type for use in uses] == [
+    walk = walk_submodel(submodel)
+    assert walk.elements == 3
+    assert [use.shape.model_type for use in walk.uses] == [
         "Submodel", "Entity", "SubmodelElementCollection", "Property"]
+    shapes = {use.shape.model_type: use.shape.key for use in walk.uses}
+    assert walk.contains == {
+        (shapes["Entity"], shapes["SubmodelElementCollection"]): 1,
+        (shapes["SubmodelElementCollection"], shapes["Property"]): 1,
+    }
+    assert list(walk.roots) == [shapes["Entity"]]
 
 
 def test_operation_variables_are_walked():
     variable = {"value": {"modelType": "Property", "idShort": "In", "valueType": "xs:int"}}
     operation = {"modelType": "Operation", "idShort": "Op", "inputVariables": [variable]}
     submodel = {"modelType": "Submodel", "idShort": "S", "submodelElements": [operation]}
-    structure, _ = structure_of(submodel)
-    assert structure.element_count == 2
+    assert walk_submodel(submodel).elements == 2
 
 
-def test_the_submodel_is_a_shape_but_not_a_slot():
-    """A layout must not carry a serial number: several vendors put a per-product
-    token in the submodel's idShort, so a head slot gives every product its own
-    structure. The submodel's shape is still recorded — it just is not the layout."""
+def test_the_submodel_is_a_shape_but_never_a_containment_parent():
+    """A layout must not carry a serial number.
+
+    Several vendors put a per-product token in the submodel's idShort — SICK ships
+    ``Nameplate_0226…`` — so rooting containment at the submodel's shape would give
+    every product its own subtree and defeat the merge. The submodel's shape is
+    still recorded, because it declares the submodel's semanticId; the top level is
+    a count instead."""
     a = {"modelType": "Submodel", "idShort": "Nameplate_0226303791c8",
          "submodelElements": [PROPERTY]}
     b = {"modelType": "Submodel", "idShort": "Nameplate_04d188107e6b",
          "submodelElements": [PROPERTY]}
-    (structure_a, uses_a), (structure_b, _) = structure_of(a), structure_of(b)
-    assert structure_a.key == structure_b.key
-    assert structure_a.slots[0].depth == 0 and structure_a.slots[0].parent_ord is None
-    assert uses_a[0].shape.model_type == "Submodel"
-    assert uses_a[0].shape.id_short == "Nameplate_0226303791c8"
+    walk_a, walk_b = walk_submodel(a), walk_submodel(b)
+    assert walk_a.roots == walk_b.roots
+    assert walk_a.contains == walk_b.contains == {}
+    assert walk_a.uses[0].shape.model_type == "Submodel"
+    assert walk_a.uses[0].shape.id_short == "Nameplate_0226303791c8"
+    assert walk_a.uses[0].shape.key not in {p for p, _ in walk_a.contains}
 
 
 # -- folding -------------------------------------------------------------------
+
+
+def test_containment_records_both_supports():
+    """Occurrences and submodel support are different numbers, and both matter:
+    the second is what tells a schema relation from a one-off."""
+    from neo4aas.vocabulary.extract import extract_environment
+
+    element = {"modelType": "Property", "idShort": "Doc", "valueType": "xs:string"}
+    collection = {"modelType": "SubmodelElementCollection", "idShort": "Docs",
+                  "value": [element, dict(element)]}
+    env = {"submodels": [{"modelType": "Submodel", "idShort": "S",
+                          "submodelElements": [collection]}]}
+    records = VocabularyRecords()
+    extract_environment(env, "v", records)
+    extract_environment(env, "v", records)
+
+    (key, occurrences), = records.contains.items()
+    assert occurrences == 4                     # two children, two submodels
+    assert records.contains_submodels[key] == 2
+
+
+def test_precedes_is_opt_in():
+    from neo4aas.vocabulary.extract import extract_environment
+
+    env = {"submodels": [{"modelType": "Submodel", "idShort": "S", "submodelElements": [
+        {"modelType": "Property", "idShort": "A", "valueType": "xs:string"},
+        {"modelType": "Property", "idShort": "B", "valueType": "xs:string"}]}]}
+    off, on = VocabularyRecords(), VocabularyRecords()
+    extract_environment(env, "v", off)
+    extract_environment(env, "v", on, with_precedes=True)
+    assert not off.precedes
+    assert len(on.precedes) == 1
 
 
 def test_merge_is_associative_over_counters():
@@ -160,6 +194,7 @@ def test_merge_is_associative_over_counters():
     merged = VocabularyRecords().merge(left).merge(right)
     assert merged.shapes.keys() == both.shapes.keys()
     assert merged.vendor_shapes == both.vendor_shapes
+    assert merged.contains == both.contains
     assert sum(r.occurrences for r in merged.shapes.values()) == \
            sum(r.occurrences for r in both.shapes.values())
 
@@ -206,6 +241,13 @@ def test_every_corpus_serialization_extracts(fixture, request):
     assert 0 < len(records.shapes) < records.elements
 
 
+def test_layout_is_far_smaller_than_the_documents(json_files, xml_files):
+    """The merged containment graph is bounded by the vocabulary, not the corpus."""
+    records = extract_paths(list(json_files) + list(xml_files), vendor="v")
+    pairs = {(parent, child) for _, parent, child in records.contains}
+    assert 0 < len(pairs) < records.elements
+
+
 def test_shapes_are_reused_hundreds_of_times(json_files, xml_files):
     """The measurement the design rests on: ~300x reuse, so shapes << elements."""
     records = extract_paths(list(json_files) + list(xml_files), vendor="v")
@@ -243,5 +285,5 @@ def test_extraction_in_worker_processes_matches_serial(json_files):
     serial = extract_paths(json_files, vendor="v")
     parallel = extract_paths(json_files, vendor="v", workers=2)
     assert serial.shapes.keys() == parallel.shapes.keys()
-    assert serial.structures.keys() == parallel.structures.keys()
+    assert serial.contains == parallel.contains
     assert serial.vendor_shapes == parallel.vendor_shapes

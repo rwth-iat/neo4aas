@@ -4,9 +4,9 @@ A library for mapping [Asset Administration Shell (AAS)](https://industrialdigit
 
 It ships **two** importers. `neo4aas.core` stores AAS *instances* — shells, submodels,
 elements — with full round-trip fidelity. `neo4aas.vocabulary` stores what a corpus *says*:
-element shapes, submodel structures, semantic concepts, IDTA templates and vendors, and **no
-instances at all**, so its size tracks the corpus's vocabulary rather than its volume
-(~360 000 nodes whether the corpus holds 3 000 shells or 300 000). See
+element shapes, how they nest, semantic concepts, IDTA templates and vendors, and **no
+instances at all**, so its size tracks the corpus's vocabulary rather than its volume — the
+whole reference corpus (153 853 files, 85 million elements) is 379 375 nodes. See
 [docs/vocabulary-graph.md](docs/vocabulary-graph.md).
 
 ---
@@ -36,7 +36,7 @@ src/neo4aas/
 │       ├── ast_to_cypher.py     # AST → Cypher (compiler)
 │       └── aasql_to_cypher.py   # Entry point: convert_aasql_to_cypher()
 ├── vocabulary/                  # THE SECOND IMPORTER — neo4j driver only
-│   ├── extract.py               # documents -> shape/structure/vendor records (pure)
+│   ├── extract.py               # documents -> shape/containment/vendor records (pure)
 │   ├── concepts.py              # ECLASS + embedded ConceptDescriptions -> :Concept
 │   ├── templates.py             # IDTA submodel templates -> :Template
 │   ├── schema.py                # constraints and indexes

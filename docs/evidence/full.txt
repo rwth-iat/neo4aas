@@ -1,11 +1,11 @@
 ===== 3. FULL CORPUS =====
 
---- instances: 153 853 files, wall clock 829.2 s ---
+--- instances (--precedes): 153 853 files, wall clock 853.1 s ---
 
 ========================================================================
 vocabulary import
 ========================================================================
-wall clock               829.2 s
+wall clock               850.5 s
 files                  153,853
 documents parsed       153,852
 documents failed             1
@@ -16,56 +16,55 @@ vendors               abb, buerkert, festo, harting, phoenix_contact, r_stahl, s
 
 NODES
   Shape                 245,231
-  Structure              39,168
   SemanticId              7,099
   Concept                 3,184
   Vendor                      8
   Template                    0
-  TOTAL                 294,690   (288.5 elements per node)
+  TOTAL                 255,522   (332.8 elements per node)
 
 EDGES
-  HAS_SLOT            7,085,871
   USES                  245,681
   DECLARES              245,132
-  SHIPS                  39,170
+  PRECEDES               58,424
+  CONTAINS               47,176
   RESOLVES_TO             4,233
   BROADER                     0
   DECLARES_SHAPE              0
 
 WRITES
-  HAS_SLOT              7,085,871 rows   137.25 s
-  Shape                   245,231 rows     5.91 s
-  USES                    245,681 rows     4.66 s
-  DECLARES                245,132 rows     3.65 s
-  Shape.occurrences             0 rows     1.41 s
-  SHIPS                    39,170 rows     0.75 s
-  Structure                39,168 rows     0.65 s
-  Structure.occurrences          0 rows     0.20 s
-  SemanticId                7,099 rows     0.18 s
-  Concept                   3,184 rows     0.14 s
-  RESOLVES_TO                   0 rows     0.04 s
+  Shape                   245,231 rows     9.44 s
+  USES                    245,681 rows     5.63 s
+  DECLARES                245,132 rows     4.37 s
+  Shape counters                0 rows     2.50 s
+  PRECEDES                 58,672 rows     1.55 s
+  CONTAINS                 47,440 rows     1.52 s
+  CONTAINS submodels            0 rows     0.92 s
+  CONTAINS support              0 rows     0.50 s
+  PRECEDES support              0 rows     0.45 s
+  SemanticId                7,099 rows     0.40 s
+  Concept                   3,184 rows     0.26 s
+  RESOLVES_TO                   0 rows     0.08 s
 
 FAILED DOCUMENTS (first 1)
   ParseError: junk after document element: line 4505, column 14
     /Users/igorgarmaev/PycharmProjects/aas-corpus/instances/vendors/buerkert/loose/Burkert_0142_000067684_type_20260401_112138CET.xml.gz
 ========================================================================
 
---- templates: 194 templates, wall clock 1.9 s ---
+--- templates: 194 templates ---
 
 NODES
   Shape                 248,325
-  Structure              39,168
   SemanticId              9,834
   Concept                 3,184
   Template                  194
   Vendor                      8
 
---- dictionary: ECLASS 15.0 BASIC DE, all 40 segments, wall clock 140.7 s ---
+--- dictionary: ECLASS 15.0 BASIC DE, all 40 segments ---
 
 ========================================================================
 vocabulary import
 ========================================================================
-wall clock               140.7 s
+wall clock               120.8 s
 files                        0
 documents parsed             0
 documents failed             0
@@ -76,25 +75,25 @@ elements seen                0
 NODES
   Shape                 248,325
   Concept               121,014
-  Structure              39,168
   SemanticId              9,834
   Template                  194
   Vendor                      8
 
 EDGES
-  HAS_SLOT            7,085,871
   BROADER             5,098,901
   DECLARES              248,160
   USES                  245,681
-  SHIPS                  39,170
+  PRECEDES               58,424
+  CONTAINS               51,665
   DECLARES_SHAPE          8,664
-  RESOLVES_TO             8,653
 
 WRITES
-  BROADER(property)     2,706,281 rows   107.67 s
-  Concept                 124,803 rows     7.44 s
-  BROADER(prefix)          48,261 rows     1.47 s
-  Shape.occurrences             0 rows     0.62 s
-  RESOLVES_TO                   0 rows     0.17 s
-  Structure.occurrences          0 rows     0.06 s
+  BROADER(property)     2,706,281 rows    89.07 s
+  Concept                 124,803 rows     6.28 s
+  BROADER(prefix)          48,261 rows     1.21 s
+  Shape counters                0 rows     0.44 s
+  CONTAINS support              0 rows     0.14 s
+  PRECEDES support              0 rows     0.08 s
+  CONTAINS submodels            0 rows     0.08 s
+  RESOLVES_TO                   0 rows     0.08 s
 ========================================================================

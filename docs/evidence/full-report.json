@@ -1,6 +1,6 @@
 {
-  "started": 1787268932.464771,
-  "seconds": 140.7362018749991,
+  "started": 1787323184.7831528,
+  "seconds": 120.76015316700796,
   "files": 0,
   "documents": 0,
   "failed_documents": 0,
@@ -11,7 +11,6 @@
   "vendors": [],
   "nodes": {
     "Shape": 248325,
-    "Structure": 39168,
     "SemanticId": 9834,
     "Concept": 121014,
     "Template": 194,
@@ -21,10 +20,10 @@
     "DECLARES": 248160,
     "RESOLVES_TO": 8653,
     "BROADER": 5098901,
-    "HAS_SLOT": 7085871,
+    "CONTAINS": 51665,
+    "PRECEDES": 58424,
     "DECLARES_SHAPE": 8664,
-    "USES": 245681,
-    "SHIPS": 39170
+    "USES": 245681
   },
   "resolution": {
     "total": 9834,
@@ -39,6 +38,18 @@
     "singletons": 214113,
     "numbered": 241692,
     "plain": 6633
+  },
+  "containment": {
+    "edges": 51665,
+    "multi_vendor": 200,
+    "seen_once": 4439,
+    "in_template": 4662,
+    "declared_only": 4489
+  },
+  "ambiguity": {
+    "parents": 4679,
+    "branching": 4312,
+    "widest": 22233
   },
   "numbered_by_vendor": [
     {
@@ -198,70 +209,70 @@
         "Vendor"
       ],
       "key": "sick",
-      "degree": 212761
+      "degree": 211363
     },
     {
       "labels": [
-        "Shape"
+        "SemanticId"
       ],
-      "key": "AAQ373-Manufacturer",
-      "degree": 134056
+      "key": "https://admin-shell.io/idta/nameplate/3/0/Nameplate",
+      "degree": 54036
     },
     {
       "labels": [
-        "Shape"
+        "SemanticId"
       ],
-      "key": "AAO676-Internal_article_number",
-      "degree": 134054
+      "key": "0173-1#01-AHX837#002",
+      "degree": 54035
     },
     {
       "labels": [
-        "Shape"
+        "SemanticId"
       ],
-      "key": "AAW338-Manufacturer_product_designation",
-      "degree": 133704
+      "key": "0173-1#02-AAQ837#005",
+      "degree": 54034
     },
     {
       "labels": [
-        "Shape"
+        "SemanticId"
       ],
-      "key": "AAN350-Part_relation_to_the_main_device",
-      "degree": 128009
+      "key": "0173-1#01-AHF578#003",
+      "degree": 48885
     },
     {
       "labels": [
-        "Shape"
+        "Concept"
       ],
-      "key": "AAO663-GTIN__EAN__code",
-      "degree": 125437
+      "key": "0173-1#02-AAU731#002",
+      "degree": 41715
     },
     {
       "labels": [
-        "Shape"
+        "Concept"
       ],
-      "key": "AAO677-Manufacturer_name",
-      "degree": 103754
+      "key": "0173-1#02-AAQ326#002",
+      "degree": 41715
     },
     {
       "labels": [
-        "Shape"
+        "Concept"
       ],
-      "key": "AAN475-Number_of_parts_relations",
-      "degree": 89865
+      "key": "0173-1#02-AAW338#001",
+      "degree": 41715
     },
     {
       "labels": [
-        "Shape"
+        "Concept"
       ],
-      "key": "AAO057-Product_type",
-      "degree": 76666
+      "key": "0173-1#02-AAO677#002",
+      "degree": 41715
     },
     {
       "labels": [
-        "Shape"
+        "Concept"
       ],
-      "key": "AAN406-number_of_the_more-wire_conductors",
-      "degree": 75937
+      "key": "0173-1#02-AAU731#001",
+      "degree": 41715
     }
   ],
   "top_declares": [
@@ -307,19 +318,23 @@
     }
   ],
   "write_seconds": {
-    "Concept": 7.437493666977389,
-    "BROADER(prefix)": 1.4715108340024017,
-    "BROADER(property)": 107.66813108400675,
-    "RESOLVES_TO": 0.17355237502488308,
-    "Shape.occurrences": 0.6232257920200936,
-    "Structure.occurrences": 0.05562575001385994
+    "Concept": 6.281448541034479,
+    "BROADER(prefix)": 1.2056751670315862,
+    "BROADER(property)": 89.07465012499597,
+    "RESOLVES_TO": 0.07585620798636228,
+    "Shape counters": 0.444251750013791,
+    "CONTAINS support": 0.1350800420041196,
+    "CONTAINS submodels": 0.07684570801211521,
+    "PRECEDES support": 0.07691450003767386
   },
   "rows_written": {
     "Concept": 124803,
     "BROADER(prefix)": 48261,
     "BROADER(property)": 2706281,
     "RESOLVES_TO": 0,
-    "Shape.occurrences": 0,
-    "Structure.occurrences": 0
+    "Shape counters": 0,
+    "CONTAINS support": 0,
+    "CONTAINS submodels": 0,
+    "PRECEDES support": 0
   }
 }

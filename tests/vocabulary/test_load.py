@@ -55,8 +55,12 @@ def _snapshot(loader: VocabularyLoader) -> dict:
                 "MATCH (v:Vendor)-[u:USES]->(s:Shape) "
                 "RETURN v.name AS v, s.shape_key AS k, u.occurrences AS o")
         },
-        "slots": loader.run(
-            "MATCH ()-[r:HAS_SLOT]->() RETURN count(r) AS c")[0]["c"],
+        "contains": {
+            (r["p"], r["c"]): (r["names"], r["occ"], r["sub"]) for r in loader.run(
+                "MATCH (p:Shape)-[e:CONTAINS]->(c:Shape) "
+                "RETURN p.shape_key AS p, c.shape_key AS c, e.vendor_names AS names, "
+                "e.vendor_occurrences AS occ, e.vendor_submodels AS sub")
+        },
     }
 
 
@@ -219,14 +223,110 @@ def test_an_unknown_mode_is_refused():
         VocabularyLoader(None, mode="append")
 
 
-def test_structure_slots_are_written_once(loader, corpus_records):
-    """The slot write is the bulk of the load; a re-import must skip it entirely."""
+# -- the merged layout ----------------------------------------------------------
+
+
+def test_two_vendors_share_one_containment_edge_without_clobbering(loader, json_files):
+    """The reason support lives in per-vendor arrays rather than in one integer.
+
+    ``:CONTAINS`` is a single edge shared by every vendor that ships the pair. A
+    plain counter cannot be replaced (it would erase the other vendors) and cannot
+    be accumulated (it would double on re-import). Each run owns one array slot.
+    """
+    a = extract_paths(json_files, vendor="alpha")
+    b = extract_paths(json_files, vendor="beta")
+    loader.load_records(a)
+    loader.load_records(b)
+    loader.finalize()
+
+    shared = loader.run("""
+        MATCH (p:Shape)-[e:CONTAINS]->(c:Shape)
+        WHERE size(e.vendor_names) = 2
+        RETURN e.vendor_names AS names, e.vendor_occurrences AS occ,
+               e.occurrences AS total, e.vendors AS vendors
+        LIMIT 1""")
+    assert shared, "the same files under two vendors must share containment edges"
+    row = shared[0]
+    assert sorted(row["names"]) == ["alpha", "beta"]
+    assert row["occ"][0] == row["occ"][1], "both vendors saw the same files"
+    assert row["total"] == sum(row["occ"]) and row["vendors"] == 2
+
+    # Re-importing one vendor replaces only its own slot.
+    loader.load_records(a)
+    loader.finalize()
+    after = loader.run("""
+        MATCH (p:Shape)-[e:CONTAINS]->(c:Shape)
+        WHERE size(e.vendor_names) = 2
+        RETURN e.occurrences AS total LIMIT 1""")[0]
+    assert after["total"] == row["total"]
+
+
+def test_containment_totals_are_derived_from_the_slots(loader, corpus_records):
+    """Totals are recomputed from the arrays, so they cannot drift apart."""
     loader.load_records(corpus_records)
-    written = loader.counts.written.get("HAS_SLOT", 0)
-    assert written > 0
-    second = VocabularyLoader(loader.driver, batch_size=5_000)
-    second.load_records(corpus_records)
-    assert second.counts.written.get("HAS_SLOT", 0) == 0
+    loader.finalize()
+    assert loader.run("""
+        MATCH ()-[e:CONTAINS]->()
+        WHERE e.occurrences <> reduce(t = 0, x IN coalesce(e.vendor_occurrences, []) | t + x)
+           OR e.submodels   <> reduce(t = 0, x IN coalesce(e.vendor_submodels, []) | t + x)
+        RETURN count(e) AS c""")[0]["c"] == 0
+
+
+def test_submodel_support_is_not_the_occurrence_count(loader, corpus_records):
+    """Two different supports, and the graph keeps both — a pair seen 40 000 times
+    across 12 submodels is a repeated list, not a widespread schema relation."""
+    loader.load_records(corpus_records)
+    loader.finalize()
+    row = loader.run("""
+        MATCH ()-[e:CONTAINS]->() WHERE coalesce(e.occurrences, 0) > 0
+        RETURN count(e) AS edges,
+               sum(CASE WHEN e.occurrences > e.submodels THEN 1 ELSE 0 END) AS repeated""")[0]
+    assert row["edges"] > 0 and row["repeated"] > 0
+
+
+def test_precedes_is_written_only_when_asked(loader, json_files):
+    plain = extract_paths(json_files, vendor="v")
+    loader.load_records(plain)
+    assert loader.run("MATCH ()-[r:PRECEDES]->() RETURN count(r) AS c")[0]["c"] == 0
+
+    ordered = extract_paths(json_files, vendor="v", with_precedes=True)
+    loader.load_records(ordered)
+    loader.finalize()
+    assert loader.run("MATCH ()-[r:PRECEDES]->() RETURN count(r) AS c")[0]["c"] > 0
+
+
+def test_top_level_shapes_are_counted_not_edged(loader, corpus_records):
+    """Containment has no node to hang the top level off, so roots are a count."""
+    loader.load_records(corpus_records)
+    loader.finalize()
+    row = loader.run("""
+        MATCH (s:Shape) WHERE coalesce(s.top_level, 0) > 0
+        RETURN count(s) AS roots, max(s.top_level) AS most""")[0]
+    assert row["roots"] > 0 and row["most"] > 0
+    assert loader.run("""
+        MATCH (s:Shape)
+        OPTIONAL MATCH (:Vendor)-[u:USES]->(s)
+        WITH s, sum(coalesce(u.top_level, 0)) AS total
+        WHERE coalesce(s.top_level, 0) <> total
+        RETURN count(s) AS c""")[0]["c"] == 0
+
+
+def test_a_template_pair_nobody_ships_has_no_support(loader, corpus_templates):
+    """The conformance question, now answerable per relation instead of per shape."""
+    from neo4aas.vocabulary.templates import extract_templates
+
+    templates, records = extract_templates(corpus_templates)
+    loader.load_records(records)
+    loader.load_templates(templates)
+    loader.finalize()
+    row = loader.run("""
+        MATCH ()-[e:CONTAINS]->()
+        RETURN sum(CASE WHEN e.in_template THEN 1 ELSE 0 END) AS declared,
+               sum(CASE WHEN e.in_template AND coalesce(e.occurrences, 0) = 0
+                        THEN 1 ELSE 0 END) AS unimplemented""")[0]
+    assert row["declared"] > 0
+    assert row["unimplemented"] == row["declared"], \
+        "no vendor was loaded, so every declared pair must be unimplemented"
 
 
 def test_clear_removes_only_what_this_importer_owns(loader, corpus_records):

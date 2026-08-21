@@ -1,9 +1,10 @@
 
-----------------------------------
+===== 4. THE SIX TRAVERSALS =====
+
 ------------------------------------------------------------------------------
 1. CROSS-VENDOR FIELD MAPPING
   two vendors, two names, one concept — 92 % of shapes are vendor-private and this is the only bridge
-  530.4 ms, 10 rows
+  516.9 ms, 10 rows
   concept               name                                vendor_a  field_a                           vendor_b         field_b                                       
   0173-1#01-ADN228#012  Identification                      harting   identification                    phoenix_contact  ADN228-Identification                         
   0173-1#01-ADN292#012  CAx basic                           harting   cAxBasic                          phoenix_contact  ADN292-CAx_basic                              
@@ -19,23 +20,23 @@
 ------------------------------------------------------------------------------
 2. QUERY EXPANSION from 'voltage'
   term -> shape -> concept -> ECLASS siblings -> shapes
-  897.7 ms, 10 rows
+  630.2 ms, 10 rows
   from_field    via_class                  field                             name                                  in_eclass_classes  occurrences
   RatedVoltage  Grundpaket Lüftungssystem  RatedVoltage                      Rated Voltage                         20                 15971      
   RatedVoltage  Grundpaket Lüftungssystem  BAC859-Power_frequency            Netzfrequenz                          61                 20         
   RatedVoltage  Grundpaket Lüftungssystem  AAQ328-AWG_number                 AWG-Nummer                            112                20         
   RatedVoltage  Grundpaket Lüftungssystem  AAQ328-AWG-number                 AWG-Nummer                            112                4          
-  RatedVoltage  Grundpaket Lüftungssystem  BAH005-rated_voltage              Bemessungsspannung                    136                2324       
-  RatedVoltage  Grundpaket Lüftungssystem  Bemessungsspannung                Bemessungsspannung                    136                146        
-  RatedVoltage  Grundpaket Lüftungssystem  ratedVoltage                      Bemessungsspannung                    136                7          
+  RatedVoltage  Grundpaket Lüftungssystem  BAH005-rated_voltage              rated voltage                         136                2324       
+  RatedVoltage  Grundpaket Lüftungssystem  Bemessungsspannung                rated voltage                         136                146        
+  RatedVoltage  Grundpaket Lüftungssystem  ratedVoltage                      rated voltage                         136                7          
   RatedVoltage  Grundpaket Lüftungssystem  ContainsSubstanceAccordingToSvhc  Contains substance according to SVHC  19161              229        
-  RatedVoltage  Grundpaket Lüftungssystem  CountryOfCustomsTariffNumber      Country of customs tariff number      36577              15         
-  RatedVoltage  Grundpaket Lüftungssystem  countryOfCustomsTariffNumber      Country of customs tariff number      36577              1          
+  RatedVoltage  Grundpaket Lüftungssystem  CountryOfCustomsTariffNumber      Land der Zolltarifnummer              36577              15         
+  RatedVoltage  Grundpaket Lüftungssystem  countryOfCustomsTariffNumber      Land der Zolltarifnummer              36577              1          
 
 ------------------------------------------------------------------------------
 3. JUNK DETECTION
   :SemanticId by :DECLARES in-degree — a node degree, not a batch job
-  311.7 ms, 10 rows
+  290.0 ms, 10 rows
   semantic_id                                     shapes  distinct_id_shorts
   https://admin-shell.io/idta/nameplate/3/0/Nam…  54035   54035             
   0173-1#01-AHX837#002                            54034   54034             
@@ -50,48 +51,64 @@
 
 ------------------------------------------------------------------------------
 4. FACETING around 'ManufacturerName'
-  shape -> structure -> shape; materialising this is 3.6 M pairs
-  1492.3 ms, 10 rows
-  also_present                    model_type                 structures
-  GeneralInformation              SubmodelElementCollection  17205     
-  ManufacturerOrderCode           Property                   17201     
-  ManufacturerProductDesignation  MultiLanguageProperty      17049     
-  ManufacturerArticleNumber       Property                   16869     
-  ManufacturerLogo                File                       15850     
-  TechnicalProperties             SubmodelElementCollection  15848     
-  ProductImage                    File                       11184     
-  Materials                       SubmodelElementCollection  10350     
-  Weight                          Property                   10239     
-  Type                            MultiLanguageProperty      9963      
+  one hop: shapes sharing a containment parent, ranked by support
+  6.7 ms, 10 rows
+  also_present                    model_type             submodels  vendors
+  CompanyLogo                     File                   54037      2      
+  ManufacturerArticleNumber       Property               54037      2      
+  ManufacturerOrderCode           Property               54037      2      
+  ManufacturerProductDesignation  MultiLanguageProperty  54037      2      
+  ProductImages                   SubmodelElementList    54037      2      
+  ManufacturerArticleNumber       Property               40330      3      
+  ManufacturerArticleNumber       Property               40330      3      
+  ManufacturerLogo                File                   40330      3      
+  ManufacturerLogo                File                   40330      3      
+  ManufacturerOrderCode           Property               40322      3      
 
 ------------------------------------------------------------------------------
-5. UNDECLARED TEMPLATES (summary)
-  structures whose shape set overlaps no IDTA template
-  642.7 ms, 2 rows
-  declared  structures  submodels
-  False     24324       124462   
-  True      14844       599742   
+4b. WHERE VENDORS AGREE
+  the per-vendor support arrays: who nests this under that, how often
+  23.5 ms, 10 rows
+  parent              child                      vendors                                    submodels_each         submodels
+  Phone               TelephoneNumber            ['festo', 'harting', 'wago']               [30362, 22680, 23227]  76269    
+  Email               EmailAddress               ['festo', 'harting', 'wago']               [15181, 22650, 23227]  61058    
+  ContactInformation  CityTown                   ['festo', 'harting', 'wago']               [15181, 22648, 23227]  61056    
+  ContactInformation  Street                     ['festo', 'harting', 'wago']               [15181, 22648, 23227]  61056    
+  ContactInformation  NationalCode               ['festo', 'harting', 'wago']               [15181, 22648, 23227]  61056    
+  ContactInformation  Zipcode                    ['festo', 'harting', 'wago']               [15181, 22648, 23227]  61056    
+  GeneralInformation  ManufacturerLogo           ['harting', 'phoenix_contact', 'r_stahl']  [22647, 15749, 1934]   40330    
+  GeneralInformation  ManufacturerArticleNumber  ['harting', 'phoenix_contact', 'r_stahl']  [22647, 15749, 1934]   40330    
+  GeneralInformation  ManufacturerOrderCode      ['harting', 'phoenix_contact', 'r_stahl']  [22647, 15749, 1926]   40322    
+  GeneralInformation  ManufacturerName           ['harting', 'phoenix_contact', 'r_stahl']  [22647, 15740, 1926]   40313    
 
 ------------------------------------------------------------------------------
-5b. UNDECLARED TEMPLATES (the biggest)
-  de-facto templates the industry uses and nobody published
-  658.1 ms, 10 rows
-  first_element           elements  top_level  submodels  vendors    
-  Document00_STEP         20        1          23227      ['wago']   
-  IdentifyingOrderNumber  3         3          18466      ['wago']   
-  Document00_STEP         20        1          17201      ['harting']
-  IdentifyingOrderNumber  1         1          2894       ['wago']   
-  ProductGroup            4         4          1528       ['wago']   
-  ArcheType               262       2          1008       ['harting']
-  ArcheType               8         2          401        ['harting']
-  ArcheType               3         2          368        ['harting']
-  ContactInformation00    43        2          352        ['wago']   
-  IdentifyingOrderNumber  3         3          351        ['wago']   
+5. UNDECLARED RELATIONS (summary)
+  containment a vendor ships that no IDTA template declares
+  26.9 ms, 2 rows
+  declared  relations  submodels
+  False     47003      41236795 
+  True      173        2641114  
+
+------------------------------------------------------------------------------
+5b. UNDECLARED RELATIONS (the biggest)
+  de-facto structure the industry uses and nobody published
+  28.8 ms, 10 rows
+  parent           child                     model_type             submodels  vendors            
+  DocumentVersion  OrganizationShortName     Property               70712      ['harting', 'sick']
+  DocumentVersion  OrganizationOfficialName  Property               70712      ['harting', 'sick']
+  DocumentVersion  StatusValue               Property               70712      ['harting', 'sick']
+  DocumentVersion  StatusSetDate             Property               70709      ['harting', 'sick']
+  DocumentVersion  KeyWords                  MultiLanguageProperty  60834      ['harting', 'wago']
+  DocumentVersion  OrganizationName          Property               60834      ['harting', 'wago']
+  DocumentVersion  Title                     MultiLanguageProperty  60834      ['harting', 'wago']
+  DocumentVersion  DigitalFile               File                   60834      ['harting', 'wago']
+  DocumentVersion  Language                  Property               60834      ['harting', 'wago']
+  DocumentVersion  Summary                   MultiLanguageProperty  60834      ['harting', 'wago']
 
 ------------------------------------------------------------------------------
 6. DEPRECATED USAGE — superseded ECLASS releases
   vendor -> shape -> concept -> a newer release of the same base
-  41.4 ms, 7 rows
+  27.2 ms, 7 rows
   vendor           stale_identifiers  examples                                      
   phoenix_contact  1651               ['0173-1#02-AAO677#002', '0173-1#02-AAW338#00…
   festo            345                ['0173-1#02-AAQ326#002', '0173-1#02-AAP906#00…
@@ -101,9 +118,10 @@
   r_stahl          14                 ['0173-1#02-AAQ326#002', '0173-1#02-AAO677#00…
   abb              2                  ['0173-1#02-AAO895#003', '0173-1#02-AAQ326#00…
 
---------------------------------------------------------ED USAGE — deprecated IDTA templaED USAGE — deprecated IDTA templates
+------------------------------------------------------------------------------
+6b. DEPRECATED USAGE — deprecated IDTA templates
   why deprecated/ is read: skipping it costs ~75 000 matches
-  2.8 ms, 10 rows
+  2.6 ms, 10 rows
   vendor           deprecated_template     version  shapes  occurrences
   sick             ZVEI_Digital_Nameplate  1.0.0    8       47332908   
   sick             Digital nameplate       2.0.0    10      19668012   

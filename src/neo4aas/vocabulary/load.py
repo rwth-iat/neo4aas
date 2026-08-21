@@ -5,18 +5,35 @@ on. Re-importing the same corpus must not change a single count, which requires
 two things together: keys that are pure functions of their input
 (:mod:`neo4aas.vocabulary.extract`) and writes that are idempotent (here).
 
-Occurrence counters
--------------------
+Counters on a shared edge
+-------------------------
 
-``occurrences`` is a property, not an edge — an edge per occurrence is exactly the
-super-node this design exists to avoid. But a counter and idempotence pull against
-each other: ``SET c = c + n`` doubles on re-import.
+Support is a property, not an edge — an edge per occurrence is exactly the
+super-node this design exists to avoid. But a counter and idempotence pull
+against each other: ``SET c = c + n`` doubles on re-import.
 
-The counter is therefore **scoped to the vendor** and *replaced*, not accumulated:
-one run over a vendor's files sets ``(:Vendor)-[:USES]->(:Shape).occurrences`` to
-what that run saw, and ``Shape.occurrences`` is recomputed from the sum over
-vendors in :meth:`VocabularyLoader.finalize`. Re-importing the same files is then
-a no-op, and re-importing *more* files of the same vendor gives the new total.
+``:USES`` is easy, because there is one edge per vendor: the run *replaces* what
+that vendor's edge says. ``:CONTAINS`` and ``:PRECEDES`` are not — a single edge
+is shared by every vendor that ships the pair, so a run cannot add to a number it
+has no way of telling apart from history, and it cannot replace the whole number
+either without erasing the other vendors.
+
+So the support is stored **per vendor in parallel arrays** and a run replaces its
+own slot:
+
+.. code-block:: text
+
+    (:Shape)-[:CONTAINS {
+        vendor_names:       ['festo', 'wago'],
+        vendor_occurrences: [ 18422,   9013 ],
+        vendor_submodels:   [  6140,   3004 ],
+        occurrences: 27435, submodels: 9144,   -- reduce() sums, recomputed
+        in_template: true                      -- an IDTA template declares this pair
+    }]->(:Shape)
+
+Eight vendors means eight slots. It costs almost nothing, it makes the write
+idempotent, and it gives back the one thing the merged layout model otherwise
+loses: *which vendor* nests this shape under that one, and how often.
 
 Loading disjoint shards of one vendor in separate runs needs
 ``mode="accumulate"``, which adds instead of replacing and is consequently **not**
@@ -32,6 +49,8 @@ from typing import Any, Iterable, Iterator, Sequence
 from neo4aas.vocabulary.concepts import coded_name_parent
 from neo4aas.vocabulary.extract import VocabularyRecords
 from neo4aas.vocabulary.schema import (
+    LEGACY_LABELS,
+    LEGACY_RELATIONSHIPS,
     VOCABULARY_LABELS,
     VOCABULARY_RELATIONSHIPS,
     schema_statements,
@@ -42,7 +61,7 @@ from neo4aas.vocabulary.schema import (
 DEFAULT_BATCH_SIZE = 10_000
 
 #: Rows per transaction when deleting. Smaller than a write batch: a delete holds
-#: the whole change set in transaction memory and edges outnumber nodes ~100:1.
+#: the whole change set in transaction memory and edges outnumber nodes ~50:1.
 CLEAR_BATCH_SIZE = 10_000
 
 #: Concept properties a higher-precedence source overwrites and a lower one only
@@ -75,6 +94,39 @@ def _concept_merge_clause() -> str:
     """
 
 
+def _vendor_slot_clause(rel: str, fields: Sequence[str], accumulate: bool) -> str:
+    """A shared shape-to-shape edge whose support is kept per vendor.
+
+    ``keep`` is every array position that is *not* this vendor's, so the write is
+    "drop my old slot, append my new one" — replacing a number the run can
+    actually account for, and leaving every other vendor's untouched. Re-running
+    the same rows reproduces the same arrays element for element, which is what
+    the idempotence test checks.
+
+    ``range(0, -1)`` is the empty list, so the first write needs no special case.
+    """
+    def slot(f: str) -> str:
+        if not accumulate:
+            return f"e.vendor_{f} = [i IN keep | e.vendor_{f}[i]] + row.{f}"
+        # Shards of one vendor loaded separately: add to whatever my slot held.
+        mine = (f"coalesce(head([i IN range(0, size(names) - 1) "
+                f"WHERE names[i] = row.vendor | e.vendor_{f}[i]]), 0)")
+        return f"e.vendor_{f} = [i IN keep | e.vendor_{f}[i]] + (row.{f} + {mine})"
+
+    sets = ",\n        ".join(slot(f) for f in fields)
+    return f"""
+    UNWIND $rows AS row
+    MATCH (a:Shape {{shape_key: row.source}})
+    MATCH (b:Shape {{shape_key: row.target}})
+    MERGE (a)-[e:{rel}]->(b)
+    WITH e, row, coalesce(e.vendor_names, []) AS names
+    WITH e, row, names,
+         [i IN range(0, size(names) - 1) WHERE names[i] <> row.vendor] AS keep
+    SET e.vendor_names = [i IN keep | names[i]] + row.vendor,
+        {sets}
+    """
+
+
 MERGE_SHAPES = """
 UNWIND $rows AS row
 MERGE (s:Shape {shape_key: row.shape_key})
@@ -99,64 +151,25 @@ MATCH (n:SemanticId {value: row.value})
 MERGE (s)-[:DECLARES]->(n)
 """
 
-MERGE_STRUCTURES = """
-UNWIND $rows AS row
-MERGE (st:Structure {structure_key: row.structure_key})
-SET st.element_count = row.element_count,
-    st.slot_count = row.slot_count,
-    st.slots_written = coalesce(st.slots_written, false)
-"""
-
-#: The one ``CREATE`` in this importer, and the reason it is one.
-#:
-#: A structure's slots are written exactly once, in the same transaction that sets
-#: the flag suppressing them — so the pair is atomic, a re-import writes nothing,
-#: and the idempotence property the ``MERGE``-everywhere rule exists to guarantee
-#: is preserved and tested (``test_reimport_changes_nothing``,
-#: ``test_structure_slots_are_written_once``).
-#:
-#: ``MERGE`` here is not merely slower, it is **quadratic**: merging a relationship
-#: with properties re-reads the source node's relationship chain per row, so a
-#: 3 000-slot structure costs ~4.5 M chain steps to write 3 000 edges, and the
-#: corpus has tens of thousands of such structures. ``CREATE`` is safe precisely
-#: because ``structure_key`` *is* the ordered slot sequence: a structure's slots
-#: cannot change, so there is never an existing edge to merge with.
-CREATE_SLOTS = """
-UNWIND $rows AS row
-MATCH (st:Structure {structure_key: row.structure_key})
-MATCH (sh:Shape {shape_key: row.shape_key})
-CREATE (st)-[:HAS_SLOT {ord: row.ord, depth: row.depth, parent_ord: row.parent_ord}]->(sh)
-"""
-
-MARK_SLOTS_WRITTEN = """
-UNWIND $keys AS key
-MATCH (st:Structure {structure_key: key})
-SET st.slots_written = true
-"""
-
-STRUCTURES_WITH_SLOTS = """
-UNWIND $keys AS key
-MATCH (st:Structure {structure_key: key})
-WHERE st.slots_written
-RETURN st.structure_key AS structure_key
-"""
-
 MERGE_VENDOR_USES = """
 UNWIND $rows AS row
 MERGE (v:Vendor {name: row.vendor})
 WITH v, row
 MATCH (s:Shape {shape_key: row.shape_key})
 MERGE (v)-[u:USES]->(s)
-SET u.occurrences = %s
+SET u.occurrences = %s, u.top_level = %s
 """
 
-MERGE_VENDOR_SHIPS = """
+#: Pairs an IDTA template declares. No vendor ships a template, so this edge
+#: carries no support arrays — it is the yardstick, not a measurement. An edge that
+#: exists only because of this write ends up with ``occurrences = 0``, which is
+#: exactly the "declared but nobody implements it" finding.
+MERGE_TEMPLATE_CONTAINS = """
 UNWIND $rows AS row
-MERGE (v:Vendor {name: row.vendor})
-WITH v, row
-MATCH (st:Structure {structure_key: row.structure_key})
-MERGE (v)-[s:SHIPS]->(st)
-SET s.submodels = %s
+MATCH (a:Shape {shape_key: row.source})
+MATCH (b:Shape {shape_key: row.target})
+MERGE (a)-[e:CONTAINS]->(b)
+SET e.in_template = true
 """
 
 MERGE_TEMPLATES = """
@@ -202,25 +215,27 @@ MATCH (c:Concept) WHERE c.irdi_base = n.base
 MERGE (n)-[:RESOLVES_TO]->(c)
 """
 
-RECOMPUTE_SHAPE_OCCURRENCES = """
+RECOMPUTE_SHAPE_COUNTERS = """
 MATCH (s:Shape)
 OPTIONAL MATCH (:Vendor)-[u:USES]->(s)
-WITH s, sum(coalesce(u.occurrences, 0)) AS total
-SET s.occurrences = total
+WITH s, sum(coalesce(u.occurrences, 0)) AS total,
+     sum(coalesce(u.top_level, 0)) AS roots
+SET s.occurrences = total, s.top_level = roots
 """
 
-RECOMPUTE_STRUCTURE_OCCURRENCES = """
-MATCH (st:Structure)
-OPTIONAL MATCH (:Vendor)-[s:SHIPS]->(st)
-WITH st, sum(coalesce(s.submodels, 0)) AS total
-SET st.occurrences = total
+#: Totals are derived from the per-vendor arrays rather than written alongside
+#: them, so they can never disagree with the slots they summarise.
+RECOMPUTE_EDGE_SUPPORT = """
+MATCH ()-[e:%s]->()
+SET e.occurrences = reduce(t = 0, x IN coalesce(e.vendor_occurrences, []) | t + x),
+    e.vendors = size(coalesce(e.vendor_names, []))
 """
 
-
-def _create_slots_tx(tx, rows: list[dict], keys: list[str]) -> None:
-    """Create a batch of slots and mark their structures done, atomically."""
-    tx.run(CREATE_SLOTS, rows=rows).consume()
-    tx.run(MARK_SLOTS_WRITTEN, keys=keys).consume()
+RECOMPUTE_CONTAINS_SUBMODELS = """
+MATCH ()-[e:CONTAINS]->()
+SET e.submodels = reduce(t = 0, x IN coalesce(e.vendor_submodels, []) | t + x),
+    e.in_template = coalesce(e.in_template, false)
+"""
 
 
 def _batched(rows: Sequence, size: int) -> Iterator[list]:
@@ -308,11 +323,11 @@ class VocabularyLoader:
     # -- instances --------------------------------------------------------------
 
     def load_records(self, records: VocabularyRecords) -> None:
-        """Write one extraction fold: shapes, semanticIds, structures, vendors."""
+        """Write one extraction fold: shapes, semanticIds, containment, vendors."""
         self.load_shapes(records)
         self.load_semantic_ids(records)
-        self.load_structures(records)
         self.load_vendor_edges(records)
+        self.load_containment(records)
         self.load_concepts(records.concepts.values())
 
     def load_shapes(self, records: VocabularyRecords) -> None:
@@ -337,69 +352,49 @@ class VocabularyLoader:
         ]
         self._write("DECLARES", MERGE_DECLARES, declares)
 
-    def load_structures(self, records: VocabularyRecords) -> None:
-        rows = [
-            {"structure_key": rec.structure.key,
-             "element_count": rec.structure.element_count,
-             "slot_count": rec.structure.slot_count}
-            for rec in records.structures.values()
-        ]
-        self._write("Structure", MERGE_STRUCTURES, rows)
-
-        # Slots are the bulk of the write and never change for a given structure key
-        # — the key *is* the ordered slot sequence — so a structure whose slots are
-        # already in the graph is skipped. This is what makes a re-import cheap as
-        # well as idempotent, and it is what lets the slots be CREATEd (see
-        # CREATE_SLOTS) instead of merged one quadratic chain-scan at a time.
-        done: set[str] = set()
-        for batch in _batched([row["structure_key"] for row in rows], self.batch_size):
-            done.update(r["structure_key"]
-                        for r in self.run(STRUCTURES_WITH_SLOTS, keys=batch))
-        self._write_slots([rec.structure for rec in records.structures.values()
-                           if rec.structure.key not in done])
-
-    def _write_slots(self, structures: Sequence) -> None:
-        """Write whole structures' slots, never splitting one across transactions.
-
-        Each transaction creates the slots *and* marks the structures done, so a
-        failure mid-load leaves a structure either fully slotted or not slotted at
-        all — which is what makes the ``CREATE`` safe to retry.
-        """
-        started = time.perf_counter()
-        written, rows, keys = 0, [], []
-
-        def flush() -> None:
-            nonlocal written, rows, keys
-            if not rows:
-                return
-            with self._session() as session:
-                session.execute_write(_create_slots_tx, rows, keys)
-            written += len(rows)
-            rows, keys = [], []
-
-        for structure in structures:
-            keys.append(structure.key)
-            rows.extend(
-                {"structure_key": structure.key, "shape_key": slot.shape_key,
-                 "ord": slot.ord, "depth": slot.depth, "parent_ord": slot.parent_ord}
-                for slot in structure.slots)
-            if len(rows) >= self.batch_size:
-                flush()
-        flush()
-        if written:
-            self.counts.record("HAS_SLOT", written, time.perf_counter() - started)
-
     def load_vendor_edges(self, records: VocabularyRecords) -> None:
         occurrences = "row.occurrences" if self.mode == "replace" \
             else "coalesce(u.occurrences, 0) + row.occurrences"
-        submodels = "row.submodels" if self.mode == "replace" \
-            else "coalesce(s.submodels, 0) + row.submodels"
-        uses = [{"vendor": vendor, "shape_key": key, "occurrences": count}
-                for (vendor, key), count in sorted(records.vendor_shapes.items())]
-        ships = [{"vendor": vendor, "structure_key": key, "submodels": count}
-                 for (vendor, key), count in sorted(records.vendor_structures.items())]
-        self._write("USES", MERGE_VENDOR_USES % occurrences, uses)
-        self._write("SHIPS", MERGE_VENDOR_SHIPS % submodels, ships)
+        top_level = "row.top_level" if self.mode == "replace" \
+            else "coalesce(u.top_level, 0) + row.top_level"
+        rows = [
+            {"vendor": vendor, "shape_key": key, "occurrences": count,
+             "top_level": records.vendor_roots.get((vendor, key), 0)}
+            for (vendor, key), count in sorted(records.vendor_shapes.items())
+        ]
+        self._write("USES", MERGE_VENDOR_USES % (occurrences, top_level), rows)
+
+    def load_containment(self, records: VocabularyRecords) -> None:
+        """``:CONTAINS`` (and ``:PRECEDES`` when the fold carries it).
+
+        This is the layout, merged over every submodel in the corpus. It replaces
+        the per-layout node the first version of this importer had — 78x fewer
+        edges, at the cost of no longer being able to enumerate layouts. The
+        per-vendor support arrays are what is left to reason with.
+        """
+        contains = [
+            {"vendor": vendor, "source": parent, "target": child,
+             "occurrences": count,
+             "submodels": records.contains_submodels.get((vendor, parent, child), 0)}
+            for (vendor, parent, child), count in sorted(records.contains.items())
+        ]
+        self._write("CONTAINS",
+                    _vendor_slot_clause("CONTAINS", ("occurrences", "submodels"),
+                                        self.mode == "accumulate"),
+                    contains)
+
+        precedes = [
+            {"vendor": vendor, "source": first, "target": second, "occurrences": count}
+            for (vendor, first, second), count in sorted(records.precedes.items())
+        ]
+        self._write("PRECEDES",
+                    _vendor_slot_clause("PRECEDES", ("occurrences",),
+                                        self.mode == "accumulate"),
+                    precedes)
+
+        template = [{"source": parent, "target": child}
+                    for parent, child in sorted(records.template_contains)]
+        self._write("CONTAINS(template)", MERGE_TEMPLATE_CONTAINS, template)
 
     # -- dictionary -------------------------------------------------------------
 
@@ -444,17 +439,19 @@ class VocabularyLoader:
     # -- finalize ---------------------------------------------------------------
 
     def finalize(self) -> None:
-        """Derive what is a function of what was written: resolution and counters.
+        """Derive what is a function of what was written: resolution and totals.
 
-        Run after every source has been loaded. All three statements are set-based
-        and recompute from scratch, so running them twice changes nothing and
-        running them once after a partial load still leaves the graph consistent
-        with what it holds.
+        Run after every source has been loaded. All of these are set-based and
+        recompute from scratch, so running them twice changes nothing and running
+        them once after a partial load still leaves the graph consistent with what
+        it holds.
         """
         for name, statement in (
             ("RESOLVES_TO", MERGE_RESOLVES_TO),
-            ("Shape.occurrences", RECOMPUTE_SHAPE_OCCURRENCES),
-            ("Structure.occurrences", RECOMPUTE_STRUCTURE_OCCURRENCES),
+            ("Shape counters", RECOMPUTE_SHAPE_COUNTERS),
+            ("CONTAINS support", RECOMPUTE_EDGE_SUPPORT % "CONTAINS"),
+            ("CONTAINS submodels", RECOMPUTE_CONTAINS_SUBMODELS),
+            ("PRECEDES support", RECOMPUTE_EDGE_SUPPORT % "PRECEDES"),
         ):
             started = time.perf_counter()
             with self._session() as session:
@@ -476,17 +473,20 @@ class VocabularyLoader:
 
         Relationships go first, in their own batched transactions, and only then the
         nodes. ``DETACH DELETE`` on the nodes alone runs out of transaction memory:
-        a popular ``:Shape`` sits in tens of thousands of structures, so a batch of
-        10 000 shapes asks one transaction to drop a hundred million edges. Once the
-        edges are gone the nodes are isolated and deleting them is trivial.
+        a popular ``:Shape`` sits in tens of thousands of containment relations, so
+        a batch of 10 000 shapes asks one transaction to drop far more edges than it
+        can hold. Once the edges are gone the nodes are isolated and cheap.
+
+        Labels this importer *used* to own are removed as well, so upgrading a
+        database written by the ``:Structure`` version needs no manual cleanup.
         """
         removed = {}
         with self._session() as session:
-            for rel in VOCABULARY_RELATIONSHIPS:
+            for rel in VOCABULARY_RELATIONSHIPS + LEGACY_RELATIONSHIPS:
                 session.run(
                     f"MATCH ()-[r:{rel}]->() CALL (r) {{ DELETE r }} "
                     f"IN TRANSACTIONS OF {CLEAR_BATCH_SIZE} ROWS").consume()
-            for label in VOCABULARY_LABELS:
+            for label in VOCABULARY_LABELS + LEGACY_LABELS:
                 before = session.run(
                     f"MATCH (n:{label}) RETURN count(n) AS c").single()["c"]
                 session.run(

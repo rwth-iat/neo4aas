@@ -41,22 +41,27 @@ idempotence() {
 
 tiers() {
     banner "2. SUBLINEARITY — node count against file count"
-    printf '%8s %11s %8s %8s %10s %11s %8s\n' \
-        files elements Shape "Shape/no#" Structure SemanticId seconds
+    printf '%8s %11s %8s %9s %10s %11s %8s\n' \
+        files elements Shape "Shape/no#" CONTAINS SemanticId seconds
     for n in 1000 10000 50000; do
         "${VOCAB[@]}" clear --uri "$URI" --yes >/dev/null
         "${VOCAB[@]}" import --uri "$URI" --vendor-from-dir --stratify \
             --limit "$n" --workers "$WORKERS" "$INSTANCES" \
             > "$OUT/tier-$n.txt" 2>/dev/null
+        # Section-aware: "Shape" and "CONTAINS" also name rows in the WRITES block,
+        # and an unanchored match silently reports rows-written instead of the count.
         awk -v n="$n" '
-            /^wall clock/    { secs=$3 }
-            /^elements seen/ { gsub(",","",$3); el=$3 }
-            /^  Shape /      { gsub(",","",$2); sh=$2 }
-            /^  Structure /  { gsub(",","",$2); st=$2 }
-            /^  SemanticId / { gsub(",","",$2); se=$2 }
-            /shapes have an idShort with no/ { gsub(",","",$1); plain=$1 }
-            END { printf "%8d %11d %8d %8d %10d %11d %8.1f\n",
-                         n, el, sh, plain, st, se, secs }
+            /^NODES/  { sec = "N" }
+            /^EDGES/  { sec = "E" }
+            /^WRITES/ { sec = "W" }
+            /^wall clock/    { secs = $3 }
+            /^elements seen/ { gsub(",", "", $3); el = $3 }
+            sec == "N" && $1 == "Shape"      { gsub(",", "", $2); sh = $2 }
+            sec == "N" && $1 == "SemanticId" { gsub(",", "", $2); se = $2 }
+            sec == "E" && $1 == "CONTAINS"   { gsub(",", "", $2); ct = $2 }
+            /shapes have an idShort with no/ { gsub(",", "", $1); plain = $1 }
+            END { printf "%8d %11d %8d %9d %10d %11d %8.1f\n",
+                         n, el, sh, plain, ct, se, secs }
         ' "$OUT/tier-$n.txt"
     done
 }
@@ -72,23 +77,26 @@ full() {
 
     echo "--- instances: $(find "$INSTANCES" -type f | wc -l | tr -d ' ') files ---"
     time "${VOCAB[@]}" import --uri "$URI" --vendor-from-dir --workers "$WORKERS" \
-        --report-json "$OUT/full-instances.json" "$INSTANCES" \
-        2>"$OUT/full-progress.txt" | tee "$OUT/full-instances.txt" | tail -32
+        --precedes --report-json "$OUT/full-instances.json" "$INSTANCES" \
+        2>"$OUT/full-progress.txt" > "$OUT/full-instances.txt"
+    tail -32 "$OUT/full-instances.txt"
 
     echo "--- templates ---"
     time "${VOCAB[@]}" import --uri "$URI" --templates "$TEMPLATES" \
-        2>/dev/null | tee "$OUT/full-templates.txt" | sed -n '/^NODES/,/^$/p'
+        2>/dev/null > "$OUT/full-templates.txt"
+    sed -n '/^NODES/,/^$/p' "$OUT/full-templates.txt"
 
     echo "--- dictionary ---"
     time "${VOCAB[@]}" import --uri "$URI" --eclass "$ECLASS" ${seg[@]+"${seg[@]}"} \
-        --report-json "$OUT/full-report.json" 2>/dev/null \
-        | tee "$OUT/full-report.txt" | tail -40
+        --report-json "$OUT/full-report.json" 2>/dev/null > "$OUT/full-report.txt"
+    tail -40 "$OUT/full-report.txt"
 }
 
 traversals() {
+    # No `tee` into $OUT here: the caller redirects this function's stdout, and a
+    # second writer on the same file interleaves the two streams mid-line.
     banner "4. THE SIX TRAVERSALS"
-    uv run python scripts/bench/vocab_traversals.py --uri "$URI" \
-        | tee "$OUT/traversals.txt"
+    uv run python scripts/bench/vocab_traversals.py --uri "$URI"
 }
 
 case "${1:-all}" in

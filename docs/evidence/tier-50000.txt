@@ -1,7 +1,7 @@
 ========================================================================
 vocabulary import
 ========================================================================
-wall clock               291.8 s
+wall clock               280.0 s
 files                   50,000
 documents parsed        49,999
 documents failed             1
@@ -12,20 +12,19 @@ vendors               abb, buerkert, festo, harting, phoenix_contact, r_stahl, s
 
 NODES
   Shape                  48,846
-  Structure              19,507
   SemanticId              5,593
   Concept                 2,099
   Vendor                      8
   Template                    0
-  TOTAL                  76,053   (373.9 elements per node)
+  TOTAL                  56,546   (502.9 elements per node)
 
 EDGES
-  HAS_SLOT            3,209,726
   USES                   49,226
   DECLARES               48,752
-  SHIPS                  19,509
+  CONTAINS               31,410
   RESOLVES_TO             2,648
   BROADER                     0
+  PRECEDES                    0
   DECLARES_SHAPE              0
 
 SEMANTIC ID RESOLUTION
@@ -58,6 +57,14 @@ SEMANTIC ID RESOLUTION
        10 shapes  0173-1#02-AAQ562#012
        10 shapes  0173-1#02-AAQ665#006
 
+CONTAINMENT — THE MERGED LAYOUT
+  31,410 :CONTAINS edges replace a node per layout
+  170 are shipped by more than one vendor
+  2,200 were seen in exactly one submodel — support, not schema
+  0 are declared by an IDTA template, of which 0 no vendor implements
+  2,919 of 3,039 parents have more than one child (widest: 11,303) — the merge cannot say which
+  combinations of those children actually co-occur; the support counters are what is left to rank them by.
+
 HOW MUCH OF THE VOCABULARY IS REALLY PER-PRODUCT IDENTITY
   2,256 of 48,846 shapes have an idShort with no 2+ digit run (4.6 %)
   46,590 carry a number — OrdNo_1234567, Document07, ZMN codes: product data written into the idShort
@@ -84,29 +91,29 @@ SEMANTIC IDS BY :DECLARES IN-DEGREE  (junk detection)
     110 shapes  https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation
 
 TOP-DEGREE NODES
-    39,858  :Shape        DocumentDomainId
-    39,852  :Shape        ValueId
-    39,843  :Shape        OrganizationOfficialName
-    39,842  :Shape        Title
-    39,842  :Shape        OrganizationName
-    39,842  :Shape        Summary
-    39,839  :Shape        StatusValue
-    39,830  :Shape        ClassificationSystem
-    39,824  :Shape        ClassId
-    39,817  :Shape        ClassName
+    28,420  :Vendor       sick
+    11,629  :Vendor       harting
+    11,329  :SemanticId   https://admin-shell.io/idta/HierarchicalStructures/Node/1/0
+    11,305  :Shape        EntryNode
+     7,184  :SemanticId   0173-1#01-AHX837#002
+     7,183  :SemanticId   0173-1#02-AAQ837#005
+     7,182  :SemanticId   https://admin-shell.io/idta/nameplate/3/0/Nameplate
+     6,527  :SemanticId   0173-1#01-AHF578#003
+     4,828  :Vendor       phoenix_contact
+     2,459  :Shape        TechnicalProperties
 
 WRITES
-  HAS_SLOT              3,209,726 rows    62.84 s
-  Shape                    48,846 rows     1.25 s
-  USES                     49,226 rows     0.93 s
-  DECLARES                 48,752 rows     0.74 s
-  SHIPS                    19,509 rows     0.38 s
-  Structure                19,507 rows     0.30 s
-  SemanticId                5,593 rows     0.16 s
-  Shape.occurrences             0 rows     0.15 s
-  Concept                   2,099 rows     0.10 s
-  Structure.occurrences          0 rows     0.08 s
-  RESOLVES_TO                   0 rows     0.03 s
+  Shape                    48,846 rows     1.79 s
+  USES                     49,226 rows     1.30 s
+  CONTAINS                 31,635 rows     1.01 s
+  DECLARES                 48,752 rows     0.95 s
+  Shape counters                0 rows     0.37 s
+  CONTAINS support              0 rows     0.29 s
+  SemanticId                5,593 rows     0.26 s
+  CONTAINS submodels            0 rows     0.24 s
+  Concept                   2,099 rows     0.12 s
+  RESOLVES_TO                   0 rows     0.05 s
+  PRECEDES support              0 rows     0.01 s
 
 FAILED DOCUMENTS (first 1)
   ParseError: junk after document element: line 4505, column 14

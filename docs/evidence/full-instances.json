@@ -1,6 +1,6 @@
 {
-  "started": 1787268045.960192,
-  "seconds": 829.1994074160175,
+  "started": 1787322325.517689,
+  "seconds": 850.548539374955,
   "files": 153853,
   "documents": 153852,
   "failed_documents": 1,
@@ -25,7 +25,6 @@
   ],
   "nodes": {
     "Shape": 245231,
-    "Structure": 39168,
     "SemanticId": 7099,
     "Concept": 3184,
     "Template": 0,
@@ -35,10 +34,10 @@
     "DECLARES": 245132,
     "RESOLVES_TO": 4233,
     "BROADER": 0,
-    "HAS_SLOT": 7085871,
+    "CONTAINS": 47176,
+    "PRECEDES": 58424,
     "DECLARES_SHAPE": 0,
-    "USES": 245681,
-    "SHIPS": 39170
+    "USES": 245681
   },
   "resolution": {
     "total": 7099,
@@ -53,6 +52,18 @@
     "singletons": 214113,
     "numbered": 241518,
     "plain": 3713
+  },
+  "containment": {
+    "edges": 47176,
+    "multi_vendor": 200,
+    "seen_once": 4439,
+    "in_template": 0,
+    "declared_only": 0
+  },
+  "ambiguity": {
+    "parents": 3743,
+    "branching": 3601,
+    "widest": 22233
   },
   "numbered_by_vendor": [
     {
@@ -212,70 +223,70 @@
         "Vendor"
       ],
       "key": "sick",
-      "degree": 212761
+      "degree": 211363
+    },
+    {
+      "labels": [
+        "SemanticId"
+      ],
+      "key": "https://admin-shell.io/idta/nameplate/3/0/Nameplate",
+      "degree": 54035
+    },
+    {
+      "labels": [
+        "SemanticId"
+      ],
+      "key": "0173-1#01-AHX837#002",
+      "degree": 54035
+    },
+    {
+      "labels": [
+        "SemanticId"
+      ],
+      "key": "0173-1#02-AAQ837#005",
+      "degree": 54034
+    },
+    {
+      "labels": [
+        "SemanticId"
+      ],
+      "key": "0173-1#01-AHF578#003",
+      "degree": 48885
+    },
+    {
+      "labels": [
+        "Vendor"
+      ],
+      "key": "harting",
+      "degree": 23475
+    },
+    {
+      "labels": [
+        "SemanticId"
+      ],
+      "key": "https://admin-shell.io/idta/HierarchicalStructures/Node/1/0",
+      "degree": 22275
     },
     {
       "labels": [
         "Shape"
       ],
-      "key": "AAQ373-Manufacturer",
-      "degree": 134056
+      "key": "EntryNode",
+      "degree": 22236
+    },
+    {
+      "labels": [
+        "Vendor"
+      ],
+      "key": "phoenix_contact",
+      "degree": 5496
     },
     {
       "labels": [
         "Shape"
       ],
-      "key": "AAO676-Internal_article_number",
-      "degree": 134054
-    },
-    {
-      "labels": [
-        "Shape"
-      ],
-      "key": "AAW338-Manufacturer_product_designation",
-      "degree": 133704
-    },
-    {
-      "labels": [
-        "Shape"
-      ],
-      "key": "AAN350-Part_relation_to_the_main_device",
-      "degree": 128009
-    },
-    {
-      "labels": [
-        "Shape"
-      ],
-      "key": "AAO663-GTIN__EAN__code",
-      "degree": 125437
-    },
-    {
-      "labels": [
-        "Shape"
-      ],
-      "key": "AAO677-Manufacturer_name",
-      "degree": 103754
-    },
-    {
-      "labels": [
-        "Shape"
-      ],
-      "key": "AAN475-Number_of_parts_relations",
-      "degree": 89865
-    },
-    {
-      "labels": [
-        "Shape"
-      ],
-      "key": "AAO057-Product_type",
-      "degree": 76666
-    },
-    {
-      "labels": [
-        "Shape"
-      ],
-      "key": "AAN406-number_of_the_more-wire_conductors",
-      "degree": 75937
+      "key": "TechnicalProperties",
+      "degree": 3301
     }
   ],
   "top_declares": [
@@ -321,29 +332,31 @@
     }
   ],
   "write_seconds": {
-    "Shape": 5.913064041000325,
-    "SemanticId": 0.17879937498946674,
-    "DECLARES": 3.6451936250086874,
-    "Structure": 0.653004958992824,
-    "HAS_SLOT": 137.2499852089968,
-    "USES": 4.657228167023277,
-    "SHIPS": 0.7473624999984168,
-    "Concept": 0.14231529101380147,
-    "RESOLVES_TO": 0.04069141697254963,
-    "Shape.occurrences": 1.4072566669783555,
-    "Structure.occurrences": 0.19838212500326335
+    "Shape": 9.444646166986786,
+    "SemanticId": 0.3959398329607211,
+    "DECLARES": 4.365508042043075,
+    "USES": 5.634166417003144,
+    "CONTAINS": 1.5168207919923589,
+    "PRECEDES": 1.5521138329640962,
+    "Concept": 0.25947883300250396,
+    "RESOLVES_TO": 0.0817772499867715,
+    "Shape counters": 2.4990344169782475,
+    "CONTAINS support": 0.5048318330082111,
+    "CONTAINS submodels": 0.9191776250372641,
+    "PRECEDES support": 0.4511072500026785
   },
   "rows_written": {
     "Shape": 245231,
     "SemanticId": 7099,
     "DECLARES": 245132,
-    "Structure": 39168,
-    "HAS_SLOT": 7085871,
     "USES": 245681,
-    "SHIPS": 39170,
+    "CONTAINS": 47440,
+    "PRECEDES": 58672,
     "Concept": 3184,
     "RESOLVES_TO": 0,
-    "Shape.occurrences": 0,
-    "Structure.occurrences": 0
+    "Shape counters": 0,
+    "CONTAINS support": 0,
+    "CONTAINS submodels": 0,
+    "PRECEDES support": 0
   }
 }

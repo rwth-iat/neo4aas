@@ -2,19 +2,37 @@
 
 The whole point of the vocabulary graph is that what it holds is *distinct
 things*, not occurrences, so extraction is a fold: a stream of AAS documents
-collapses into a small set of shapes, structures and semanticIds plus integer
-counters. Two folds merge (:meth:`VocabularyRecords.merge`), which is what lets
-extraction run in worker processes and the result be summed in the parent.
+collapses into a small set of shapes and the containment relations between them,
+plus integer counters. Two folds merge (:meth:`VocabularyRecords.merge`), which
+is what lets extraction run in worker processes and the result be summed in the
+parent.
+
+Layout is edges, not nodes
+--------------------------
+
+A submodel's layout is stored as ``(:Shape)-[:CONTAINS]->(:Shape)`` merged over
+every submodel in the corpus, not as a per-layout node. That is a deliberate
+trade, and both halves of it are measured (``docs/vocabulary-graph.md``):
+
+* the merged form is **78x smaller** — 9 935 edges against 773 566 slot edges on
+  the 5 000-file load;
+* it is a *union*, so it cannot say which layouts exist. Of 1 448 parent shapes,
+  279 have more than one distinct child set, so a path read off the merged graph
+  may correspond to no real submodel.
+
+What keeps the merge honest is **support**: every edge records how many
+occurrences and how many submodels it was seen in, per vendor. A pair seen in
+12 000 submodels is schema; one seen in three is noise, and the graph says which
+is which even though it can no longer enumerate layouts.
 
 Keys
 ----
 
 ``shape_key`` is a SHA-256 over the canonical JSON of
 ``[idShort, semanticId, modelType, valueType]`` — **verbatim** values, no
-normalisation, no case folding, no trimming. ``structure_key`` is a SHA-256 over
-the canonical JSON of the structure's ordered ``shape_key`` sequence. Both are
-pure functions of their input, so the same corpus produces the same keys on any
-machine and any run, which is what makes the whole import idempotent.
+normalisation, no case folding, no trimming. It is a pure function of its input,
+so the same corpus produces the same keys on any machine and any run, which is
+what makes the whole import idempotent.
 
 ``semanticId`` is ``semanticId.keys[0].value`` and nothing else. ``Key.type``
 disagrees across vendors for identical values (one vendor writes
@@ -35,7 +53,7 @@ import json
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Sequence
+from typing import Any, Iterable, Iterator
 
 from neo4aas.core.io import aas_suffix, is_aas_file, read_bytes
 from neo4aas.core.utils import irdi_base
@@ -79,14 +97,9 @@ def shape_key(id_short: str | None, semantic_id: str | None,
     return _digest([id_short, semantic_id, model_type, value_type])
 
 
-def structure_key(shape_keys: Sequence[str]) -> str:
-    """Stable key of a submodel structure: its ordered sequence of shape keys."""
-    return _digest(list(shape_keys))
-
-
 @dataclass(frozen=True, slots=True)
 class Shape:
-    """One distinct element shape. 4 686 of these describe 860 260 elements."""
+    """One distinct element shape. A few thousand describe tens of millions of elements."""
 
     key: str
     id_short: str | None
@@ -107,10 +120,10 @@ class Shape:
 
 @dataclass(frozen=True, slots=True)
 class ShapeUse:
-    """One slot's shape plus the per-occurrence detail the shape does not carry.
+    """One occurrence's shape plus the detail the shape key does not carry.
 
-    ``category`` is not part of the shape key (the key is fixed by design) and the
-    two ``Reference`` type fields are recorded on the ``:SemanticId`` node but never
+    ``category`` is not part of the key (the key is fixed by design) and the two
+    ``Reference`` type fields are recorded on the ``:SemanticId`` node but never
     used for matching — vendors disagree about them for identical values. They are
     collected during the single structural walk rather than by a second pass.
     """
@@ -121,45 +134,26 @@ class ShapeUse:
     ref_type: str | None
 
 
-@dataclass(frozen=True, slots=True)
-class Slot:
-    """A position inside a structure: which shape sits where, under whom."""
+@dataclass
+class SubmodelWalk:
+    """What one submodel contributes: shapes, roots, containment, adjacency.
 
-    ord: int
-    depth: int
-    parent_ord: int | None
-    shape_key: str
-
-
-@dataclass(frozen=True, slots=True)
-class Structure:
-    """One distinct submodel structure: the ordered shape sequence of its elements.
-
-    The Submodel's *own* shape is deliberately not a slot. It was, in an earlier
-    version, on the argument that it makes a structure self-describing — and it
-    measurably broke the thing structures exist for. Several vendors put a
-    per-product token in the submodel's ``idShort`` (SICK ships
-    ``Nameplate_0226303791c8a2efe04ed3e83865b6b7``), so a head slot gives every
-    product its own structure: on a 400-file sample, 584 structures with the head
-    against 452 without, and the gap widens with corpus size. Structures are the
-    corpus's *layouts*, and a layout must not carry a serial number.
-
-    The submodel's shape is still recorded as a :class:`Shape` — the vendor uses it
-    and it declares the submodel's semanticId — it simply is not part of the layout.
+    Containment is counted *per submodel* so that ``:CONTAINS`` can carry two
+    different supports — total occurrences, and the number of submodels the pair
+    was seen in. The second is what separates a real schema relation from a
+    one-off, and it is the only defence the merged form has against the phantom
+    combinations it cannot rule out.
     """
 
-    key: str
-    slots: tuple[Slot, ...]
-
-    @property
-    def element_count(self) -> int:
-        """SubmodelElements at every depth — one ``:HAS_SLOT`` edge each."""
-        return len(self.slots)
-
-    @property
-    def slot_count(self) -> int:
-        """Top-level slots: how wide the submodel is before any nesting."""
-        return sum(1 for slot in self.slots if slot.depth == 0)
+    uses: list[ShapeUse] = field(default_factory=list)
+    #: Shapes appearing directly under the Submodel. ``:CONTAINS`` has no node to
+    #: hang these off, so "what starts a submodel" is a count, not an edge.
+    roots: Counter = field(default_factory=Counter)
+    #: ``(parent_shape_key, child_shape_key) -> occurrences in this submodel``.
+    contains: Counter = field(default_factory=Counter)
+    #: ``(shape_key, next_shape_key) -> occurrences`` between adjacent siblings.
+    precedes: Counter = field(default_factory=Counter)
+    elements: int = 0
 
 
 @dataclass
@@ -176,15 +170,6 @@ class ShapeRecord:
     def absorb(self, other: ShapeRecord) -> None:
         self.occurrences += other.occurrences
         self.category = _min_opt(self.category, other.category)
-
-
-@dataclass
-class StructureRecord:
-    structure: Structure
-    occurrences: int = 0
-
-    def absorb(self, other: StructureRecord) -> None:
-        self.occurrences += other.occurrences
 
 
 @dataclass
@@ -210,15 +195,30 @@ class SemanticIdRecord:
 
 @dataclass
 class VocabularyRecords:
-    """The fold. Merges associatively, so workers can extract in parallel."""
+    """The fold. Merges associatively, so workers can extract in parallel.
+
+    Every counter is keyed by **vendor first**. That is not bookkeeping — it is
+    what makes the write idempotent. ``:CONTAINS`` is a single edge shared by
+    every vendor that ships the pair, so a run cannot simply add to a number it
+    has no way of telling apart from history; it replaces its own vendor's slot
+    (see :mod:`neo4aas.vocabulary.load`).
+    """
 
     shapes: dict[str, ShapeRecord] = field(default_factory=dict)
-    structures: dict[str, StructureRecord] = field(default_factory=dict)
     semantic_ids: dict[str, SemanticIdRecord] = field(default_factory=dict)
     #: ``(vendor, shape_key) -> occurrences`` — the ``:USES`` edge payload.
     vendor_shapes: Counter = field(default_factory=Counter)
-    #: ``(vendor, structure_key) -> submodels`` — the ``:SHIPS`` edge payload.
-    vendor_structures: Counter = field(default_factory=Counter)
+    #: ``(vendor, shape_key) -> occurrences at the top level of a submodel``.
+    vendor_roots: Counter = field(default_factory=Counter)
+    #: ``(vendor, parent_key, child_key) -> element occurrences``.
+    contains: Counter = field(default_factory=Counter)
+    #: ``(vendor, parent_key, child_key) -> submodels the pair was seen in``.
+    contains_submodels: Counter = field(default_factory=Counter)
+    #: ``(vendor, key, next_key) -> occurrences`` — ``:PRECEDES`` support.
+    precedes: Counter = field(default_factory=Counter)
+    #: ``(parent_key, child_key)`` pairs an IDTA template declares. No vendor: a
+    #: template is not shipped by anyone, it is what shipping is measured against.
+    template_contains: set = field(default_factory=set)
     #: ``irdi -> concept dict``, harvested from ConceptDescriptions embedded in the
     #: documents. For a large share of distinct semanticIds this is the *only*
     #: definition source in the corpus (see :mod:`neo4aas.vocabulary.concepts`).
@@ -238,11 +238,6 @@ class VocabularyRecords:
                 self.shapes[key].absorb(rec)
             else:
                 self.shapes[key] = rec
-        for key, srec in other.structures.items():
-            if key in self.structures:
-                self.structures[key].absorb(srec)
-            else:
-                self.structures[key] = srec
         for value, sem in other.semantic_ids.items():
             if value in self.semantic_ids:
                 self.semantic_ids[value].absorb(sem)
@@ -251,7 +246,11 @@ class VocabularyRecords:
         for irdi, concept in other.concepts.items():
             self.concepts.setdefault(irdi, concept)
         self.vendor_shapes.update(other.vendor_shapes)
-        self.vendor_structures.update(other.vendor_structures)
+        self.vendor_roots.update(other.vendor_roots)
+        self.contains.update(other.contains)
+        self.contains_submodels.update(other.contains_submodels)
+        self.precedes.update(other.precedes)
+        self.template_contains |= other.template_contains
         self.vendors |= other.vendors
         self.documents += other.documents
         self.shells += other.shells
@@ -274,13 +273,6 @@ class VocabularyRecords:
         if vendor is not None:
             self.vendor_shapes[(vendor, shape.key)] += occurrences
 
-    def add_structure(self, structure: Structure, vendor: str) -> None:
-        rec = self.structures.get(structure.key)
-        if rec is None:
-            rec = self.structures[structure.key] = StructureRecord(structure)
-        rec.occurrences += 1
-        self.vendor_structures[(vendor, structure.key)] += 1
-
     def add_semantic_id(self, value: str, key_type: str | None, ref_type: str | None) -> None:
         rec = self.semantic_ids.get(value)
         if rec is None:
@@ -289,6 +281,23 @@ class VocabularyRecords:
             rec.key_types.add(key_type)
         if ref_type:
             rec.ref_types.add(ref_type)
+
+    def add_walk(self, walk: SubmodelWalk, vendor: str, *, with_precedes: bool = False) -> None:
+        """Fold one submodel's walk in under ``vendor``."""
+        for use in walk.uses:
+            self.add_shape(use.shape, vendor, use.category)
+            if use.shape.semantic_id:
+                self.add_semantic_id(use.shape.semantic_id, use.key_type, use.ref_type)
+        for key, count in walk.roots.items():
+            self.vendor_roots[(vendor, key)] += count
+        for pair, count in walk.contains.items():
+            self.contains[(vendor, *pair)] += count
+            self.contains_submodels[(vendor, *pair)] += 1
+        if with_precedes:
+            for pair, count in walk.precedes.items():
+                self.precedes[(vendor, *pair)] += count
+        self.submodels += 1
+        self.elements += walk.elements
 
 
 # -- reading -------------------------------------------------------------------
@@ -366,33 +375,48 @@ def _child_elements(element: dict) -> Iterator[dict]:
                     yield inner
 
 
-def structure_of(submodel: dict) -> tuple[Structure, list[ShapeUse]]:
-    """Walk a Submodel into its structure and the shapes it uses.
+def walk_submodel(submodel: dict) -> SubmodelWalk:
+    """Walk a Submodel into shapes, roots, containment pairs and sibling adjacency.
 
-    Pre-order, ``ord`` running over the whole submodel, slot 0 the Submodel itself.
-    One walk produces everything the caller needs — the structure, the shapes, and
-    the per-occurrence Reference detail — because this walk is the extractor's hot
-    loop and the corpus is 150 000 documents.
+    One pass produces everything the fold needs — this is the extractor's hot loop
+    and the corpus is 150 000 documents.
+
+    The Submodel's own shape is recorded (it declares the submodel's semanticId)
+    but is **not** the parent of the top-level elements. Several vendors put a
+    per-product token in the submodel ``idShort`` — SICK ships
+    ``Nameplate_0226303791c8a2efe04ed3e83865b6b7`` — so rooting containment there
+    would give every product its own subtree and defeat the merge entirely. The
+    top level is a count on the shape instead (:attr:`SubmodelWalk.roots`).
     """
-    slots: list[Slot] = []
-    uses: list[ShapeUse] = []
+    walk = SubmodelWalk()
 
     def record(element: dict, model_type: str | None = None) -> Shape:
         shape = Shape.of(element, model_type)
         _, key_type, ref_type = semantic_id_parts(element)
-        uses.append(ShapeUse(shape, _text(element.get("category")), key_type, ref_type))
+        walk.uses.append(ShapeUse(shape, _text(element.get("category")), key_type, ref_type))
         return shape
 
-    def visit(element: dict, depth: int, parent_ord: int | None) -> None:
-        position = len(slots)
-        slots.append(Slot(position, depth, parent_ord, record(element).key))
+    def visit(element: dict) -> Shape:
+        shape = record(element)
+        walk.elements += 1
+        previous: Shape | None = None
         for child in _child_elements(element):
-            visit(child, depth + 1, position)
+            child_shape = visit(child)
+            walk.contains[(shape.key, child_shape.key)] += 1
+            if previous is not None:
+                walk.precedes[(previous.key, child_shape.key)] += 1
+            previous = child_shape
+        return shape
 
-    record(submodel, "Submodel")          # a shape, but not a slot — see Structure
+    record(submodel, "Submodel")
+    previous: Shape | None = None
     for element in _child_elements(submodel):
-        visit(element, 0, None)
-    return Structure(structure_key([s.shape_key for s in slots]), tuple(slots)), uses
+        shape = visit(element)
+        walk.roots[shape.key] += 1
+        if previous is not None:
+            walk.precedes[(previous.key, shape.key)] += 1
+        previous = shape
+    return walk
 
 
 def iter_environments(path: Path) -> Iterator[dict]:
@@ -422,7 +446,8 @@ def iter_environments(path: Path) -> Iterator[dict]:
 # -- extraction ----------------------------------------------------------------
 
 
-def extract_environment(env: dict, vendor: str, into: VocabularyRecords) -> None:
+def extract_environment(env: dict, vendor: str, into: VocabularyRecords, *,
+                        with_precedes: bool = False) -> None:
     """Fold one Environment into ``into``. Only vocabulary comes out."""
     from neo4aas.vocabulary.concepts import concept_from_description
 
@@ -432,16 +457,8 @@ def extract_environment(env: dict, vendor: str, into: VocabularyRecords) -> None
     into.shells += len(_as_list(env.get(ENV_SHELLS)))
 
     for submodel in _as_list(env.get(ENV_SUBMODELS)):
-        if not isinstance(submodel, dict):
-            continue
-        structure, uses = structure_of(submodel)
-        into.add_structure(structure, vendor)
-        into.submodels += 1
-        into.elements += structure.element_count
-        for use in uses:
-            into.add_shape(use.shape, vendor, use.category)
-            if use.shape.semantic_id:
-                into.add_semantic_id(use.shape.semantic_id, use.key_type, use.ref_type)
+        if isinstance(submodel, dict):
+            into.add_walk(walk_submodel(submodel), vendor, with_precedes=with_precedes)
 
     for description in _as_list(env.get(ENV_CONCEPT_DESCRIPTIONS)):
         concept = concept_from_description(description)
@@ -451,7 +468,7 @@ def extract_environment(env: dict, vendor: str, into: VocabularyRecords) -> None
     into.vendors.add(vendor)
 
 
-def extract_file(path: Path, vendor: str) -> VocabularyRecords:
+def extract_file(path: Path, vendor: str, *, with_precedes: bool = False) -> VocabularyRecords:
     """Fold one source file. A document that will not parse is reported, not raised."""
     records = VocabularyRecords()
     try:
@@ -461,7 +478,7 @@ def extract_file(path: Path, vendor: str) -> VocabularyRecords:
         return records
     for env in environments:
         try:
-            extract_environment(env, vendor, records)
+            extract_environment(env, vendor, records, with_precedes=with_precedes)
         except Exception as exc:                                # noqa: BLE001 — boundary
             records.failures.append((str(path), f"{type(exc).__name__}: {exc}"))
     records.documents += 1
@@ -530,6 +547,7 @@ def _round_robin(files: list[tuple[Path, Path]]) -> list[tuple[Path, Path]]:
 def extract_paths(paths: Iterable[str | Path], *, vendor_from_dir: bool = False,
                   vendor: str = "unknown", limit: int | None = None,
                   workers: int = 1, stratify: bool = False,
+                  with_precedes: bool = False,
                   progress: Any = None) -> VocabularyRecords:
     """Fold every AAS source file under ``paths`` into one :class:`VocabularyRecords`.
 
@@ -541,28 +559,32 @@ def extract_paths(paths: Iterable[str | Path], *, vendor_from_dir: bool = False,
     """
     files = collect_files(paths, limit, stratify)
     if workers > 1 and len(files) > 1:
-        return _extract_parallel(files, vendor_from_dir, vendor, workers, progress)
+        return _extract_parallel(files, vendor_from_dir, vendor, workers,
+                                 with_precedes, progress)
 
     total = VocabularyRecords()
     for root, path in files:
-        total.merge(extract_file(path, vendor_of(path, root, vendor_from_dir, vendor)))
+        total.merge(extract_file(path, vendor_of(path, root, vendor_from_dir, vendor),
+                                 with_precedes=with_precedes))
         if progress:
             progress(total)
     return total
 
 
-def _extract_one(job: tuple[str, str, bool, str]) -> VocabularyRecords:
+def _extract_one(job: tuple[str, str, bool, str, bool]) -> VocabularyRecords:
     """Worker entry point. Module-level so it pickles."""
-    root, path, vendor_from_dir, fallback = job
+    root, path, vendor_from_dir, fallback, with_precedes = job
     file_path = Path(path)
-    return extract_file(file_path, vendor_of(file_path, Path(root), vendor_from_dir, fallback))
+    return extract_file(file_path, vendor_of(file_path, Path(root), vendor_from_dir, fallback),
+                        with_precedes=with_precedes)
 
 
 def _extract_parallel(files: list[tuple[Path, Path]], vendor_from_dir: bool, vendor: str,
-                      workers: int, progress: Any) -> VocabularyRecords:
+                      workers: int, with_precedes: bool, progress: Any) -> VocabularyRecords:
     from concurrent.futures import ProcessPoolExecutor
 
-    jobs = [(str(root), str(path), vendor_from_dir, vendor) for root, path in files]
+    jobs = [(str(root), str(path), vendor_from_dir, vendor, with_precedes)
+            for root, path in files]
     total = VocabularyRecords()
     chunk = max(1, min(256, len(jobs) // (workers * 8) or 1))
     with ProcessPoolExecutor(max_workers=workers) as pool:

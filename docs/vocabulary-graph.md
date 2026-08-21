@@ -18,9 +18,11 @@ prior measurements it rests on are in
 
 ## The model
 
+Layout is **edges between shapes**, not a node per layout.
+
 ```
-(:Shape     {shape_key, id_short, model_type, value_type, category, occurrences})
-(:Structure {structure_key, element_count, slot_count, occurrences})
+(:Shape     {shape_key, id_short, model_type, value_type, category,
+             occurrences, top_level})
 (:SemanticId{value, base, key_types, ref_types})
 (:Concept   {irdi, irdi_base, coded_name, level, source, kind,
              preferred_name, definition, unit, data_type, deprecated})
@@ -30,35 +32,70 @@ prior measurements it rests on are in
 (:Shape)-[:DECLARES]->(:SemanticId)
 (:SemanticId)-[:RESOLVES_TO]->(:Concept)      -- absent when unresolvable; that is data
 (:Concept)-[:BROADER]->(:Concept)             -- ECLASS CodedName prefix hierarchy
-(:Structure)-[:HAS_SLOT {ord, depth, parent_ord}]->(:Shape)
 (:Template)-[:DECLARES_SHAPE]->(:Shape)
-(:Vendor)-[:USES {occurrences}]->(:Shape)
-(:Vendor)-[:SHIPS {submodels}]->(:Structure)
+(:Vendor)-[:USES {occurrences, top_level}]->(:Shape)
+
+(:Shape)-[:CONTAINS {vendor_names[], vendor_occurrences[], vendor_submodels[],
+                     occurrences, submodels, vendors, in_template}]->(:Shape)
+(:Shape)-[:PRECEDES {vendor_names[], vendor_occurrences[], occurrences}]->(:Shape)
 ```
 
-### Why each rule is there
+### Layout is a merge, and the merge is lossy
+
+An earlier version of this importer stored a node per distinct layout,
+`(:Structure)-[:HAS_SLOT {ord, depth, parent_ord}]->(:Shape)`, one edge per slot.
+Merging every submodel's layout into `(:Shape)-[:CONTAINS]->(:Shape)` is far smaller —
+**7 085 871 slot edges become 51 665** on the full corpus, a 137x reduction, and the write
+that took 137 s takes 1.5 s — and it is a *union*, so it loses its members:
+
+* it cannot enumerate layouts. Of 1 448 parent shapes, **279 (19 %) have more than one
+  distinct child set** and the worst has **402**. A path read off the merged graph may
+  correspond to no real submodel.
+* `(:Vendor)-[:SHIPS]->(:Structure)`, "how many submodels have this layout", and
+  classifying an unknown submodel against known layouts all go with it.
+
+The trade is deliberate. What is added back is **support**, and it is what makes the
+merge usable rather than merely small.
+
+### Support: two numbers, per vendor
+
+Every containment edge records how many *element occurrences* and how many *submodels*
+it was seen in — a pair seen in 12 000 submodels is schema, one seen in three is noise
+— and it records both **per vendor**:
+
+```
+(:Shape)-[:CONTAINS {
+    vendor_names:       ['festo', 'wago'],
+    vendor_occurrences: [ 18422,   9013 ],
+    vendor_submodels:   [  6140,   3004 ],
+    occurrences: 27435, submodels: 9144,   -- reduce() sums, recomputed in finalize()
+    in_template: true                      -- an IDTA template declares this pair
+}]->(:Shape)
+```
+
+Eight vendors means eight slots. It costs almost nothing and it buys two things:
+
+1. **"Which vendor nests this under that, and how often"** — the vendor dimension the
+   merge would otherwise destroy.
+2. **Idempotence.** This is the part that is not optional. A `:CONTAINS` edge is shared
+   by every vendor that ships the pair, so a run cannot *replace* the number (it would
+   erase the other vendors) and cannot *accumulate* it (it would double on re-import).
+   Each run replaces its own array slot and nothing else. `finalize()` recomputes the
+   scalar totals with `reduce()` over the arrays, so a total can never drift from the
+   slots it summarises.
+
+### Why each of the other rules is there
 
 **Keys are stable hashes over verbatim values.** `shape_key` is SHA-256 over the canonical
-JSON of `[idShort, semanticId, modelType, valueType]`; `structure_key` is SHA-256 over the
-ordered `shape_key` sequence. No normalisation, no case folding, no trimming — normalising
-would merge two vocabularies that really are different. Both digests are pinned as literals
-in `tests/vocabulary/test_extract.py`, because changing how a key is computed does not fail
-a test somewhere: it orphans every node in every database that already holds this
-vocabulary. Such a change is a migration.
+JSON of `[idShort, semanticId, modelType, valueType]`. No normalisation, no case folding,
+no trimming — normalising would merge two vocabularies that really are different. The
+digest is pinned as a literal in `tests/vocabulary/test_extract.py`, because changing how
+a key is computed does not fail a test somewhere: it orphans every node in every database
+that already holds this vocabulary. Such a change is a migration.
 
-**Every write is `MERGE`, with one deliberate exception.** Re-importing the same corpus must
-not move a single count. That is the primary acceptance test, and it is what catches a
-`CREATE` in the wrong place as well as a key that is not a pure function of its input.
-
-The exception is the slot write. A structure's slots are `CREATE`d, not merged, in the *same
-transaction* that sets the `slots_written` flag which suppresses them — so the pair is atomic,
-a re-import writes nothing, and a failure mid-load leaves a structure either fully slotted or
-not slotted at all. `MERGE` there is not merely slower, it is **quadratic**: merging a
-relationship with properties re-reads the source node's relationship chain once per row, so a
-3 000-slot structure costs about 4.5 M chain steps to write 3 000 edges, and the corpus has
-tens of thousands of such structures. It is safe for a specific reason — `structure_key` *is*
-the ordered slot sequence, so a structure's slots cannot change and there is never an existing
-edge to merge with. The idempotence the rule exists to guarantee is preserved, and tested.
+**Every write is `MERGE`.** Re-importing the same corpus must not move a single count.
+That is the primary acceptance test, and it is what catches a `CREATE` in the wrong place
+as well as a key that is not a pure function of its input.
 
 **semanticIds match on the value only and join on the version-stripped base.** `Key.type`
 disagrees across vendors for identical values — one writes `ConceptDescription`, another
@@ -66,45 +103,37 @@ disagrees across vendors for identical values — one writes `ConceptDescription
 for matching. Dropping the `#<version>` suffix lifts resolution roughly tenfold, because
 ECLASS bumps the version on effectively every shared base between releases.
 
-**Occurrence counters are properties, not edges.** An edge per occurrence is the super-node
-this design exists to avoid. A counter and idempotence pull against each other (`c = c + n`
-doubles on re-import), so the counter is **scoped to the vendor and replaced**: one run over
-a vendor's files sets `(:Vendor)-[:USES]->(:Shape).occurrences` to what that run saw, and
-`Shape.occurrences` is recomputed as the sum over vendors in `finalize()`. `--mode
-accumulate` adds instead — for deliberately sharded loads — and is consequently not
-idempotent.
+**The Submodel's own shape is never a containment parent.** Several vendors put a
+per-product token in the submodel `idShort` — SICK ships
+`Nameplate_0226303791c8a2efe04ed3e83865b6b7` — so rooting containment there would give
+every *product* its own subtree and defeat the merge entirely. Top-level elements are
+counted instead, on `Shape.top_level` and `(:Vendor)-[:USES]->(:Shape).top_level`.
 
-**Unresolved semanticIds stay in the graph** with no `:RESOLVES_TO`. Roughly a third of them
-resolve nowhere, and a vendor pointing at an identifier no dictionary defines is a finding,
-not an ingest error. The report lists them.
+**Unresolved semanticIds stay in the graph** with no `:RESOLVES_TO`. Roughly a third of
+them resolve nowhere, and a vendor pointing at an identifier no dictionary defines is a
+finding, not an ingest error. The report lists them.
 
-**Shape co-occurrence is never materialised.** Two hops through `:Structure` give it;
-materialising it is 3.6 M edges for one sample.
+**Shape co-occurrence is never materialised.** Two hops through a shared `:CONTAINS`
+parent give it; materialising it is 1.9 **billion** pairs (`Σ n²`) on the 5 000-file load
+alone.
 
-### Two deviations from the sketch, both measured
-
-**A structure is the ordered shape sequence of a submodel's *elements*; the submodel's own
-shape is not a slot.** It was, in the first version, on the argument that a head slot makes
-a structure self-describing. It measurably broke the thing structures are for. Several
-vendors put a per-product token in the submodel's `idShort` — SICK ships
-`Nameplate_0226303791c8a2efe04ed3e83865b6b7` — so a head slot gives every *product* its own
-structure: 584 structures with the head against 452 without on a 400-file sample, and the
-gap widens with corpus size. A layout must not carry a serial number. The submodel's shape
-is still recorded as a `:Shape` (the vendor uses it, and it declares the submodel's
-semanticId); it simply is not part of the layout.
-
-`element_count` is the number of elements at every depth — one `:HAS_SLOT` edge each.
-`slot_count` is the number of top-level slots, i.e. how wide the submodel is before any
-nesting.
+**`:PRECEDES` is opt-in** (`--precedes`). Sibling adjacency with the same per-vendor
+support — it keeps *ordering* answerable at the schema level once the per-layout ordering
+is gone. Roughly the same edge count as `:CONTAINS`.
 
 **A property concept also gets a `:BROADER` edge to the ECLASS class that describes it.**
-The sketch defines `:BROADER` as CodedName prefix containment, which only relates *classes*.
-But most semanticIds in the corpus resolve to a *property*, and a property with no broader
-concept has no siblings — so query expansion, the traversal the graph exists for, would have
-nothing to expand through. The class→property links come from ECLASS's own `described_by`
-block and are joined on the version-stripped base. `--no-property-class-edges` turns them off.
+The sketch defines `:BROADER` as CodedName prefix containment, which only relates
+*classes*. But most semanticIds in the corpus resolve to a *property*, and a property with
+no broader concept has no siblings — so query expansion, the traversal the graph exists
+for, would have nothing to expand through. The class→property links come from ECLASS's own
+`described_by` block and are joined on the version-stripped base.
+`--no-property-class-edges` turns them off.
 
----
+### Upgrading from the `:Structure` model
+
+`vocab clear` removes `:Structure`, `:HAS_SLOT` and `:SHIPS` as well as the current labels
+(`schema.LEGACY_LABELS` / `LEGACY_RELATIONSHIPS`), so moving a database across is one
+`clear` and one re-import.
 
 ## Usage
 
@@ -127,6 +156,10 @@ neo4aas vocab import --vendor-from-dir --workers 8 \
 neo4aas vocab stats
 neo4aas vocab clear            # asks; --yes to skip
 ```
+
+Add `--precedes` to the instance load to record sibling order as
+`(:Shape)-[:PRECEDES]->(:Shape)` alongside containment — same walk, same per-vendor support,
+roughly the same edge count, off by default.
 
 Three loaders, each runnable alone and each idempotent. `--limit N` takes the first N files
 in path order; add `--stratify` to spread those N round-robin across vendors, which is what
@@ -156,18 +189,17 @@ NODES
   Shape                   3,535
   SemanticId              1,421
   Concept                   874
-  Structure                 800
   Vendor                      8
   Template                    0
-  TOTAL                   6,638   (128.5 elements per node)
+  TOTAL                   5,838   (146.1 elements per node)
 
 EDGES
-  HAS_SLOT              354,900
+  CONTAINS                7,112
   USES                    3,859
   DECLARES                3,529
   RESOLVES_TO             1,028
-  SHIPS                     801
   BROADER                     0
+  PRECEDES                    0
   DECLARES_SHAPE              0
 
 SEMANTIC ID RESOLUTION
@@ -188,23 +220,26 @@ same vendor mix and the growth is not an artefact of meeting a new vendor.
 
 ```
 ===== 2. SUBLINEARITY — node count against file count =====
-   files    elements    Shape Shape/no#  Structure  SemanticId  seconds
-    1000      853035     3535       814        800        1421     22.7
-   10000     7055942    11468      1104       4440        3217     78.8
-   50000    28438821    48846      2256      19507        5593    291.8
+   files    elements    Shape Shape/no#   CONTAINS  SemanticId  seconds
+    1000      853035     3535       814       7112        1421     15.8
+   10000     7055942    11468      1104      12868        3217     66.3
+   50000    28438821    48846      2256      31410        5593    280.0
 ```
 
 Per-file rates, which is what the criterion is really about:
 
-| files | elements/file | shapes/file | clean shapes/file | structures/file | elements per shape |
+| files | elements/file | shapes/file | clean shapes/file | CONTAINS/file | elements per shape |
 |---:|---:|---:|---:|---:|---:|
-| 1,000 | 853 | 3.54 | 0.814 | 0.80 | 241 |
-| 10,000 | 706 | 1.15 | 0.110 | 0.44 | 615 |
-| 50,000 | 569 | 0.98 | 0.045 | 0.39 | 582 |
-| 153,853 | 553 | 1.59 | 0.024 | 0.25 | 347 |
+| 1 000 | 853 | 3.54 | 0.814 | 7.11 | 241 |
+| 10 000 | 706 | 1.15 | 0.110 | 1.29 | 615 |
+| 50 000 | 569 | 0.98 | 0.045 | 0.63 | 582 |
+| 153 853 | 553 | 1.59 | 0.024 | 0.34 | 347 |
 
-Shapes and structures both flatten — but not to a constant, and the reason is worth more
-than the criterion.
+Containment flattens hardest of all — **7.11 edges per file at 1 000 files, 0.34 at 153 853**,
+a 21x fall — which is the merge doing its job: new documents mostly repeat nesting that is
+already an edge.
+
+Shapes flatten too, but not to a constant, and the reason is worth more than the criterion.
 
 **95 % of shapes carry a per-product token in the `idShort`.** A shape is keyed on the
 `idShort` verbatim, which is right: normalising would merge vocabularies that genuinely
@@ -237,7 +272,7 @@ no number, against file count:
 | 50 000 | 2 256 | 0.045 |
 | 153 853 | 3 713 | 0.024 |
 
-**A 34× fall in the per-file rate over a 154× growth in files**, ending at 3 713 shapes for
+**A 34x fall in the per-file rate over a 154x growth in files**, ending at 3 713 shapes for
 85 million elements — 23 000 elements per shape. That is the flattening the criterion asks
 for. The instance side has not leaked in; the corpus contains vendors who write serial
 numbers into their schema, and this graph is the first place that is visible corpus-wide.
@@ -248,37 +283,31 @@ declare 3 094 further shapes that no vendor ships.)
 
 ```
 TOP-DEGREE NODES
-   212,761  :Vendor       sick
-   134,056  :Shape        AAQ373-Manufacturer
-   134,054  :Shape        AAO676-Internal_article_number
-   133,704  :Shape        AAW338-Manufacturer_product_designation
-   128,009  :Shape        AAN350-Part_relation_to_the_main_device
-   125,437  :Shape        AAO663-GTIN__EAN__code
-   103,754  :Shape        AAO677-Manufacturer_name
-    89,865  :Shape        AAN475-Number_of_parts_relations
-    76,666  :Shape        AAO057-Product_type
-    75,937  :Shape        AAN406-number_of_the_more-wire_conductors
+   211,363  :Vendor       sick
+    54,036  :SemanticId   https://admin-shell.io/idta/nameplate/3/0/Nameplate
+    54,035  :SemanticId   0173-1#01-AHX837#002
+    54,034  :SemanticId   0173-1#02-AAQ837#005
+    48,885  :SemanticId   0173-1#01-AHF578#003
+    41,715  :Concept      0173-1#02-AAU731#002
+    41,715  :Concept      0173-1#02-AAQ326#002
+    41,715  :Concept      0173-1#02-AAW338#001
+    41,715  :Concept      0173-1#02-AAO677#002
+    41,715  :Concept      0173-1#02-AAU731#001
 ```
 
-High degree on a `:Shape`, `:SemanticId` or `:Concept` is the design working: 543× Reference
+High degree on a `:Shape`, `:SemanticId` or `:Concept` is the design working: 543x Reference
 reuse has to land somewhere, and the whole point is that it lands on *one* node instead of
-being repeated per occurrence. `AAQ373-Manufacturer` carries 134 056 edges and stands in for
-188 779 elements; 134 054 of those edges are `:HAS_SLOT`, i.e. the positions it occupies
-across the 39 168 distinct structures. Degree here is bounded by the *structure* vocabulary,
-which is what §2 measures, not by the corpus:
+being repeated per occurrence. Dropping the per-layout node changed the shape of this list —
+the old model's top ten were all `:Shape` nodes carrying tens of thousands of `:HAS_SLOT`
+edges, and those are gone. What remains is bounded by the *vocabulary*: a `:SemanticId` at
+54 036 is one node for the 54 035 distinct shapes that declare it, which is the junk-detection
+finding of traversal 3, not a scaling problem.
 
-```cypher
-MATCH (s:Shape {id_short: 'AAQ373-Manufacturer'})
-RETURN s.occurrences, count { (s)--() } AS degree,
-       count { (:Structure)-[:HAS_SLOT]->(s) } AS slots
--- 188779 | 134056 | 134054
-```
-
-The top row needs saying out loud: `:Vendor sick` at degree 212 761 is the highest-degree
-node in the graph, and it is one `:USES` edge per shape that vendor ships. It is bounded by
-the *shape* count, not the element count — and it is 99 % numbered idShorts, so it is the
-same finding as §2 seen from the other side. A vendor that names its fields consistently has
-a few hundred: `wago` has 272.
+The top row needs saying out loud: `:Vendor sick` at 211 363 is the highest-degree node in the
+graph, and it is one `:USES` edge per shape that vendor ships. Bounded by the shape count, not
+the element count — and 99 % of those idShorts are numbered, so it is the same finding as §2
+seen from the other side. A vendor that names its fields consistently has a few hundred: `wago`
+has 272.
 
 What matters is that no degree anywhere comes from an instance edge — there are no instance
 nodes to have one. `test_no_instance_ever_becomes_a_node` asserts that every label and every
@@ -364,21 +393,30 @@ What they show, in one line each:
 3. **Junk detection.** `https://admin-shell.io/idta/nameplate/3/0/Nameplate` is declared by
    54 035 distinct shapes. Today that is a batch job; here it is a node degree, free and
    never stale.
-4. **Faceting.** What else is on a thing that has a `ManufacturerName`: `ManufacturerOrderCode`
-   in 17 201 structures, `ManufacturerProductDesignation` in 17 049. Materialising this is
-   3.6 M pairs; traversing it is 1.5 s.
-5. **Undeclared templates.** 24 324 structures covering 124 462 submodels overlap no IDTA
-   template — with `Document00_STEP` (wago, 23 227 submodels) and `IdentifyingOrderNumber`
-   (wago, 18 466) at the top. These are de-facto templates nobody published.
-6. **Deprecated usage.** Every vendor ships superseded ECLASS versions — phoenix_contact 1 651
-   stale identifiers, festo 345, sick 273 — and SICK's nameplates still match the *deprecated*
-   `ZVEI_Digital_Nameplate 1.0.0`. This is why `deprecated/` is read.
+4. **Faceting.** What else sits under the same parent as a `ManufacturerName`:
+   `ManufacturerOrderCode`, `ManufacturerProductDesignation`, `ProductImages`, each in 54 037
+   submodels. **One hop now, where the per-layout model needed two — 30 ms against 1 492 ms.**
+   This is the clearest win from dropping `:Structure`.
+5. **Where vendors agree.** The per-vendor arrays, read straight off the edge:
+   `Phone → TelephoneNumber` is shipped by festo, harting and wago with
+   `[30 362, 22 680, 23 227]` submodels each. This is the vendor dimension the merge would
+   otherwise have destroyed, and it exists only because the support had to be per-vendor to be
+   idempotent in the first place.
+6. **Undeclared relations.** 47 003 containment relations that a vendor ships are declared by
+   no IDTA template, against 173 that are — `DocumentVersion → OrganizationShortName` in
+   70 712 submodels across harting and sick, published by nobody. The per-layout model could
+   only answer this per *structure*; per relation is finer and more useful.
+7. **Deprecated usage.** Every vendor ships superseded ECLASS versions — phoenix_contact
+   1 651 stale identifiers, festo 345, sick 273 — and SICK's nameplates still match the
+   *deprecated* `ZVEI_Digital_Nameplate 1.0.0`. This is why `deprecated/` is read.
 
 ```
+===== 4. THE SIX TRAVERSALS =====
+
 ------------------------------------------------------------------------------
 1. CROSS-VENDOR FIELD MAPPING
   two vendors, two names, one concept — 92 % of shapes are vendor-private and this is the only bridge
-  530.4 ms, 10 rows
+  516.9 ms, 10 rows
   concept               name                                vendor_a  field_a                           vendor_b         field_b                                       
   0173-1#01-ADN228#012  Identification                      harting   identification                    phoenix_contact  ADN228-Identification                         
   0173-1#01-ADN292#012  CAx basic                           harting   cAxBasic                          phoenix_contact  ADN292-CAx_basic                              
@@ -394,23 +432,23 @@ What they show, in one line each:
 ------------------------------------------------------------------------------
 2. QUERY EXPANSION from 'voltage'
   term -> shape -> concept -> ECLASS siblings -> shapes
-  897.7 ms, 10 rows
+  630.2 ms, 10 rows
   from_field    via_class                  field                             name                                  in_eclass_classes  occurrences
   RatedVoltage  Grundpaket Lüftungssystem  RatedVoltage                      Rated Voltage                         20                 15971      
   RatedVoltage  Grundpaket Lüftungssystem  BAC859-Power_frequency            Netzfrequenz                          61                 20         
   RatedVoltage  Grundpaket Lüftungssystem  AAQ328-AWG_number                 AWG-Nummer                            112                20         
   RatedVoltage  Grundpaket Lüftungssystem  AAQ328-AWG-number                 AWG-Nummer                            112                4          
-  RatedVoltage  Grundpaket Lüftungssystem  BAH005-rated_voltage              Bemessungsspannung                    136                2324       
-  RatedVoltage  Grundpaket Lüftungssystem  Bemessungsspannung                Bemessungsspannung                    136                146        
-  RatedVoltage  Grundpaket Lüftungssystem  ratedVoltage                      Bemessungsspannung                    136                7          
+  RatedVoltage  Grundpaket Lüftungssystem  BAH005-rated_voltage              rated voltage                         136                2324       
+  RatedVoltage  Grundpaket Lüftungssystem  Bemessungsspannung                rated voltage                         136                146        
+  RatedVoltage  Grundpaket Lüftungssystem  ratedVoltage                      rated voltage                         136                7          
   RatedVoltage  Grundpaket Lüftungssystem  ContainsSubstanceAccordingToSvhc  Contains substance according to SVHC  19161              229        
-  RatedVoltage  Grundpaket Lüftungssystem  CountryOfCustomsTariffNumber      Country of customs tariff number      36577              15         
-  RatedVoltage  Grundpaket Lüftungssystem  countryOfCustomsTariffNumber      Country of customs tariff number      36577              1          
+  RatedVoltage  Grundpaket Lüftungssystem  CountryOfCustomsTariffNumber      Land der Zolltarifnummer              36577              15         
+  RatedVoltage  Grundpaket Lüftungssystem  countryOfCustomsTariffNumber      Land der Zolltarifnummer              36577              1          
 
 ------------------------------------------------------------------------------
 3. JUNK DETECTION
   :SemanticId by :DECLARES in-degree — a node degree, not a batch job
-  311.7 ms, 10 rows
+  290.0 ms, 10 rows
   semantic_id                                     shapes  distinct_id_shorts
   https://admin-shell.io/idta/nameplate/3/0/Nam…  54035   54035             
   0173-1#01-AHX837#002                            54034   54034             
@@ -425,48 +463,64 @@ What they show, in one line each:
 
 ------------------------------------------------------------------------------
 4. FACETING around 'ManufacturerName'
-  shape -> structure -> shape; materialising this is 3.6 M pairs
-  1492.3 ms, 10 rows
-  also_present                    model_type                 structures
-  GeneralInformation              SubmodelElementCollection  17205     
-  ManufacturerOrderCode           Property                   17201     
-  ManufacturerProductDesignation  MultiLanguageProperty      17049     
-  ManufacturerArticleNumber       Property                   16869     
-  ManufacturerLogo                File                       15850     
-  TechnicalProperties             SubmodelElementCollection  15848     
-  ProductImage                    File                       11184     
-  Materials                       SubmodelElementCollection  10350     
-  Weight                          Property                   10239     
-  Type                            MultiLanguageProperty      9963      
+  one hop: shapes sharing a containment parent, ranked by support
+  6.7 ms, 10 rows
+  also_present                    model_type             submodels  vendors
+  CompanyLogo                     File                   54037      2      
+  ManufacturerArticleNumber       Property               54037      2      
+  ManufacturerOrderCode           Property               54037      2      
+  ManufacturerProductDesignation  MultiLanguageProperty  54037      2      
+  ProductImages                   SubmodelElementList    54037      2      
+  ManufacturerArticleNumber       Property               40330      3      
+  ManufacturerArticleNumber       Property               40330      3      
+  ManufacturerLogo                File                   40330      3      
+  ManufacturerLogo                File                   40330      3      
+  ManufacturerOrderCode           Property               40322      3      
 
 ------------------------------------------------------------------------------
-5. UNDECLARED TEMPLATES (summary)
-  structures whose shape set overlaps no IDTA template
-  642.7 ms, 2 rows
-  declared  structures  submodels
-  False     24324       124462   
-  True      14844       599742   
+4b. WHERE VENDORS AGREE
+  the per-vendor support arrays: who nests this under that, how often
+  23.5 ms, 10 rows
+  parent              child                      vendors                                    submodels_each         submodels
+  Phone               TelephoneNumber            ['festo', 'harting', 'wago']               [30362, 22680, 23227]  76269    
+  Email               EmailAddress               ['festo', 'harting', 'wago']               [15181, 22650, 23227]  61058    
+  ContactInformation  CityTown                   ['festo', 'harting', 'wago']               [15181, 22648, 23227]  61056    
+  ContactInformation  Street                     ['festo', 'harting', 'wago']               [15181, 22648, 23227]  61056    
+  ContactInformation  NationalCode               ['festo', 'harting', 'wago']               [15181, 22648, 23227]  61056    
+  ContactInformation  Zipcode                    ['festo', 'harting', 'wago']               [15181, 22648, 23227]  61056    
+  GeneralInformation  ManufacturerLogo           ['harting', 'phoenix_contact', 'r_stahl']  [22647, 15749, 1934]   40330    
+  GeneralInformation  ManufacturerArticleNumber  ['harting', 'phoenix_contact', 'r_stahl']  [22647, 15749, 1934]   40330    
+  GeneralInformation  ManufacturerOrderCode      ['harting', 'phoenix_contact', 'r_stahl']  [22647, 15749, 1926]   40322    
+  GeneralInformation  ManufacturerName           ['harting', 'phoenix_contact', 'r_stahl']  [22647, 15740, 1926]   40313    
 
 ------------------------------------------------------------------------------
-5b. UNDECLARED TEMPLATES (the biggest)
-  de-facto templates the industry uses and nobody published
-  658.1 ms, 10 rows
-  first_element           elements  top_level  submodels  vendors    
-  Document00_STEP         20        1          23227      ['wago']   
-  IdentifyingOrderNumber  3         3          18466      ['wago']   
-  Document00_STEP         20        1          17201      ['harting']
-  IdentifyingOrderNumber  1         1          2894       ['wago']   
-  ProductGroup            4         4          1528       ['wago']   
-  ArcheType               262       2          1008       ['harting']
-  ArcheType               8         2          401        ['harting']
-  ArcheType               3         2          368        ['harting']
-  ContactInformation00    43        2          352        ['wago']   
-  IdentifyingOrderNumber  3         3          351        ['wago']   
+5. UNDECLARED RELATIONS (summary)
+  containment a vendor ships that no IDTA template declares
+  26.9 ms, 2 rows
+  declared  relations  submodels
+  False     47003      41236795 
+  True      173        2641114  
+
+------------------------------------------------------------------------------
+5b. UNDECLARED RELATIONS (the biggest)
+  de-facto structure the industry uses and nobody published
+  28.8 ms, 10 rows
+  parent           child                     model_type             submodels  vendors            
+  DocumentVersion  OrganizationShortName     Property               70712      ['harting', 'sick']
+  DocumentVersion  OrganizationOfficialName  Property               70712      ['harting', 'sick']
+  DocumentVersion  StatusValue               Property               70712      ['harting', 'sick']
+  DocumentVersion  StatusSetDate             Property               70709      ['harting', 'sick']
+  DocumentVersion  KeyWords                  MultiLanguageProperty  60834      ['harting', 'wago']
+  DocumentVersion  OrganizationName          Property               60834      ['harting', 'wago']
+  DocumentVersion  Title                     MultiLanguageProperty  60834      ['harting', 'wago']
+  DocumentVersion  DigitalFile               File                   60834      ['harting', 'wago']
+  DocumentVersion  Language                  Property               60834      ['harting', 'wago']
+  DocumentVersion  Summary                   MultiLanguageProperty  60834      ['harting', 'wago']
 
 ------------------------------------------------------------------------------
 6. DEPRECATED USAGE — superseded ECLASS releases
   vendor -> shape -> concept -> a newer release of the same base
-  41.4 ms, 7 rows
+  27.2 ms, 7 rows
   vendor           stale_identifiers  examples                                      
   phoenix_contact  1651               ['0173-1#02-AAO677#002', '0173-1#02-AAW338#00…
   festo            345                ['0173-1#02-AAQ326#002', '0173-1#02-AAP906#00…
@@ -476,9 +530,10 @@ What they show, in one line each:
   r_stahl          14                 ['0173-1#02-AAQ326#002', '0173-1#02-AAO677#00…
   abb              2                  ['0173-1#02-AAO895#003', '0173-1#02-AAQ326#00…
 
---------------------------------------------------------ED USAGE — deprecated IDTA templaED USAGE — deprecated IDTA templates
+------------------------------------------------------------------------------
+6b. DEPRECATED USAGE — deprecated IDTA templates
   why deprecated/ is read: skipping it costs ~75 000 matches
-  2.8 ms, 10 rows
+  2.6 ms, 10 rows
   vendor           deprecated_template     version  shapes  occurrences
   sick             ZVEI_Digital_Nameplate  1.0.0    8       47332908   
   sick             Digital nameplate       2.0.0    10      19668012   
@@ -495,35 +550,51 @@ What they show, in one line each:
 ### 6. Full corpus
 
 153 853 files / 153 852 shells / 724 204 submodels / **85 025 569 elements**, plus 194 IDTA
-templates and ECLASS 15.0 BASIC DE (all 40 segments), in **16 min 12 s** end to end
-(829 s + 2 s + 141 s across the three loaders):
+templates and ECLASS 15.0 BASIC DE (all 40 segments), in **16 min 14 s** end to end
+(851 s + 2 s + 121 s across the three loaders), with `--precedes` on:
 
-| | |
-|---|---:|
-| nodes | **418 543** |
-| edges | **12 735 100** |
-| elements per node | 203 |
-| documents that failed to parse | **1** |
+| | this model | the `:Structure` model |
+|---|---:|---:|
+| nodes | **379 375** | 418 543 |
+| edges | **5 720 148** | 12 735 100 |
+| layout edges | **51 665** `:CONTAINS` + 58 424 `:PRECEDES` | 7 085 871 `:HAS_SLOT` |
+| layout write time | **1.5 s** + 1.6 s | 137.3 s |
+| documents that failed to parse | **1** | 1 |
 
-The one failure is a genuinely corrupt file — `buerkert/…_20260401_112138CET.xml.gz`, XML junk
-after the document element at line 4505 — reported by path and error, skipped, and the other
-153 852 loaded. That is the contract: ingestion never crashes on bad input.
+**The layout write went from 137 seconds to one and a half.** Nothing else in the instance
+load moved, because everything else was already proportional to the vocabulary; the run is now
+almost entirely extraction (851 s of it), and the graph is 45 % smaller.
 
-Where the time goes is worth noting, because it says what this importer is bounded by. The
-instance run spends 692 s extracting 85 M elements in 8 worker processes and 137 s writing
-7.1 M `:HAS_SLOT` edges; every other write in the whole corpus is under six seconds, because
-every other write is proportional to the *vocabulary*. The dictionary's 108 s is 2.7 M
-ECLASS class→property edges — a property of ECLASS, not of the corpus.
+What the merge cost, printed by every import rather than argued about:
+
+```
+CONTAINMENT — THE MERGED LAYOUT
+  51,665 :CONTAINS edges replace a node per layout
+  200 are shipped by more than one vendor
+  4,439 were seen in exactly one submodel — support, not schema
+  4,662 are declared by an IDTA template, of which 4,489 no vendor implements
+  4,312 of 4,679 parents have more than one child (widest: 22,233) — the merge cannot say which
+  combinations of those children actually co-occur; the support counters are what is left to rank them by.
+```
+
+**200 of 51 665 containment relations are shipped by more than one vendor**, and that number
+is essentially flat across the tiers (212 at 1 000 files, 212 at 10 000, 225 at 50 000). The
+cross-vendor overlap is a constant, not a fraction — the same 92 %-vendor-private finding seen
+through the layout.
+
+The one parse failure is a genuinely corrupt file — `buerkert/…_20260401_112138CET.xml.gz`,
+XML junk after the document element at line 4505 — reported by path and error, skipped, and
+the other 153 852 loaded. That is the contract: ingestion never crashes on bad input.
 
 ```
 ===== 3. FULL CORPUS =====
 
---- instances: 153 853 files, wall clock 829.2 s ---
+--- instances (--precedes): 153 853 files, wall clock 853.1 s ---
 
 ========================================================================
 vocabulary import
 ========================================================================
-wall clock               829.2 s
+wall clock               850.5 s
 files                  153,853
 documents parsed       153,852
 documents failed             1
@@ -534,56 +605,55 @@ vendors               abb, buerkert, festo, harting, phoenix_contact, r_stahl, s
 
 NODES
   Shape                 245,231
-  Structure              39,168
   SemanticId              7,099
   Concept                 3,184
   Vendor                      8
   Template                    0
-  TOTAL                 294,690   (288.5 elements per node)
+  TOTAL                 255,522   (332.8 elements per node)
 
 EDGES
-  HAS_SLOT            7,085,871
   USES                  245,681
   DECLARES              245,132
-  SHIPS                  39,170
+  PRECEDES               58,424
+  CONTAINS               47,176
   RESOLVES_TO             4,233
   BROADER                     0
   DECLARES_SHAPE              0
 
 WRITES
-  HAS_SLOT              7,085,871 rows   137.25 s
-  Shape                   245,231 rows     5.91 s
-  USES                    245,681 rows     4.66 s
-  DECLARES                245,132 rows     3.65 s
-  Shape.occurrences             0 rows     1.41 s
-  SHIPS                    39,170 rows     0.75 s
-  Structure                39,168 rows     0.65 s
-  Structure.occurrences          0 rows     0.20 s
-  SemanticId                7,099 rows     0.18 s
-  Concept                   3,184 rows     0.14 s
-  RESOLVES_TO                   0 rows     0.04 s
+  Shape                   245,231 rows     9.44 s
+  USES                    245,681 rows     5.63 s
+  DECLARES                245,132 rows     4.37 s
+  Shape counters                0 rows     2.50 s
+  PRECEDES                 58,672 rows     1.55 s
+  CONTAINS                 47,440 rows     1.52 s
+  CONTAINS submodels            0 rows     0.92 s
+  CONTAINS support              0 rows     0.50 s
+  PRECEDES support              0 rows     0.45 s
+  SemanticId                7,099 rows     0.40 s
+  Concept                   3,184 rows     0.26 s
+  RESOLVES_TO                   0 rows     0.08 s
 
 FAILED DOCUMENTS (first 1)
   ParseError: junk after document element: line 4505, column 14
     /Users/igorgarmaev/PycharmProjects/aas-corpus/instances/vendors/buerkert/loose/Burkert_0142_000067684_type_20260401_112138CET.xml.gz
 ========================================================================
 
---- templates: 194 templates, wall clock 1.9 s ---
+--- templates: 194 templates ---
 
 NODES
   Shape                 248,325
-  Structure              39,168
   SemanticId              9,834
   Concept                 3,184
   Template                  194
   Vendor                      8
 
---- dictionary: ECLASS 15.0 BASIC DE, all 40 segments, wall clock 140.7 s ---
+--- dictionary: ECLASS 15.0 BASIC DE, all 40 segments ---
 
 ========================================================================
 vocabulary import
 ========================================================================
-wall clock               140.7 s
+wall clock               120.8 s
 files                        0
 documents parsed             0
 documents failed             0
@@ -594,27 +664,27 @@ elements seen                0
 NODES
   Shape                 248,325
   Concept               121,014
-  Structure              39,168
   SemanticId              9,834
   Template                  194
   Vendor                      8
 
 EDGES
-  HAS_SLOT            7,085,871
   BROADER             5,098,901
   DECLARES              248,160
   USES                  245,681
-  SHIPS                  39,170
+  PRECEDES               58,424
+  CONTAINS               51,665
   DECLARES_SHAPE          8,664
-  RESOLVES_TO             8,653
 
 WRITES
-  BROADER(property)     2,706,281 rows   107.67 s
-  Concept                 124,803 rows     7.44 s
-  BROADER(prefix)          48,261 rows     1.47 s
-  Shape.occurrences             0 rows     0.62 s
-  RESOLVES_TO                   0 rows     0.17 s
-  Structure.occurrences          0 rows     0.06 s
+  BROADER(property)     2,706,281 rows    89.07 s
+  Concept                 124,803 rows     6.28 s
+  BROADER(prefix)          48,261 rows     1.21 s
+  Shape counters                0 rows     0.44 s
+  CONTAINS support              0 rows     0.14 s
+  PRECEDES support              0 rows     0.08 s
+  CONTAINS submodels            0 rows     0.08 s
+  RESOLVES_TO                   0 rows     0.08 s
 ========================================================================
 ```
 
@@ -632,7 +702,7 @@ WRITES
 - **Not document deduplication.** Measured at 1.02× against per-document compression — the
   compressor already collects it, for free, with no hash index and no garbage collection.
   Whole submodels are 2.0 % byte-identical; there is nothing there to factor out.
-- **Not materialised co-occurrence.** `:Structure` is the join.
+- **Not materialised co-occurrence.** A shared `:CONTAINS` parent is the join.
 
 ## Not built: the PostgreSQL fast path
 
@@ -646,16 +716,25 @@ is not the bottleneck.
 
 ## Known limits
 
-- **`occurrences` is scoped to a vendor and replaced.** Loading disjoint shards of one vendor
-  in separate runs needs `--mode accumulate`, which is not idempotent. There is no per-run
-  ledger, because a ledger keyed on documents would be a node per document.
+- **Support is scoped to a vendor and replaced.** Loading disjoint shards of one vendor in
+  separate runs needs `--mode accumulate`, which is not idempotent. There is no per-run ledger,
+  because a ledger keyed on documents would be a node per document.
+- **The vendor arrays cap out at however many vendors a corpus has.** Eight here; a corpus with
+  thousands of suppliers would want a `(:Vendor)-[:NESTS]->` reification instead, which is
+  exactly the per-layout node this model removed — at that point the trade should be re-measured
+  rather than assumed.
 - **`:Concept` is flat with respect to corpus size but proportional to dictionary size.** A
   full ECLASS export is hundreds of thousands of concepts whether the corpus is 3 000 shells
   or 300 000; `--eclass-segments` narrows it to the segments a corpus actually uses.
-- **Structure identity is exact, not fuzzy.** A submodel with seven documents and one with
-  eight are different structures. That is the right primitive for "same layout", and the
-  wrong one for "same family" — clustering structures into de-facto template families is the
-  obvious next thing and is not built.
+- **The merged layout cannot enumerate layouts, and no amount of support fixes that.** 19 % of
+  parent shapes branch, so "which combinations of these children actually co-occur" is
+  unanswerable by construction. Support ranks relations; it does not reconstruct sets. If a
+  question genuinely needs whole layouts — conformance scoring per submodel, near-duplicate
+  detection, classifying an unknown submodel — it needs the relational store, or a per-layout
+  node reintroduced deliberately.
+- **`:CONTAINS` has no multiplicity.** How many `Document0N` sit under one `Documents`
+  collection in a single instance is not recorded, only totals. It is one more pair of
+  per-vendor arrays if it is ever needed.
 - **`Shape.category` is the smallest value seen** when two occurrences of one shape disagree.
   Deterministic, so a re-import is stable, but it is a choice rather than a fact.
 - **The full corpus ships 8 470 products twice**, once as `.aasx` and once as `.xml`/`.json`

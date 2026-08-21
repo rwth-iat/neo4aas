@@ -74,35 +74,41 @@ LIMIT $limit
 """
 
 FACETING = """
-MATCH (seed:Shape)<-[:HAS_SLOT]-(st:Structure)-[:HAS_SLOT]->(other:Shape)
-WHERE seed.id_short = $field AND other.id_short <> $field
-      AND other.id_short IS NOT NULL
+MATCH (parent:Shape)-[:CONTAINS]->(seed:Shape)
+WHERE seed.id_short = $field
+MATCH (parent)-[e:CONTAINS]->(other:Shape)
+WHERE other.id_short <> $field AND other.id_short IS NOT NULL
 RETURN other.id_short AS also_present, other.model_type AS model_type,
-       count(DISTINCT st) AS structures
-ORDER BY structures DESC, also_present
+       e.submodels AS submodels, size(coalesce(e.vendor_names, [])) AS vendors
+ORDER BY submodels DESC, also_present
 LIMIT $limit
 """
 
-UNDECLARED_TEMPLATES_COUNT = """
-MATCH (st:Structure)
-WHERE coalesce(st.occurrences, 0) > 0
-WITH st, EXISTS {
-    MATCH (st)-[:HAS_SLOT]->(:Shape)<-[:DECLARES_SHAPE]-(:Template)
-} AS declared
-RETURN declared, count(st) AS structures, sum(st.occurrences) AS submodels
+#: One hop, where the ``:Structure`` version needed two — siblings are now shapes
+#: sharing a containment parent. Cheaper, and the support on the edge ranks them.
+VENDOR_DISAGREEMENT = """
+MATCH (p:Shape)-[e:CONTAINS]->(c:Shape)
+WHERE size(coalesce(e.vendor_names, [])) > 1
+RETURN p.id_short AS parent, c.id_short AS child,
+       e.vendor_names AS vendors, e.vendor_submodels AS submodels_each,
+       e.submodels AS submodels
+ORDER BY size(e.vendor_names) DESC, submodels DESC
+LIMIT $limit
+"""
+
+UNDECLARED_SUMMARY = """
+MATCH ()-[e:CONTAINS]->()
+WHERE coalesce(e.occurrences, 0) > 0
+RETURN coalesce(e.in_template, false) AS declared, count(e) AS relations,
+       sum(e.submodels) AS submodels
 ORDER BY declared
 """
 
-UNDECLARED_TEMPLATES_SAMPLE = """
-MATCH (st:Structure)-[:HAS_SLOT {ord: 0}]->(first:Shape)
-WHERE coalesce(st.occurrences, 0) > 0
-  AND NOT EXISTS {
-      MATCH (st)-[:HAS_SLOT]->(:Shape)<-[:DECLARES_SHAPE]-(:Template)
-  }
-MATCH (v:Vendor)-[:SHIPS]->(st)
-RETURN first.id_short AS first_element, st.element_count AS elements,
-       st.slot_count AS top_level, st.occurrences AS submodels,
-       collect(DISTINCT v.name) AS vendors
+UNDECLARED_SAMPLE = """
+MATCH (p:Shape)-[e:CONTAINS]->(c:Shape)
+WHERE coalesce(e.occurrences, 0) > 0 AND NOT coalesce(e.in_template, false)
+RETURN p.id_short AS parent, c.id_short AS child, c.model_type AS model_type,
+       e.submodels AS submodels, e.vendor_names AS vendors
 ORDER BY submodels DESC
 LIMIT $limit
 """
@@ -192,14 +198,17 @@ def main() -> int:
                  ":SemanticId by :DECLARES in-degree — a node degree, not a batch job",
                  JUNK_DETECTION, limit=args.limit)
             _run(session, f"4. FACETING around '{field}'",
-                 "shape -> structure -> shape; materialising this is 3.6 M pairs",
+                 "one hop: shapes sharing a containment parent, ranked by support",
                  FACETING, field=field, limit=args.limit)
-            _run(session, "5. UNDECLARED TEMPLATES (summary)",
-                 "structures whose shape set overlaps no IDTA template",
-                 UNDECLARED_TEMPLATES_COUNT)
-            _run(session, "5b. UNDECLARED TEMPLATES (the biggest)",
-                 "de-facto templates the industry uses and nobody published",
-                 UNDECLARED_TEMPLATES_SAMPLE, limit=args.limit)
+            _run(session, "4b. WHERE VENDORS AGREE",
+                 "the per-vendor support arrays: who nests this under that, how often",
+                 VENDOR_DISAGREEMENT, limit=args.limit)
+            _run(session, "5. UNDECLARED RELATIONS (summary)",
+                 "containment a vendor ships that no IDTA template declares",
+                 UNDECLARED_SUMMARY)
+            _run(session, "5b. UNDECLARED RELATIONS (the biggest)",
+                 "de-facto structure the industry uses and nobody published",
+                 UNDECLARED_SAMPLE, limit=args.limit)
             _run(session, "6. DEPRECATED USAGE — superseded ECLASS releases",
                  "vendor -> shape -> concept -> a newer release of the same base",
                  DEPRECATED_VERSIONS, limit=args.limit)

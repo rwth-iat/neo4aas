@@ -42,7 +42,7 @@ from neo4aas.core.io import read_bytes
 from neo4aas.vocabulary.extract import (
     VocabularyRecords,
     loads_aas_json,
-    structure_of,
+    walk_submodel,
 )
 
 logger = logging.getLogger(__name__)
@@ -116,9 +116,12 @@ def extract_templates(root: str | Path,
                       ) -> tuple[list[TemplateRecord], VocabularyRecords]:
     """Walk the templates tree into ``:Template`` records and their shapes.
 
-    The shapes go into the *same* vocabulary as the instance side, with no vendor
-    attached: a template shape nobody ships ends up with ``occurrences = 0``, which
-    is the "declared but unused" half of the conformance question.
+    The shapes and the containment pairs go into the *same* vocabulary as the
+    instance side, with no vendor attached: a template shape nobody ships ends up
+    with ``occurrences = 0``, and a template containment pair no vendor implements
+    ends up as a ``:CONTAINS`` edge with ``in_template = true`` and no support
+    arrays. That is the "declared but unused" half of the conformance question, and
+    it is now answerable per *relation* rather than only per shape.
     """
     root = Path(root)
     records = into if into is not None else VocabularyRecords()
@@ -150,13 +153,14 @@ def extract_templates(root: str | Path,
                     submodel_id=submodel.get("id"),
                     kind=submodel.get("kind"),
                 )
-                _, uses = structure_of(submodel)
-                for use in uses:
+                walk = walk_submodel(submodel)
+                for use in walk.uses:
                     template.shape_keys.add(use.shape.key)
                     records.add_shape(use.shape, None, use.category, occurrences=0)
                     if use.shape.semantic_id:
                         records.add_semantic_id(use.shape.semantic_id,
                                                 use.key_type, use.ref_type)
+                records.template_contains.update(walk.contains)
                 templates.append(template)
         records.documents += 1
 

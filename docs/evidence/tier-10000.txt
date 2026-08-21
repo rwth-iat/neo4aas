@@ -1,7 +1,7 @@
 ========================================================================
 vocabulary import
 ========================================================================
-wall clock                78.8 s
+wall clock                66.3 s
 files                   10,000
 documents parsed         9,999
 documents failed             1
@@ -12,20 +12,19 @@ vendors               abb, buerkert, festo, harting, phoenix_contact, r_stahl, s
 
 NODES
   Shape                  11,468
-  Structure               4,440
   SemanticId              3,217
   Concept                 1,250
   Vendor                      8
   Template                    0
-  TOTAL                  20,383   (346.2 elements per node)
+  TOTAL                  15,943   (442.6 elements per node)
 
 EDGES
-  HAS_SLOT            1,104,507
+  CONTAINS               12,868
   USES                   11,827
   DECLARES               11,375
-  SHIPS                   4,441
   RESOLVES_TO             1,504
   BROADER                     0
+  PRECEDES                    0
   DECLARES_SHAPE              0
 
 SEMANTIC ID RESOLUTION
@@ -58,6 +57,14 @@ SEMANTIC ID RESOLUTION
         7 shapes  0173-1#02-AAQ673#013
         6 shapes  0173-1#02-AAB702#010
 
+CONTAINMENT — THE MERGED LAYOUT
+  12,868 :CONTAINS edges replace a node per layout
+  151 are shipped by more than one vendor
+  1,283 were seen in exactly one submodel — support, not schema
+  0 are declared by an IDTA template, of which 0 no vendor implements
+  1,594 of 1,681 parents have more than one child (widest: 1,335) — the merge cannot say which
+  combinations of those children actually co-occur; the support counters are what is left to rank them by.
+
 HOW MUCH OF THE VOCABULARY IS REALLY PER-PRODUCT IDENTITY
   1,104 of 11,468 shapes have an idShort with no 2+ digit run (9.6 %)
   10,364 carry a number — OrdNo_1234567, Document07, ZMN codes: product data written into the idShort
@@ -84,29 +91,29 @@ SEMANTIC IDS BY :DECLARES IN-DEGREE  (junk detection)
      67 shapes  0173-1#02-ABI500#001/0173-1#01-AHF579#001
 
 TOP-DEGREE NODES
-    32,490  :Shape        DocumentDomainId
-    32,485  :Shape        ValueId
-    32,478  :Shape        ClassificationSystem
-    32,475  :Shape        Title
-    32,475  :Shape        OrganizationName
-    32,475  :Shape        Summary
-    32,475  :Shape        OrganizationOfficialName
-    32,473  :Shape        ClassId
-    32,472  :Shape        StatusValue
-    32,466  :Shape        ClassName
+     5,187  :Vendor       sick
+     2,701  :Vendor       phoenix_contact
+     1,572  :Vendor       harting
+     1,361  :SemanticId   https://admin-shell.io/idta/HierarchicalStructures/Node/1/0
+     1,337  :Shape        EntryNode
+     1,252  :SemanticId   0173-1#01-AHX837#002
+     1,251  :SemanticId   0173-1#02-AAQ837#005
+     1,250  :SemanticId   https://admin-shell.io/idta/nameplate/3/0/Nameplate
+     1,120  :SemanticId   0173-1#01-AHF578#003
+       905  :Shape        TechnicalProperties
 
 WRITES
-  HAS_SLOT              1,104,507 rows    22.60 s
-  Shape                    11,468 rows     0.40 s
-  USES                     11,827 rows     0.24 s
-  DECLARES                 11,375 rows     0.17 s
-  SHIPS                     4,441 rows     0.10 s
+  Shape                    11,468 rows     0.50 s
+  CONTAINS                 13,080 rows     0.42 s
+  USES                     11,827 rows     0.30 s
+  DECLARES                 11,375 rows     0.21 s
   SemanticId                3,217 rows     0.10 s
-  Structure                 4,440 rows     0.09 s
-  Concept                   1,250 rows     0.07 s
-  Shape.occurrences             0 rows     0.03 s
-  Structure.occurrences          0 rows     0.03 s
-  RESOLVES_TO                   0 rows     0.02 s
+  CONTAINS support              0 rows     0.08 s
+  Concept                   1,250 rows     0.08 s
+  CONTAINS submodels            0 rows     0.06 s
+  Shape counters                0 rows     0.05 s
+  RESOLVES_TO                   0 rows     0.04 s
+  PRECEDES support              0 rows     0.00 s
 
 FAILED DOCUMENTS (first 1)
   ParseError: junk after document element: line 4505, column 14

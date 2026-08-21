@@ -1,7 +1,7 @@
 ========================================================================
 vocabulary import
 ========================================================================
-wall clock                15.5 s
+wall clock                16.1 s
 files                    1,000
 documents parsed         1,000
 documents failed             0
@@ -14,18 +14,17 @@ NODES
   Shape                   3,535
   SemanticId              1,421
   Concept                   874
-  Structure                 800
   Vendor                      8
   Template                    0
-  TOTAL                   6,638   (128.5 elements per node)
+  TOTAL                   5,838   (146.1 elements per node)
 
 EDGES
-  HAS_SLOT              354,900
+  CONTAINS                7,112
   USES                    3,859
   DECLARES                3,529
   RESOLVES_TO             1,028
-  SHIPS                     801
   BROADER                     0
+  PRECEDES                    0
   DECLARES_SHAPE              0
 
 SEMANTIC ID RESOLUTION
@@ -58,6 +57,27 @@ SEMANTIC ID RESOLUTION
         2 shapes  https://admin-shell.io/sandbox/idta/handover/MCAD/0/1/
         1 shapes  0112/2///61360_7#AAS006#001
 
+CONTAINMENT — THE MERGED LAYOUT
+  7,112 :CONTAINS edges replace a node per layout
+  0 are shipped by more than one vendor
+  1,057 were seen in exactly one submodel — support, not schema
+  0 are declared by an IDTA template, of which 0 no vendor implements
+  1,185 of 1,226 parents have more than one child (widest: 221) — the merge cannot say which
+  combinations of those children actually co-occur; the support counters are what is left to rank them by.
+
+HOW MUCH OF THE VOCABULARY IS REALLY PER-PRODUCT IDENTITY
+  814 of 3,535 shapes have an idShort with no 2+ digit run (23.0 %)
+  2,721 carry a number — OrdNo_1234567, Document07, ZMN codes: product data written into the idShort
+  894 occur exactly once in the whole corpus
+    phoenix_contact         821 shapes,  93 % numbered
+    sick                    757 shapes,  65 % numbered
+    abb                     726 shapes,  94 % numbered
+    r_stahl                 633 shapes,  87 % numbered
+    harting                 373 shapes,  56 % numbered
+    festo                   201 shapes,  35 % numbered
+    buerkert                190 shapes,   4 % numbered
+    wago                    158 shapes,   5 % numbered
+
 SEMANTIC IDS BY :DECLARES IN-DEGREE  (junk detection)
     616 shapes  0173-1#02-ABI500#001/0173-1#01-AHF579#001*01
     220 shapes  https://admin-shell.io/idta/HierarchicalStructures/Node/1/0
@@ -71,26 +91,27 @@ SEMANTIC IDS BY :DECLARES IN-DEGREE  (junk detection)
      60 shapes  0173-1#02-AAQ675#008
 
 TOP-DEGREE NODES
-    14,699  :Shape        DocumentDomainId
-    14,696  :Shape        ClassificationSystem
-    14,696  :Shape        ValueId
-    14,693  :Shape        ClassId
-    14,689  :Shape        Title
-    14,689  :Shape        OrganizationName
-    14,689  :Shape        Summary
-    14,689  :Shape        OrganizationOfficialName
-    14,688  :Shape        StatusValue
-    14,688  :Shape        ClassName
+       821  :Vendor       phoenix_contact
+       757  :Vendor       sick
+       726  :Vendor       abb
+       633  :Vendor       r_stahl
+       630  :Shape        DocumentVersion
+       617  :Shape        DocumentClassification
+       617  :SemanticId   0173-1#02-ABI500#001/0173-1#01-AHF579#001*01
+       611  :Shape        DocumentId
+       373  :Vendor       harting
+       226  :Shape        TechnicalProperties
 
 WRITES
-  Shape                     3,535 rows     0.08 s
-  USES                      3,859 rows     0.06 s
-  DECLARES                  3,529 rows     0.05 s
+  CONTAINS                  7,324 rows     0.18 s
+  USES                      3,859 rows     0.12 s
+  Shape                     3,535 rows     0.09 s
+  DECLARES                  3,529 rows     0.06 s
   Concept                     874 rows     0.05 s
   SemanticId                1,421 rows     0.04 s
-  SHIPS                       801 rows     0.02 s
-  Structure                   800 rows     0.02 s
   RESOLVES_TO                   0 rows     0.01 s
-  Shape.occurrences             0 rows     0.01 s
-  Structure.occurrences          0 rows     0.00 s
+  CONTAINS support              0 rows     0.01 s
+  CONTAINS submodels            0 rows     0.01 s
+  Shape counters                0 rows     0.01 s
+  PRECEDES support              0 rows     0.00 s
 ========================================================================
