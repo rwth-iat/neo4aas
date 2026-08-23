@@ -47,6 +47,18 @@ def irdi_base(value: str) -> str:
     return value
 
 
+def is_irdi(value: str | None) -> bool:
+    """Whether a value is an IRDI at all — i.e. carries the 4-digit ICD prefix.
+
+    :func:`irdi_base` deliberately returns a non-IRDI unchanged so callers can
+    store a base unconditionally. A caller that must *reject* a malformed
+    identifier needs the question asked directly: the IEC CDD export ships 1 547
+    properties scraped without their prefix (``AAE930#001``), which no amount of
+    version-stripping makes joinable.
+    """
+    return bool(value and _IRDI_PREFIX_RE.match(value))
+
+
 def rm_quotes(s: str):
     return s.replace("'", "")
 

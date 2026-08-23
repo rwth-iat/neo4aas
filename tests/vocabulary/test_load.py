@@ -326,3 +326,80 @@ def test_clear_removes_only_what_this_importer_owns(loader, corpus_records):
     assert loader.run(
         "MATCH (n:SomethingElse) RETURN count(n) AS c")[0]["c"] == 1
     loader.run("MATCH (n:SomethingElse) DETACH DELETE n")
+
+
+# -- IEC CDD, the second dictionary --------------------------------------------
+
+
+@pytest.fixture
+def cdd_result():
+    """The smallest real dictionary in the export: 152 records, every kind."""
+    from neo4aas.vocabulary.iec_cdd import parse_iec_cdd
+    from tests.paths import CORPUS_IEC_CDD_DIR
+
+    path = CORPUS_IEC_CDD_DIR / "iec63508.jsonl"
+    if not path.is_file():
+        pytest.skip(f"IEC CDD not available at {path}")
+    return parse_iec_cdd([path])
+
+
+def _load_cdd(loader, result) -> None:
+    from neo4aas.vocabulary.iec_cdd import (
+        class_broader_pairs,
+        concepts_from_iec_cdd,
+        property_class_pairs,
+    )
+
+    loader.load_concepts(concepts_from_iec_cdd(result))
+    loader.load_broader_base_pairs(class_broader_pairs(result), name="BROADER(cdd class)")
+    loader.load_broader_base_pairs(property_class_pairs(result),
+                                   name="BROADER(cdd property)")
+    loader.finalize()
+
+
+def test_iec_cdd_concepts_and_hierarchy_are_written(loader, cdd_result):
+    _load_cdd(loader, cdd_result)
+    counts = {r["kind"]: r["c"] for r in loader.run(
+        "MATCH (c:Concept {source: 'iec_cdd'}) RETURN c.kind AS kind, count(*) AS c")}
+    assert counts == cdd_result.kinds
+    assert loader.run("""
+        MATCH (:Concept {source: 'iec_cdd'})-[:BROADER]->(:Concept {source: 'iec_cdd'})
+        RETURN count(*) AS c""")[0]["c"] > 0
+
+
+def test_a_cdd_semantic_id_resolves_on_the_version_stripped_base(loader, cdd_result):
+    """A vendor cites version ``#001`` of a concept the export ships as ``#002``.
+
+    That is the whole reason the join is on the base — and it is why IEC CDD is
+    worth loading at all: those semanticIds resolve nowhere without it.
+    """
+    from neo4aas.core.utils import irdi_base
+
+    entry = next(r for r in cdd_result.records.values() if r["_type"] == "property")
+    declared = f"{irdi_base(entry['irdi'])}#999"
+
+    loader.run("CREATE (:SemanticId {value: $v, base: $b})",
+               v=declared, b=irdi_base(declared))
+    _load_cdd(loader, cdd_result)
+
+    assert loader.run("""
+        MATCH (:SemanticId {value: $v})-[:RESOLVES_TO]->(c:Concept)
+        RETURN c.irdi AS irdi""", v=declared)[0]["irdi"] == entry["irdi"]
+
+
+def test_reimporting_the_dictionary_changes_nothing(loader, cdd_result):
+    _load_cdd(loader, cdd_result)
+    first = _snapshot(loader)
+    _load_cdd(loader, cdd_result)
+    assert _snapshot(loader) == first
+
+
+def test_the_two_dictionaries_do_not_contest_each_other(loader, cdd_result):
+    """ECLASS and IEC CDD rank equally in ``SOURCE_PRECEDENCE``, which is only safe
+    because they publish disjoint identifier spaces. An overlap would mean a load
+    order decided the definitions, and idempotence would be gone."""
+    _load_cdd(loader, cdd_result)
+    assert loader.run("""
+        MATCH (c:Concept {source: 'iec_cdd'})
+        WHERE NOT c.irdi STARTS WITH '0112'
+        RETURN count(*) AS c""")[0]["c"] == 0

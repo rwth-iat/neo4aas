@@ -31,7 +31,7 @@ Layout is **edges between shapes**, not a node per layout.
 
 (:Shape)-[:DECLARES]->(:SemanticId)
 (:SemanticId)-[:RESOLVES_TO]->(:Concept)      -- absent when unresolvable; that is data
-(:Concept)-[:BROADER]->(:Concept)             -- ECLASS CodedName prefix hierarchy
+(:Concept)-[:BROADER]->(:Concept)             -- ECLASS CodedName prefix / CDD superclass
 (:Template)-[:DECLARES_SHAPE]->(:Shape)
 (:Vendor)-[:USES {occurrences, top_level}]->(:Shape)
 
@@ -124,6 +124,38 @@ for, would have nothing to expand through. The class→property links come from 
 `described_by` block and are joined on the version-stripped base.
 `--no-property-class-edges` turns them off.
 
+### Two dictionaries, one identifier space
+
+ECLASS is not the only dictionary vendors point at. IEC CDD publishes IEC 61360-4/-7,
+61987, 62683, 62720, 63213 and 63508 under the ICD `0112`, and the corpus ships it as one
+JSONL file per standard. Both load into the same `:Concept` label, merged on `irdi` and
+joined to semanticIds on the same version-stripped base, and they rank *equally* in
+`SOURCE_PRECEDENCE` — safe only because the two ICDs never name the same concept, which
+`test_the_two_dictionaries_do_not_contest_each_other` pins.
+
+One thing IEC CDD does better: **hierarchy is explicit.** ECLASS encodes it positionally in
+the 8-digit CodedName and this importer recovers it by prefix containment; the CDD export
+names `superclass_irdi` outright. So a CDD concept carries no `coded_name` and there is no
+prefix pass over it — `class_broader_pairs()` reads the reference. `higher_level_classes`
+is deliberately ignored: it lists the *whole* ancestor chain, and emitting it would make
+every ancestor a direct parent and flatten the hierarchy it describes.
+
+Two defects of the export are decided at parse time rather than passed into the graph:
+
+- **1 547 properties carry a relative IRDI** — scraped without their ICD prefix
+  (`AAE930#001`). Such a value joins nothing, and the prefix could only be *guessed* from
+  `published_in`. They are skipped and counted; 1 511 of them already exist in full form
+  elsewhere in the export, so dropping them loses almost nothing, while inventing an
+  identifier would poison the join key everything else rests on.
+- **7 117 IRDIs are published more than once** with differing content, up to eight times,
+  6 445 differing in `revision` — the CDD revises inside a version. The highest revision
+  wins, ties broken on the CDD's own `unid`, so the pick cannot depend on the order lines
+  were read. Without that, two imports of one export would disagree.
+
+`status_level` is `Superseded` for half the export. That marks an older *version* of a live
+concept, not a withdrawn one, so only the explicit `is_deprecated` flag sets
+`Concept.deprecated`.
+
 ### Upgrading from the `:Structure` model
 
 `vocab clear` removes `:Structure`, `:HAS_SLOT` and `:SHIPS` as well as the current labels
@@ -141,6 +173,9 @@ neo4aas vocab import --templates aas-corpus/specs/submodel-templates
 
 # an ECLASS OntoML export, optionally a subset of segments
 neo4aas vocab import --eclass .../1730150000deDEbasicXML01 --eclass-segments 27
+
+# the IEC CDD export: a directory of .jsonl dictionaries, or a single one
+neo4aas vocab import --iec-cdd aas-corpus/dictionaries/iec_cdd
 
 # all three in one run, with a JSON report
 neo4aas vocab import --vendor-from-dir --workers 8 \
@@ -369,7 +404,7 @@ RETURN CASE WHEN n.value STARTS WITH '0173-1' THEN 'ECLASS IRDI'
 
 Three quarters are IDTA or vendor-defined URLs, which no dictionary defines by construction —
 `https://admin-shell.io/idta/nameplate/3/0/Nameplate` is a template identifier, not a concept.
-46 are IEC CDD IRDIs from a dictionary that is not loaded. The 411 ECLASS IRDIs are the
+46 are IEC CDD IRDIs, which `--iec-cdd` now resolves. The 411 ECLASS IRDIs are the
 interesting ones: their version-stripped base is absent from ECLASS 15.0 entirely
 (`0173-1#02-AAQ661`, `0173-1#02-AAS425` and their neighbours return zero concepts on
 `irdi_base`), so those are vendors citing identifiers that the current release has retired.

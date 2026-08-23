@@ -55,6 +55,8 @@ def build_parser() -> argparse.ArgumentParser:
     imp.add_argument("--eclass", type=Path, help="root of an ECLASS OntoML export")
     imp.add_argument("--eclass-segments", default="",
                      help="comma-separated ECLASS segment numbers, e.g. 27,13")
+    imp.add_argument("--iec-cdd", type=Path,
+                     help="IEC CDD export: a directory of .jsonl dictionaries, or one file")
     imp.add_argument("--no-property-class-edges", action="store_true",
                      help="skip the property->class :BROADER edges from ECLASS")
     imp.add_argument("--mode", choices=("replace", "accumulate"), default="replace",
@@ -125,6 +127,19 @@ def command_import(args) -> int:
 
         templates, records = extract_templates(args.templates, records)
 
+    cdd_result = None
+    if args.iec_cdd:
+        from neo4aas.vocabulary.iec_cdd import parse_iec_cdd
+
+        print(f"parsing IEC CDD from {args.iec_cdd} …", file=sys.stderr)
+        cdd_result = parse_iec_cdd([args.iec_cdd])
+        print(f"  {len(cdd_result.records):,} entries "
+              f"({', '.join(f'{k}: {v:,}' for k, v in sorted(cdd_result.kinds.items()))}); "
+              f"{cdd_result.skipped_relative:,} skipped for a relative IRDI, "
+              f"{cdd_result.superseded_records:,} superseded by a higher revision",
+              file=sys.stderr)
+        records.failures.extend(cdd_result.failures)
+
     eclass_result = None
     if args.eclass:
         from neo4aas.vocabulary.concepts import parse_eclass
@@ -144,6 +159,8 @@ def command_import(args) -> int:
 
     if args.dry_run:
         concepts = set(records.concepts)
+        if cdd_result is not None:
+            concepts.update(cdd_result.records)
         if eclass_result is not None:
             from neo4aas.vocabulary.concepts import concepts_from_eclass
 
@@ -182,6 +199,23 @@ def command_import(args) -> int:
             loader.load_broader_prefix(concepts_from_eclass(eclass_result))
             if not args.no_property_class_edges:
                 loader.load_broader_property_class(property_class_pairs(eclass_result))
+        if cdd_result is not None:
+            from neo4aas.vocabulary.iec_cdd import (
+                class_broader_pairs,
+                concepts_from_iec_cdd,
+            )
+            from neo4aas.vocabulary.iec_cdd import (
+                property_class_pairs as cdd_property_class_pairs,
+            )
+
+            # CDD hierarchy is explicit, so there is no prefix pass: the export
+            # names the superclass instead of encoding it in a CodedName.
+            loader.load_concepts(concepts_from_iec_cdd(cdd_result))
+            loader.load_broader_base_pairs(class_broader_pairs(cdd_result),
+                                           name="BROADER(cdd class)")
+            if not args.no_property_class_edges:
+                loader.load_broader_base_pairs(cdd_property_class_pairs(cdd_result),
+                                               name="BROADER(cdd property)")
         loader.finalize()
         report.seconds = time.perf_counter() - started
         collect(loader, report)

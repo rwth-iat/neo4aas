@@ -197,11 +197,16 @@ MATCH (parent:Concept) WHERE parent.coded_name = row.parent_coded_name
 MERGE (child)-[:BROADER]->(parent)
 """
 
-MERGE_BROADER_PROPERTY_CLASS = """
+#: A ``:BROADER`` edge between two concepts named by their version-stripped bases,
+#: so every version of the child links to every version of the parent. Both
+#: dictionaries feed it: ECLASS's ``described_by`` block, and IEC CDD's explicit
+#: ``superclass_irdi`` and class/property references.
+MERGE_BROADER_BASE = """
 UNWIND $rows AS row
-MATCH (p:Concept) WHERE p.irdi_base = row.property_base
-MATCH (c:Concept) WHERE c.irdi_base = row.class_base AND c.irdi <> p.irdi
-MERGE (p)-[:BROADER]->(c)
+MATCH (child:Concept) WHERE child.irdi_base = row.child_base
+MATCH (parent:Concept) WHERE parent.irdi_base = row.parent_base
+  AND parent.irdi <> child.irdi
+MERGE (child)-[:BROADER]->(parent)
 """
 
 #: The join that makes the graph worth having: a declared identifier against the
@@ -402,13 +407,19 @@ class VocabularyLoader:
         return self._write_stream("BROADER(prefix)", MERGE_BROADER_PREFIX, rows)
 
     def load_broader_property_class(self, pairs: Iterable[tuple[str, str]]) -> int:
-        """Property → describing class, joined on the version-stripped IRDI base.
+        """Property → describing class, joined on the version-stripped IRDI base."""
+        return self.load_broader_base_pairs(pairs, name="BROADER(property)")
 
-        Deduplicated first: ECLASS repeats a class→property pair across releases, and
-        the dictionary carries millions of these, so writing them twice is free work.
+    def load_broader_base_pairs(self, pairs: Iterable[tuple[str, str]],
+                                name: str = "BROADER") -> int:
+        """``(child_base, parent_base)`` → ``:BROADER``, deduplicated first.
+
+        Both dictionaries repeat a pair across the releases they ship, and ECLASS
+        carries millions of them, so writing a pair twice is free work.
         """
-        rows = ({"property_base": p, "class_base": c} for p, c in sorted(set(pairs)))
-        return self._write_stream("BROADER(property)", MERGE_BROADER_PROPERTY_CLASS, rows)
+        rows = ({"child_base": child, "parent_base": parent}
+                for child, parent in sorted(set(pairs)))
+        return self._write_stream(name, MERGE_BROADER_BASE, rows)
 
     # -- templates --------------------------------------------------------------
 

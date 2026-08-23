@@ -36,3 +36,4 @@ CORPUS_DIR = Path(os.environ.get("AAS_CORPUS_DIR", REPO_ROOT.parent / "aas-corpu
 CORPUS_INSTANCES_DIR = CORPUS_DIR / "instances" / "vendors"
 CORPUS_TEMPLATES_DIR = CORPUS_DIR / "specs" / "submodel-templates"
 CORPUS_ECLASS_DIR = CORPUS_DIR / "dictionaries" / "eclass"
+CORPUS_IEC_CDD_DIR = CORPUS_DIR / "dictionaries" / "iec_cdd"

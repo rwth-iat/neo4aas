@@ -114,6 +114,19 @@ RETURN count(p) AS parents,
        max(children) AS widest
 """
 
+#: Which dictionary defines the graph, and how much of it any of them is actually
+#: asked for. Two sources publish disjoint identifier spaces (ECLASS ``0173``, IEC
+#: CDD ``0112``), so "we loaded a dictionary" and "that dictionary answers what the
+#: vendors point at" are different questions and both are worth printing.
+CONCEPTS_BY_SOURCE_QUERY = """
+MATCH (c:Concept)
+WITH c.source AS source, c.kind AS kind,
+     count { (:SemanticId)-[:RESOLVES_TO]->(c) } AS hits
+RETURN source, kind, count(*) AS concepts,
+       sum(CASE WHEN hits > 0 THEN 1 ELSE 0 END) AS asked_for
+ORDER BY concepts DESC
+"""
+
 DECLARES_DEGREE_QUERY = """
 MATCH (n:SemanticId)
 RETURN n.value AS value, count { (n)<-[:DECLARES]-(:Shape) } AS shapes
@@ -147,6 +160,7 @@ class RunReport:
     unresolved: list[dict] = field(default_factory=list)
     top_degree: list[dict] = field(default_factory=list)
     top_declares: list[dict] = field(default_factory=list)
+    concepts_by_source: list[dict] = field(default_factory=list)
     write_seconds: dict[str, float] = field(default_factory=dict)
     rows_written: dict[str, int] = field(default_factory=dict)
 
@@ -216,6 +230,14 @@ class RunReport:
                     f"{self.ambiguity['widest']:,}) — the merge cannot say which")
                 add("  combinations of those children actually co-occur; the support "
                     "counters are what is left to rank them by.")
+
+        if self.concepts_by_source:
+            add("")
+            add("DICTIONARY — WHERE THE CONCEPTS CAME FROM")
+            for row in self.concepts_by_source:
+                add(f"  {str(row['source']):<10} {str(row['kind']):<12}"
+                    f"{row['concepts']:>10,} concepts"
+                    f"{row['asked_for']:>9,} a semanticId points at")
 
         if self.quality.get("shapes"):
             shapes = self.quality["shapes"]
@@ -290,6 +312,7 @@ def collect(loader, report: RunReport, *, top: int = TOP_DEGREE_LIMIT,
                          loader.run(TOP_DEGREE_QUERY,
                                     labels=list(VOCABULARY_LABELS), limit=top)]
     report.top_declares = [dict(r) for r in loader.run(DECLARES_DEGREE_QUERY, limit=top)]
+    report.concepts_by_source = [dict(r) for r in loader.run(CONCEPTS_BY_SOURCE_QUERY)]
     report.write_seconds = dict(loader.counts.seconds)
     report.rows_written = dict(loader.counts.written)
     return report

@@ -31,8 +31,11 @@ from typing import Any, Iterable, Iterator
 from neo4aas.core.utils import irdi_base
 
 #: Higher wins when the same IRDI arrives from two sources. A dictionary export is
-#: authoritative; a CD embedded in a vendor file is a copy of unknown vintage.
-SOURCE_PRECEDENCE: dict[str, int] = {"aas": 1, "eclass": 2}
+#: authoritative; a CD embedded in a vendor file is a copy of unknown vintage. The
+#: two dictionaries rank *equally* — they publish disjoint identifier spaces
+#: (ECLASS under ICD ``0173``, IEC CDD under ``0112``) so they never contest a
+#: field, and equal precedence is not a win, which keeps a second import a no-op.
+SOURCE_PRECEDENCE: dict[str, int] = {"aas": 1, "eclass": 2, "iec_cdd": 2}
 
 #: Languages preferred when an ECLASS/IEC 61360 label exists in several.
 LANGUAGE_PREFERENCE: tuple[str, ...] = ("en", "de")
