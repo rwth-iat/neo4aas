@@ -39,6 +39,11 @@ from neo4aas.core.utils import irdi_base, is_irdi
         ("urn:irdi:0112/2///61987#ABN590#002", "0112/2///61987#ABN590"),
         ("https://api.eclass-cdp.com/0173-1#02-ABL775#001", "0173-1#02-ABL775"),
         ("https://api.eclass-cdp.com/ 0173-1-02-ABK163-002", "0173-1#02-ABK163"),
+        # Surrounding whitespace: nine ECLASS IRDIs in the corpus are shipped padded
+        # (' 0173-1#02-AAN468#008' on a Language property). Trimming invents nothing.
+        (" 0173-1#02-AAN468#008", "0173-1#02-AAN468"),
+        ("0173-1#02-AAN468#008\n", "0173-1#02-AAN468"),
+        ("\t0112/2///61987#ABN590#002 ", "0112/2///61987#ABN590"),
         # Not wrappers, and deliberately left alone — see test_scope_of_normalisation.
         ("urn:samm:io.admin-shell.idta.batterypass.technical_data:1.0.0#batteryMass",
          "urn:samm:io.admin-shell.idta.batterypass.technical_data:1.0.0#batteryMass"),
@@ -82,6 +87,20 @@ def test_a_compound_irdi_is_not_collapsed_to_its_head():
     compound = "0173-1#02-ABI503#003~0/0173-1#01-AHF582#003"
     assert irdi_base(compound) == "0173-1#02-ABI503#003~0/0173-1#01-AHF582"
     assert irdi_base(compound) != irdi_base("0173-1#02-ABI503#003")
+
+
+def test_a_padded_irdi_and_its_trimmed_form_are_one_base():
+    """Whitespace is never part of an identifier, so it must not split a concept."""
+    assert irdi_base(" 0173-1#02-AAN468#008") == irdi_base("0173-1#02-AAN468#012")
+    assert is_irdi("  0173-1#02-AAN468#008  ")
+
+
+def test_trimming_does_not_repair_a_malformed_icd():
+    """Only surrounding whitespace goes. A wrong ICD stays wrong — '0173a-1' and
+    '173-1' are shipped by real files and are not repairable without guessing."""
+    for value in (" 0173a-1#02-ABK288#002 ", " 173-1#02-AAW627#001 "):
+        assert not is_irdi(value)
+        assert irdi_base(value) == value.strip()
 
 
 def test_a_wrapped_irdi_and_its_plain_form_are_one_base():

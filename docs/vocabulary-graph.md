@@ -166,8 +166,11 @@ serves the same IRDIs with the two `#` separators replaced by `-`, sometimes wit
 space after the host or with the separators left as `#` after all. All of these *are* ECLASS
 properties; the join key simply could not see through the wrapper, so they named nothing.
 
-`core.utils.canonical_irdi()` strips the known wrappers, and `irdi_base()` and `is_irdi()`
-both go through it so they cannot disagree about what is an IRDI. The stored `value` stays
+`core.utils.canonical_irdi()` trims surrounding whitespace and strips the known wrappers,
+and `irdi_base()` and `is_irdi()` both go through it so they cannot disagree about what is
+an IRDI. The trim matters on its own: nine ECLASS IRDIs in the corpus are shipped padded
+(`' 0173-1#02-AAN468#008'` on a `Language` property), and whitespace is never part of an
+identifier. The stored `value` stays
 **verbatim** — the graph records what the vendor wrote — and only the derived `base` is
 canonical, which is exactly how the CDP URL has always behaved.
 
@@ -176,9 +179,10 @@ Three forms are deliberately *not* normalised, and the report keeps them visible
 - **Compound IRDIs** (`0173-1#02-ABI503#003~0/0173-1#01-AHF582#003`, 37 values). The tail
   qualifies the head — a property *in the context of* a class — so collapsing to the head
   would silently rename the concept.
-- **Misspelled wrappers** (`urn:iridi:`, `urn:idi:`, `urn:samurn:`, 5 values). Repairing a
-  typo is inventing an identifier: the same rule that drops IEC CDD's 1 547 prefix-less
-  IRDIs rather than guessing their ICD.
+- **Misspelled wrappers and malformed ICDs** (`urn:iridi:`, `urn:idi:`, `urn:samurn:`,
+  `0173a-1#02-ABK288#002`, `173-1#02-AAW627#001`). Repairing a typo is inventing an
+  identifier: the same rule that drops IEC CDD's 1 547 prefix-less IRDIs rather than
+  guessing their ICD. Trimming whitespace is *not* in this category — nothing is guessed.
 - **`urn:samm:`** (292 values). An Eclipse SAMM aspect-model identifier — a different
   identifier system, with no dictionary entry to find. Unresolved is the correct answer.
 

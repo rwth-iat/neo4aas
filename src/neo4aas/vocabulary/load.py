@@ -65,7 +65,11 @@ DEFAULT_BATCH_SIZE = 10_000
 CLEAR_BATCH_SIZE = 10_000
 
 #: Concept properties a higher-precedence source overwrites and a lower one only
-#: fills in when missing. ``irdi``/``irdi_base`` are the identity and never move.
+#: fills in when missing. ``irdi`` is the identity and never moves; ``irdi_base`` is a
+#: pure function of it (:func:`neo4aas.core.utils.irdi_base`) and is therefore
+#: **recomputed on every write**, not frozen on first sight — the incoming row always
+#: carries the current answer, and freezing it means a change to what ``irdi_base``
+#: normalises can never reach a node that already exists.
 CONCEPT_FIELDS: tuple[str, ...] = (
     "source", "kind", "coded_name", "level", "preferred_name", "definition",
     "unit", "data_type", "deprecated",
@@ -88,7 +92,7 @@ def _concept_merge_clause() -> str:
     UNWIND $rows AS row
     MERGE (c:Concept {{irdi: row.irdi}})
     WITH c, row, coalesce(row.precedence, 0) > coalesce(c.precedence, 0) AS wins
-    SET c.irdi_base = coalesce(c.irdi_base, row.irdi_base),
+    SET c.irdi_base = row.irdi_base,
         c.precedence = CASE WHEN wins THEN row.precedence ELSE c.precedence END,
         {assignments}
     """

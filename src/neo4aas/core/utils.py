@@ -44,11 +44,17 @@ def canonical_irdi(value: str | None) -> str | None:
     templates, sometimes with a stray space after the host or with the separators left
     as ``#`` after all.
 
-    Only whole, unambiguous wrappers are removed. Anything else is returned unchanged,
-    so a caller can canonicalise every value it sees.
+    Surrounding whitespace goes first: nine ECLASS IRDIs in the reference corpus are
+    shipped padded (``' 0173-1#02-AAN468#008'`` on a Language property), and whitespace
+    is never part of an identifier — trimming it invents nothing, unlike repairing a
+    malformed ICD (``0173a-1``, ``173-1``), which stays unresolved on purpose.
+
+    Only whole, unambiguous wrappers are removed. Anything else is returned unchanged
+    apart from that trim, so a caller can canonicalise every value it sees.
     """
     if not value:
         return value
+    value = value.strip()
     urn = _URN_IRDI_RE.match(value)
     if urn:
         value = urn.group(1).strip()

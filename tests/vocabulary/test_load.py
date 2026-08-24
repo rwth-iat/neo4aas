@@ -499,3 +499,25 @@ def test_a_wrapped_irdi_resolves_and_a_samm_urn_does_not(loader, corpus_records)
             MATCH (n:SemanticId {value: $v})
             RETURN count { (n)-[:RESOLVES_TO]->() } AS hits""",
             v=unresolvable)[0]["hits"] == 0
+
+
+def test_a_concept_base_is_recomputed_not_frozen(loader):
+    """``irdi_base`` is a pure function of ``irdi``, so the row always carries the
+    current answer and the stored one must yield to it.
+
+    Freezing it with ``coalesce`` looked like protecting an identity, but it meant a
+    change to what :func:`neo4aas.core.utils.irdi_base` normalises could never reach a
+    node that already existed — the graph would keep a base no current code computes,
+    while query-time callers computed the new one and missed it. Found in the live
+    graph: one embedded ConceptDescription kept a whitespace-padded base across a
+    re-import that was supposed to refresh exactly that.
+    """
+    row = {"irdi": "0173-1#02-AAW338#001 ", "irdi_base": "0173-1#02-AAW338",
+           "source": "aas", "kind": "description", "precedence": 1, "coded_name": None,
+           "level": None, "preferred_name": "designation", "definition": None,
+           "unit": None, "data_type": None, "deprecated": False}
+    loader.load_concepts([dict(row, irdi_base="0173-1#02-AAW338#001 ")])   # stale
+    loader.load_concepts([row])                                            # current
+
+    assert loader.run("MATCH (c:Concept {irdi: $i}) RETURN c.irdi_base AS b",
+                      i=row["irdi"])[0]["b"] == "0173-1#02-AAW338"
