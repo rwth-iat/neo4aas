@@ -164,7 +164,7 @@ def command_import(args) -> int:
         if eclass_result is not None:
             from neo4aas.vocabulary.concepts import concepts_from_eclass
 
-            concepts.update(row["irdi"] for row in concepts_from_eclass(eclass_result))
+            concepts.update(row["id"] for row in concepts_from_eclass(eclass_result))
         report.nodes = {
             "Shape": len(records.shapes),
             "SemanticId": len(records.semantic_ids), "Concept": len(concepts),
@@ -174,6 +174,16 @@ def command_import(args) -> int:
             "CONTAINS": len({(p, c) for _, p, c in records.contains}),
             "DECLARES_SUPPLEMENTAL": len(records.supplemental_declarations),
         }
+        # The collapse ratio is a property of the *extraction*, so a dry run can
+        # state it without a database — and it is the one number that says whether
+        # the normaliser is destroying distinctions.
+        named = [rec.shape for rec in records.shapes.values() if rec.shape.id_short]
+        if named:
+            report.id_short_forms = {
+                "raw": len({s.id_short for s in named}),
+                "norm": len({s.id_short_norm for s in named}),
+                "base": len({s.id_short_base for s in named}),
+            }
         report.seconds = time.perf_counter() - started
         print(report.render())
         return 0

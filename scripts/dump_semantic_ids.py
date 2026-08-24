@@ -49,7 +49,7 @@ RESOLVED_QUERY = """
 MATCH (n:SemanticId)-[:RESOLVES_TO]->(c:Concept)
 WITH n, collect(c) AS concepts
 """ + _DECLARERS % "concepts," + """
-RETURN n.value AS value, n.base AS base,
+RETURN n.value AS value, n.value_base AS value_base,
        size(concepts)                                            AS concepts,
        [x IN concepts | x.source]                                AS sources,
        [x IN concepts | x.kind]                                  AS kinds,
@@ -66,16 +66,16 @@ UNRESOLVED_QUERY = """
 MATCH (n:SemanticId)
 WHERE NOT (n)-[:RESOLVES_TO]->(:Concept)
 """ + _DECLARERS % "" + """
-RETURN n.value AS value, n.base AS base, shapes, primary, supplemental, shipped,
+RETURN n.value AS value, n.value_base AS value_base, shapes, primary, supplemental, shipped,
        sample.id_short AS element, sample.model_type AS model_type
 ORDER BY shapes DESC, value ASC
 """
 
-RESOLVED_COLUMNS = ["value", "base", "concepts", "sources", "kinds", "preferred_name",
+RESOLVED_COLUMNS = ["value", "value_base", "concepts", "sources", "kinds", "preferred_name",
                     "unit", "data_type", "deprecated", "shapes", "primary",
                     "supplemental", "shipped", "element", "model_type"]
 
-UNRESOLVED_COLUMNS = ["form", "value", "base", "shapes", "primary", "supplemental",
+UNRESOLVED_COLUMNS = ["form", "value", "value_base", "shapes", "primary", "supplemental",
                       "shipped", "element", "model_type"]
 
 #: Why an identifier resolved nowhere. Keyed on the **base**, not the raw value: the
@@ -147,7 +147,7 @@ def main() -> int:
             row[key] = ",".join(sorted({v for v in row[key] or () if v}))
 
     for row in unresolved:
-        row["form"] = form_of(row["base"] or row["value"])
+        row["form"] = form_of(row["value_base"] or row["value"])
 
     stamp = datetime.date.today().isoformat()
     provenance = [

@@ -364,10 +364,10 @@ def test_one_value_used_both_ways_is_a_single_semantic_id():
 
 
 def test_an_eclass_cdp_url_supplemental_joins_on_the_canonical_irdi():
-    """`irdi_base` already normalises the dash-encoded CDP URL, which is the form
+    """`id_base` already normalises the dash-encoded CDP URL, which is the form
     harting ships supplementals in — so it lands on the plain ECLASS concept."""
     records = _folded(SUPPLEMENTED)
-    assert (records.semantic_ids["https://api.eclass-cdp.com/0173-1-02-AAW001-001"].base
+    assert (records.semantic_ids["https://api.eclass-cdp.com/0173-1-02-AAW001-001"].value_base
             == "0173-1#02-AAW001")
 
 

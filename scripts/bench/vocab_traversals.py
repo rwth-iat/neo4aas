@@ -19,7 +19,7 @@ MATCH (v1:Vendor)-[:USES]->(a:Shape)-[:DECLARES]->(:SemanticId)
       -[:RESOLVES_TO]->(c:Concept)
       <-[:RESOLVES_TO]-(:SemanticId)<-[:DECLARES]-(b:Shape)<-[:USES]-(v2:Vendor)
 WHERE v1.name < v2.name AND a.id_short <> b.id_short AND c.preferred_name IS NOT NULL
-RETURN c.irdi AS concept, c.preferred_name AS name,
+RETURN c.id AS concept, c.preferred_name AS name,
        v1.name AS vendor_a, a.id_short AS field_a,
        v2.name AS vendor_b, b.id_short AS field_b
 ORDER BY concept, vendor_a, vendor_b, field_a, field_b
@@ -117,9 +117,9 @@ DEPRECATED_VERSIONS = """
 MATCH (v:Vendor)-[:USES]->(s:Shape)-[:DECLARES]->(n:SemanticId)
       -[:RESOLVES_TO]->(c:Concept)
 WHERE c.source = 'eclass'
-WITH v, n, c.irdi_base AS base
-MATCH (release:Concept {irdi_base: base}) WHERE release.source = 'eclass'
-WITH v, n, base, max(release.irdi) AS newest
+WITH v, n, c.id_base AS base
+MATCH (release:Concept {id_base: base}) WHERE release.source = 'eclass'
+WITH v, n, base, max(release.id) AS newest
 WHERE n.value <> newest AND n.value STARTS WITH base
 RETURN v.name AS vendor, count(DISTINCT n) AS stale_identifiers,
        collect(DISTINCT n.value)[..3] AS examples

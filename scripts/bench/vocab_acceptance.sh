@@ -8,6 +8,7 @@
 #   ./scripts/bench/vocab_acceptance.sh tiers         1k / 10k / 50k node growth
 #   ./scripts/bench/vocab_acceptance.sh full          whole corpus + dictionary
 #   ./scripts/bench/vocab_acceptance.sh traversals    the six queries, timed
+#   ./scripts/bench/vocab_acceptance.sh idshort       the derived idShort forms
 set -euo pipefail
 
 URI="${URI:-bolt://localhost:7688}"
@@ -92,6 +93,23 @@ full() {
     tail -40 "$OUT/full-report.txt"
 }
 
+idshort() {
+    banner "5. IDSHORT NORMALISATION — collapse, merges, bridges, stem ratios"
+    # The whole evidence for id_short_norm / id_short_base is one import: the collapse
+    # ratio says the normaliser is not destroying distinctions, the merged spellings
+    # and the cross-vendor forms are what it bought, and the stem ratios are the
+    # junk-semanticId signal it makes computable. The full lists go to JSON — a
+    # sample cannot be checked against a corpus.
+    "${VOCAB[@]}" clear --uri "$URI" --yes >/dev/null
+    "${VOCAB[@]}" import --uri "$URI" --vendor-from-dir --stratify \
+        --limit "${FILES:-3000}" --workers "$WORKERS" \
+        --templates "$TEMPLATES" --report-json "$OUT/idshort-forms.json" \
+        "$INSTANCES" > "$OUT/idshort.txt" 2>/dev/null
+    sed -n '/^IDSHORT NORMALISATION/,/^SEMANTIC IDS BY :DECLARES/p' "$OUT/idshort.txt"
+    echo "--- full lists in $OUT/idshort-forms.json ---"
+    uv run python scripts/bench/vocab_idshort_report.py "$OUT/idshort-forms.json"
+}
+
 traversals() {
     # No `tee` into $OUT here: the caller redirects this function's stdout, and a
     # second writer on the same file interleaves the two streams mid-line.
@@ -100,7 +118,7 @@ traversals() {
 }
 
 case "${1:-all}" in
-    idempotence|tiers|full|traversals) "$1" ;;
-    all) idempotence; tiers; full; traversals ;;
-    *) echo "usage: $0 {idempotence|tiers|full|traversals|all}" >&2; exit 2 ;;
+    idempotence|tiers|full|traversals|idshort) "$1" ;;
+    all) idempotence; tiers; full; traversals; idshort ;;
+    *) echo "usage: $0 {idempotence|tiers|full|traversals|idshort|all}" >&2; exit 2 ;;
 esac

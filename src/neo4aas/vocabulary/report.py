@@ -25,6 +25,11 @@ from typing import Any
 
 TOP_DEGREE_LIMIT = 10
 UNRESOLVED_SAMPLE = 25
+#: How many rows of the idShort sections reach the console. The full lists always
+#: reach ``--report-json``.
+IDSHORT_SAMPLE = 25
+#: A stem ratio over one or two shapes says nothing, so the ranked table starts here.
+STEM_MIN_SHAPES = 4
 
 RESOLUTION_QUERY_SIMPLE = """
 MATCH (n:SemanticId)
@@ -103,13 +108,13 @@ WITH n, count { (n)<-[:DECLARES|DECLARES_SUPPLEMENTAL]-(:Shape) } AS shapes
 WITH CASE
        // Keyed on the *base*, because that is what the join uses: a wrapper the key
        // can now read has an IRDI base and belongs under "absent", not "unreadable".
-       WHEN n.base =~ '^[0-9]{4}[-/].*[~/].*' THEN 'compound IRDI (not collapsed)'
-       WHEN n.base =~ '^[0-9]{4}[-/].*'    THEN 'IRDI absent from the dictionary'
-       WHEN n.base =~ '(?i)^urn:irdi:.*'   THEN 'wrapper the join key cannot read'
-       WHEN n.base =~ '(?i)^urn:samm:.*'   THEN 'SAMM aspect model (other system)'
-       WHEN n.base =~ '(?i)^urn:.*'        THEN 'other URN (incl. misspelled wrapper)'
-       WHEN n.base CONTAINS 'eclass-cdp.com' THEN 'ECLASS-CDP URL the key cannot read'
-       WHEN n.base STARTS WITH 'http'      THEN 'IDTA / vendor URL (not a concept)'
+       WHEN n.value_base =~ '^[0-9]{4}[-/].*[~/].*' THEN 'compound IRDI (not collapsed)'
+       WHEN n.value_base =~ '^[0-9]{4}[-/].*'    THEN 'IRDI absent from the dictionary'
+       WHEN n.value_base =~ '(?i)^urn:irdi:.*'   THEN 'wrapper the join key cannot read'
+       WHEN n.value_base =~ '(?i)^urn:samm:.*'   THEN 'SAMM aspect model (other system)'
+       WHEN n.value_base =~ '(?i)^urn:.*'        THEN 'other URN (incl. misspelled wrapper)'
+       WHEN n.value_base CONTAINS 'eclass-cdp.com' THEN 'ECLASS-CDP URL the key cannot read'
+       WHEN n.value_base STARTS WITH 'http'      THEN 'IDTA / vendor URL (not a concept)'
        ELSE 'other'
      END AS form, shapes
 RETURN form, count(*) AS values, sum(shapes) AS declared_by
@@ -120,7 +125,7 @@ TOP_DEGREE_QUERY = """
 MATCH (n)
 WHERE any(l IN labels(n) WHERE l IN $labels)
 RETURN labels(n) AS labels,
-       coalesce(n.value, n.irdi, n.name, n.template_id, n.id_short, n.shape_key) AS key,
+       coalesce(n.value, n.id, n.name, n.template_id, n.id_short, n.shape_key) AS key,
        count { (n)--() } AS degree
 ORDER BY degree DESC
 LIMIT $limit
@@ -190,6 +195,78 @@ ORDER BY shapes DESC, value ASC
 LIMIT $limit
 """
 
+#: What normalising the idShort buys, and what it must **not** cost.
+#:
+#: A collapse of ~1.03x is the point: the derived forms are for matching, not for
+#: merging, and a much harder collapse would mean the normaliser is destroying
+#: distinctions the corpus really makes. The number is printed rather than asserted
+#: so that a change to the normaliser shows up as a number moving.
+IDSHORT_FORMS_QUERY = """
+MATCH (s:Shape) WHERE s.id_short IS NOT NULL
+RETURN count(DISTINCT s.id_short) AS raw,
+       count(DISTINCT s.id_short_norm) AS norm,
+       count(DISTINCT s.id_short_base) AS base
+"""
+
+#: The interoperability payoff: two vendors writing one concept two ways.
+#: ``ValueID``/``ValueId``, ``CityTown``/``City_Town`` — no semanticId involved, and
+#: nothing in the graph could see them as the same thing before.
+IDSHORT_MERGED_QUERY = """
+MATCH (s:Shape) WHERE s.id_short IS NOT NULL
+WITH s.id_short_norm AS form, collect(DISTINCT s.id_short) AS spellings
+WHERE size(spellings) > 1
+RETURN form, spellings, size(spellings) AS spelling_count
+ORDER BY spelling_count DESC, form ASC
+"""
+
+#: Cross-vendor bridges found without a dictionary. A vendor that ships no
+#: semanticId at all is still joined to the rest of the corpus by these.
+IDSHORT_CROSS_VENDOR_QUERY = """
+MATCH (v:Vendor)-[:USES]->(s:Shape) WHERE s.id_short IS NOT NULL
+WITH s.id_short_norm AS form, collect(DISTINCT v.name) AS vendors
+WHERE size(vendors) > 1
+RETURN form, vendors, size(vendors) AS vendor_count
+ORDER BY vendor_count DESC, form ASC
+"""
+
+#: Junk-semanticId detection: **distinct ``id_short_base`` per declaring shape**.
+#:
+#: A semanticId declared by 204 shapes that carry 202 different stems is a
+#: catch-all — the vendor is filing unrelated things under one identifier. One
+#: declared by 73 shapes with 5 stems is an enumeration (``AAQ672-Connector__00__``
+#: … ``__47__``), which is exactly what a shared identifier is *for*. The ratio
+#: separates them; the raw in-degree does not.
+#:
+#: The ``0.5`` cut and the ``stems > 3`` floor were chosen by eye on one sample, so
+#: this reports the whole ranked table and the distribution and leaves the threshold
+#: to whoever reads it. A known false positive stays in the table rather than being
+#: filtered away: a collection legitimately named after its content
+#: (``Australia``, ``Austria``, ``Belgium`` …) scores 1.00 and is not misuse. Telling
+#: those apart needs the ``:CONTAINS`` parent test, which this query does not do.
+SEMANTIC_ID_STEMS_QUERY = """
+MATCH (s:Shape)-[:DECLARES]->(n:SemanticId)
+WHERE s.id_short_base IS NOT NULL
+WITH n, count(s) AS shapes, count(DISTINCT s.id_short_base) AS stems
+WHERE shapes >= $min_shapes
+RETURN n.value AS value, shapes, stems,
+       round(1.0 * stems / shapes, 3) AS ratio,
+       count { (n)-[:RESOLVES_TO]->(:Concept) } > 0 AS resolves
+ORDER BY ratio DESC, shapes DESC, value ASC
+"""
+
+#: The distribution behind the table above — ten buckets, so the shape of the data
+#: sets the threshold instead of a constant chosen on one sample.
+SEMANTIC_ID_STEM_HISTOGRAM_QUERY = """
+MATCH (s:Shape)-[:DECLARES]->(n:SemanticId)
+WHERE s.id_short_base IS NOT NULL
+WITH n, count(s) AS shapes, count(DISTINCT s.id_short_base) AS stems
+WHERE shapes >= $min_shapes
+WITH CASE WHEN stems = shapes THEN 10
+          ELSE toInteger(floor(10.0 * stems / shapes)) END AS bucket
+RETURN bucket, count(*) AS semantic_ids
+ORDER BY bucket ASC
+"""
+
 DECLARES_DEGREE_QUERY = """
 MATCH (n:SemanticId)
 RETURN n.value AS value, count { (n)<-[:DECLARES]-(:Shape) } AS shapes
@@ -227,6 +304,14 @@ class RunReport:
     supplemental: dict[str, Any] = field(default_factory=dict)
     supplemental_top: list[dict] = field(default_factory=list)
     unresolved_forms: list[dict] = field(default_factory=list)
+    id_short_forms: dict[str, Any] = field(default_factory=dict)
+    #: Full lists, not samples: the console prints the head, ``--report-json`` keeps
+    #: everything. They are the evidence for the normaliser, and a sample cannot be
+    #: checked against a corpus.
+    id_short_merged: list[dict] = field(default_factory=list)
+    id_short_cross_vendor: list[dict] = field(default_factory=list)
+    semantic_id_stems: list[dict] = field(default_factory=list)
+    semantic_id_stem_histogram: list[dict] = field(default_factory=list)
     write_seconds: dict[str, float] = field(default_factory=dict)
     rows_written: dict[str, int] = field(default_factory=dict)
 
@@ -338,6 +423,43 @@ class RunReport:
                 add(f"    {row['vendor']:<18} {row['shapes']:>8,} shapes, "
                     f"{row['pct']:>3} % numbered")
 
+        if self.id_short_forms.get("raw"):
+            forms = self.id_short_forms
+            raw, norm, base = forms["raw"], forms["norm"], forms["base"]
+            add("")
+            add("IDSHORT NORMALISATION — MATCHING WITHOUT A DICTIONARY")
+            add(f"  {raw:,} raw idShorts collapse to {norm:,} normalised forms "
+                f"({raw / max(norm, 1):.2f}x) and {base:,} bases "
+                f"({raw / max(base, 1):.2f}x)")
+            add("  A small collapse is the point: these are matching keys, not a merge.")
+            add(f"  {len(self.id_short_merged):,} forms merge more than one raw spelling "
+                f"— the interoperability payoff (full list in --report-json)")
+            for row in self.id_short_merged[:IDSHORT_SAMPLE]:
+                add(f"    {row['form'][:38]:<38} {', '.join(row['spellings'][:4])}")
+            add(f"  {len(self.id_short_cross_vendor):,} forms are used by more than one "
+                f"vendor — bridges found with no semanticId at all")
+            for row in self.id_short_cross_vendor[:IDSHORT_SAMPLE]:
+                add(f"    {row['form'][:38]:<38} {', '.join(row['vendors'])}")
+
+        if self.semantic_id_stems:
+            add("")
+            add("SEMANTIC IDS BY STEM RATIO  (distinct id_short_base / declaring shapes)")
+            add("  ratio  stems shapes  res  semanticId")
+            for row in self.semantic_id_stems[:IDSHORT_SAMPLE]:
+                add(f"  {row['ratio']:>5.2f} {row['stems']:>6,} {row['shapes']:>6,}"
+                    f"  {'yes' if row['resolves'] else ' no'}  {row['value'][:52]}")
+            if len(self.semantic_id_stems) > IDSHORT_SAMPLE:
+                add(f"    … {len(self.semantic_id_stems) - IDSHORT_SAMPLE:,} more, "
+                    f"full table in --report-json")
+            if self.semantic_id_stem_histogram:
+                add("  distribution — the threshold is the reader's to set, not a constant:")
+                widest = max(r["semantic_ids"] for r in self.semantic_id_stem_histogram)
+                for row in self.semantic_id_stem_histogram:
+                    lo = row["bucket"] / 10.0
+                    bar = "#" * max(1, round(40 * row["semantic_ids"] / max(widest, 1)))
+                    add(f"    {lo:>4.1f}-{min(lo + 0.1, 1.0):<4.1f}"
+                        f"{row['semantic_ids']:>6,}  {bar}")
+
         if self.top_declares:
             add("")
             add("SEMANTIC IDS BY :DECLARES IN-DEGREE  (junk detection)")
@@ -369,7 +491,8 @@ class RunReport:
 
 
 def collect(loader, report: RunReport, *, top: int = TOP_DEGREE_LIMIT,
-            unresolved: int = UNRESOLVED_SAMPLE) -> RunReport:
+            unresolved: int = UNRESOLVED_SAMPLE,
+            min_shapes: int = STEM_MIN_SHAPES) -> RunReport:
     """Fill the graph-side half of the report from a live database."""
     from neo4aas.vocabulary.schema import VOCABULARY_LABELS
 
@@ -405,6 +528,15 @@ def collect(loader, report: RunReport, *, top: int = TOP_DEGREE_LIMIT,
         report.supplemental = dict(supplemental[0])
     report.supplemental_top = [dict(r) for r in
                                loader.run(SUPPLEMENTAL_TOP_QUERY, limit=top)]
+    forms = loader.run(IDSHORT_FORMS_QUERY)
+    if forms:
+        report.id_short_forms = dict(forms[0])
+    report.id_short_merged = [dict(r) for r in loader.run(IDSHORT_MERGED_QUERY)]
+    report.id_short_cross_vendor = [dict(r) for r in loader.run(IDSHORT_CROSS_VENDOR_QUERY)]
+    report.semantic_id_stems = [dict(r) for r in
+                                loader.run(SEMANTIC_ID_STEMS_QUERY, min_shapes=min_shapes)]
+    report.semantic_id_stem_histogram = [
+        dict(r) for r in loader.run(SEMANTIC_ID_STEM_HISTOGRAM_QUERY, min_shapes=min_shapes)]
     report.write_seconds = dict(loader.counts.seconds)
     report.rows_written = dict(loader.counts.written)
     return report

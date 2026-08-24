@@ -56,7 +56,8 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator
 
 from neo4aas.core.io import aas_suffix, is_aas_file, read_bytes
-from neo4aas.core.utils import irdi_base
+from neo4aas.core.utils import id_base
+from neo4aas.vocabulary.idshort import id_short_base, normalize_id_short
 
 #: Attributes whose value is a list of contained SubmodelElements. ``value`` is in
 #: here for SubmodelElementCollection/List; a Property's scalar ``value`` and a
@@ -116,6 +117,21 @@ class Shape:
         value_type = _text(element.get("valueType"))
         return cls(shape_key(id_short, semantic, mt, value_type),
                    id_short, semantic, mt, value_type)
+
+    #: The two derived forms are *properties*, not fields, for two reasons: a field
+    #: would be computed in :meth:`of` — once per element, tens of millions of times,
+    #: where these are read once per *distinct* shape at write time — and it would
+    #: travel in the pickle a ``--workers`` run sends back from every batch. Neither
+    #: is part of :func:`shape_key`; see the module docstring.
+    @property
+    def id_short_norm(self) -> str | None:
+        """:func:`~neo4aas.vocabulary.idshort.normalize_id_short` of :attr:`id_short`."""
+        return normalize_id_short(self.id_short)
+
+    @property
+    def id_short_base(self) -> str | None:
+        """:func:`~neo4aas.vocabulary.idshort.id_short_base` of :attr:`id_short`."""
+        return id_short_base(self.id_short)
 
 
 @dataclass(frozen=True, slots=True)
@@ -186,7 +202,10 @@ class SemanticIdRecord:
     """
 
     value: str
-    base: str
+    #: The version-stripped join key (:func:`neo4aas.core.utils.id_base`). Named for
+    #: the field it derives from — a ``:SemanticId`` has one other property that could
+    #: have a base, and the reader should not have to guess which.
+    value_base: str
     #: Every ``Key.type`` seen for this value. Vendors disagree; that disagreement is
     #: data quality, so it is recorded and never used for matching.
     key_types: set[str] = field(default_factory=set)
@@ -227,7 +246,7 @@ class VocabularyRecords:
     #: ``(parent_key, child_key)`` pairs an IDTA template declares. No vendor: a
     #: template is not shipped by anyone, it is what shipping is measured against.
     template_contains: set = field(default_factory=set)
-    #: ``irdi -> concept dict``, harvested from ConceptDescriptions embedded in the
+    #: ``id -> concept dict``, harvested from ConceptDescriptions embedded in the
     #: documents. For a large share of distinct semanticIds this is the *only*
     #: definition source in the corpus (see :mod:`neo4aas.vocabulary.concepts`).
     concepts: dict[str, dict] = field(default_factory=dict)
@@ -251,8 +270,8 @@ class VocabularyRecords:
                 self.semantic_ids[value].absorb(sem)
             else:
                 self.semantic_ids[value] = sem
-        for irdi, concept in other.concepts.items():
-            self.concepts.setdefault(irdi, concept)
+        for identifier, concept in other.concepts.items():
+            self.concepts.setdefault(identifier, concept)
         self.vendor_shapes.update(other.vendor_shapes)
         self.vendor_roots.update(other.vendor_roots)
         self.contains.update(other.contains)
@@ -284,7 +303,7 @@ class VocabularyRecords:
     def add_semantic_id(self, value: str, key_type: str | None, ref_type: str | None) -> None:
         rec = self.semantic_ids.get(value)
         if rec is None:
-            rec = self.semantic_ids[value] = SemanticIdRecord(value, irdi_base(value))
+            rec = self.semantic_ids[value] = SemanticIdRecord(value, id_base(value))
         if key_type:
             rec.key_types.add(key_type)
         if ref_type:
@@ -484,7 +503,7 @@ def extract_environment(env: dict, vendor: str, into: VocabularyRecords) -> None
     for description in _as_list(env.get(ENV_CONCEPT_DESCRIPTIONS)):
         concept = concept_from_description(description)
         if concept:
-            into.concepts.setdefault(concept["irdi"], concept)
+            into.concepts.setdefault(concept["id"], concept)
 
     into.vendors.add(vendor)
 

@@ -1,0 +1,245 @@
+========================================================================
+vocabulary import
+========================================================================
+wall clock                23.5 s
+files                    3,000
+documents parsed         3,180
+documents failed             1
+shells seen              2,999
+submodels seen          13,979
+elements seen         2,140,930
+vendors               abb, buerkert, festo, harting, phoenix_contact, r_stahl, sick, wago
+
+NODES
+  Shape                   8,202
+  SemanticId              4,871
+  Concept                 1,049
+  Template                  194
+  Vendor                      8
+  TOTAL                  14,324   (149.5 elements per node)
+
+EDGES
+  CONTAINS                    12,507
+  DECLARES_SHAPE               8,664
+  DECLARES                     8,053
+  USES                         5,318
+  RESOLVES_TO                  1,339
+  DECLARES_SUPPLEMENTAL          523
+  BROADER                          0
+
+SEMANTIC ID RESOLUTION
+  1,226 of 4,871 resolve into the dictionary (25.2 %)
+  3,645 resolve nowhere — listed below, not hidden
+  of those a vendor actually ships: 1,176 of 1,796 (65.5 %)
+      378 shapes  https://admin-shell.io/idta/nameplate/3/0/Nameplate
+       61 shapes  0173-1#02-AAQ683#013
+       60 shapes  0173-1#02-AAQ675#008
+       56 shapes  0173-1#02-AAQ672#013
+       31 shapes  http://admin-shell.io/dexpi/1/0/SubTagMapping
+       26 shapes  https://admin-shell.io/idta/HierarchicalStructures/HasPart/1/0
+       22 shapes  https://admin-shell.io/idta/cds/attributeContainer/1
+       19 shapes  https://admin-shell.io/smt-dropin/smt-dropin-use/1/0
+       15 shapes  0173-1#02-AAQ661#013
+       14 shapes  https://admin-shell.io
+       12 shapes  http://admin-shell.io/DEXPI/1/0/TagMapping
+        9 shapes  0173-1#02-AAZ760#004
+        9 shapes  http://admin-shell.io/vdi/2770/1/0/Document
+        9 shapes  https://admin-shell.io/idta/EnergyFlexibilityDataModel/1/0/UUID
+        8 shapes  0173-1#02-AAQ680#012
+        8 shapes  https://admin-shell.io/SMT/General/Arbitrary
+        8 shapes  https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel
+        7 shapes  0173-1#02-AAQ671#011
+        7 shapes  0173-1#02-AAQ680#010
+        7 shapes  0173-1#02-ABI503#003~0/0173-1#01-AHF582#003
+        6 shapes  0173-1#02-AAQ673#013
+        6 shapes  0173-1#02-AAS435#006
+        6 shapes  https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Interface
+        6 shapes  https://www.w3.org/2019/wot/td
+        6 shapes  urn:irdi:0173-1#02-ABL821#001
+
+CONTAINMENT — THE MERGED LAYOUT
+  12,507 :CONTAINS edges replace a node per layout
+  0 are shipped by more than one vendor
+  1,234 were seen in exactly one submodel — support, not schema
+  4,662 are declared by an IDTA template, of which 4,582 no vendor implements
+  1,979 of 2,257 parents have more than one child (widest: 292) — the merge cannot say which
+  combinations of those children actually co-occur; the support counters are what is left to rank them by.
+
+UNRESOLVED SEMANTIC IDS BY FORM
+  IDTA / vendor URL (not a concept)       2347 values    3017 declaring shapes
+  IRDI absent from the dictionary          869 values    1235 declaring shapes
+  SAMM aspect model (other system)         292 values     299 declaring shapes
+  compound IRDI (not collapsed)            110 values     134 declaring shapes
+  other                                     19 values      19 declaring shapes
+  other URN (incl. misspelled wrapper)       5 values       7 declaring shapes
+  ECLASS-CDP URL the key cannot read         3 values       3 declaring shapes
+
+SUPPLEMENTAL SEMANTIC IDS — THE CROSS-DICTIONARY BRIDGE
+  379 distinct values on 523 :DECLARES_SUPPLEMENTAL edges, 80 resolve
+  325 are reachable *only* as a supplemental — invisible before this edge existed, 60 of them resolve
+       19 shapes    https://admin-shell.io/smt-dropin/smt-dropin-use/1/0
+        7 shapes    0173-1#02-ABI503#003~0/0173-1#01-AHF582#003
+        6 shapes -> 0173-1#02-ABL358#002/0173-1#01-AHX773#002
+        6 shapes    https://www.w3.org/2019/wot/td
+        6 shapes    urn:irdi:0173-1#02-ABL821#001
+        6 shapes    urn:irdi:0173-1#02-ABL840#001
+        6 shapes    urn:irdi:0173-1#02-ABL847#001
+        6 shapes    urn:irdi:0173-1#02-ABL849#001
+        6 shapes    urn:irdi:0173-1#02-ABL850#001
+        6 shapes    urn:irdi:0173-1#02-ABL868#001
+
+DICTIONARY — WHERE THE CONCEPTS CAME FROM
+  aas        description      1,049 concepts    1,049 a semanticId points at
+
+HOW MUCH OF THE VOCABULARY IS REALLY PER-PRODUCT IDENTITY
+  3,996 of 8,202 shapes have an idShort with no 2+ digit run (48.7 %)
+  4,206 carry a number — OrdNo_1234567, Document07, ZMN codes: product data written into the idShort
+  1,984 occur exactly once in the whole corpus
+    sick                  1,755 shapes,  83 % numbered
+    phoenix_contact         955 shapes,  94 % numbered
+    r_stahl                 756 shapes,  89 % numbered
+    abb                     727 shapes,  94 % numbered
+    harting                 468 shapes,  61 % numbered
+    wago                    240 shapes,   5 % numbered
+    festo                   217 shapes,  33 % numbered
+    buerkert                200 shapes,   4 % numbered
+
+IDSHORT NORMALISATION — MATCHING WITHOUT A DICTIONARY
+  7,072 raw idShorts collapse to 7,008 normalised forms (1.01x) and 3,486 bases (2.03x)
+  A small collapse is the point: these are matching keys, not a merge.
+  64 forms merge more than one raw spelling — the interoperability payoff (full list in --report-json)
+    aab 787 max connectable conductor cros AAB787-max__connectable_conductor_cross-section_fine_wire_with_conductor_end_sleeve, AAB787-max__connectable_conductor_cross_section_fine_wire_with_conductor_end_sleeve
+    aab 789 max connectable conductor cros AAB789-max__connectable_conductor_cross-section_multiple_wire, AAB789-max__connectable_conductor_cross_section_multiple_wire
+    aab 937 min connectable conductor cros AAB937-min__connectable_conductor_cross-section_fine_wire_with_conductor_end_sleeve, AAB937-min__connectable_conductor_cross_section_fine_wire_with_conductor_end_sleeve
+    aab 940 min connectable conductor cros AAB940-min__connectable_conductor_cross-section_multiple_wire, AAB940-min__connectable_conductor_cross_section_multiple_wire
+    aac 034 shock hazard protection presen AAC034-shock-hazard_protection_present, AAC034-shock_hazard_protection_present
+    aaf 677 child protection present       AAF677-child-protection_present, AAF677-child_protection_present
+    aas 575 power loss per pole current de AAS575-Power_loss_per_pole__current-dependent__PlIp_, AAS575-Power_loss_per_pole__current_dependent__PlIp_
+    aaz 343 min conductor cross section fl AAZ343-min__conductor_cross-section__flexible_wire_with_ferrule_without_plastic_collar_, AAZ343-min__conductor_cross_section__flexible_wire_with_ferrule_without_plastic_collar_
+    aaz 344 max conductor cross section fl AAZ344-max__conductor_cross-section__flexible_wire_with_ferrule_without_plastic_collar_, AAZ344-max__conductor_cross_section__flexible_wire_with_ferrule_without_plastic_collar_
+    aaz 345 min conductor cross section fl AAZ345-min__conductor_cross-section__flexible_wire_with_ferrule_with_plastic_collar_, AAZ345-min__conductor_cross_section__flexible_wire_with_ferrule_with_plastic_collar_
+    aaz 346 max conductor cross section fl AAZ346-max__conductor_cross-section__flexible_wire_with_ferrule_with_plastic_collar_, AAZ346-max__conductor_cross_section__flexible_wire_with_ferrule_with_plastic_collar_
+    aaz 358 plug in direction              AAZ358-Plug-in_direction, AAZ358-Plug_in_direction
+    abh 266 direct plug in connection poss ABH266-direct_plug-in_connection_possible, ABH266-direct_plug_in_connection_possible
+    abh 270 rated current at nominal cross ABH270-rated_current_at_nominal_cross-section__In_, ABH270-rated_current_at_nominal_cross_section__In_
+    abh 271 rated current at max conductor ABH271-rated_current_at_max__conductor_cross-section__In, ABH271-rated_current_at_max__conductor_cross_section__In
+    arbitrary                              Arbitrary, arbitrary
+    article number                         ArticleNumber, articleNumber
+    certificate approval                   CertificateApproval, Certificate_Approval
+    city town                              CityTown, City_Town
+    comment                                Comment, comment
+    current value                          CurrentValue, currentValue
+    description                            Description, description
+    digital file 00                        DigitalFile00, DigitalFile__00__
+    document 00                            Document00, Document__00__
+    document classification 00             DocumentClassification00, DocumentClassification__00__
+  207 forms are used by more than one vendor — bridges found with no semanticId at all
+    city town                              abb, buerkert, wago, festo, harting, r_stahl, sick, phoenix_contact
+    class id                               phoenix_contact, abb, harting, r_stahl, wago, festo, buerkert, sick
+    class name                             abb, phoenix_contact, festo, wago, r_stahl, buerkert, harting, sick
+    classification system                  wago, phoenix_contact, festo, r_stahl, abb, harting, buerkert, sick
+    status set date                        abb, buerkert, festo, phoenix_contact, wago, harting, r_stahl, sick
+    status value                           festo, wago, r_stahl, phoenix_contact, abb, buerkert, sick, harting
+    street                                 abb, harting, festo, wago, sick, r_stahl, buerkert, phoenix_contact
+    title                                  festo, harting, abb, phoenix_contact, r_stahl, buerkert, wago, sick
+    digital file                           festo, r_stahl, harting, abb, wago, buerkert, sick
+    document domain id                     abb, phoenix_contact, festo, harting, r_stahl, buerkert, sick
+    document version                       festo, abb, buerkert, r_stahl, wago, harting, sick
+    general information                    buerkert, r_stahl, festo, phoenix_contact, harting, sick, wago
+    manufacturer name                      buerkert, r_stahl, festo, phoenix_contact, harting, wago, sick
+    manufacturer order code                buerkert, r_stahl, phoenix_contact, festo, harting, sick, wago
+    manufacturer product designation       buerkert, festo, harting, wago, r_stahl, phoenix_contact, sick
+    national code                          abb, harting, festo, wago, sick, r_stahl, buerkert
+    organization name                      r_stahl, abb, festo, phoenix_contact, harting, buerkert, wago
+    uri of the product                     phoenix_contact, harting, r_stahl, buerkert, abb, festo, sick
+    address of additional link             sick, festo, r_stahl, wago, harting, abb
+    company                                abb, wago, sick, harting, festo, r_stahl
+    document classification                abb, festo, buerkert, r_stahl, harting, sick
+    document id                            abb, harting, r_stahl, buerkert, wago, sick
+    document version id                    festo, phoenix_contact, r_stahl, abb, harting, buerkert
+    handover documentation                 harting, r_stahl, phoenix_contact, abb, festo, buerkert
+    language                               harting, abb, festo, buerkert, wago, sick
+
+SEMANTIC IDS BY STEM RATIO  (distinct id_short_base / declaring shapes)
+  ratio  stems shapes  res  semanticId
+   1.00     36     36  yes  0173-1#02-AAO259#006
+   1.00     21     21   no  https://admin-shell.io/idta/cds/attributeContainer/1
+   1.00     14     14   no  https://admin-shell.io
+   1.00      9      9   no  https://admin-shell.io/idta/EnergyFlexibilityDataMod
+   1.00      8      8   no  https://admin-shell.io/SMT/General/Arbitrary
+   1.00      8      8  yes  https://admin-shell.io/ZVEI/TechnicalData/MainSectio
+   1.00      8      8   no  https://admin-shell.io/idta/HierarchicalStructures/T
+   1.00      6      6   no  https://admin-shell.io/idta/AssetInterfacesDescripti
+   1.00      5      5   no  https://admin-shell.io/SemanticIdNotAvailable /1/1 
+   1.00      5      5   no  https://example.com/ids/ConceptDescription/4353_1815
+   1.00      4      4  yes  0112/2///61987#ABA950#008
+   1.00      4      4  yes  0173-1#01-AHD206#001
+   1.00      4      4  yes  0173-1#02-AAQ326#004
+   1.00      4      4   no  0173-1#02-ABF198#001
+   0.90    149    165  yes  0173-1#02-AAY811#001
+   0.83      5      6  yes  0173-1#02-ABK162#002/0173-1#01-AHX839#002
+   0.83      5      6  yes  0173-1#02-ABL358#002/0173-1#01-AHX773#002
+   0.75      3      4  yes  0173-1#02-ABI501#001/0173-1#01-AHF580#001
+   0.75      3      4  yes  0173-1#02-BAG640#013
+   0.60      3      5  yes  0173-1#02-ABI000#001
+   0.60      3      5  yes  0173-1#02-ABI501#001/0173-1#01-AHF580#001*01
+   0.58      7     12   no  http://admin-shell.io/DEXPI/1/0/TagMapping
+   0.57      4      7  yes  0173-1#02-ABI503#003/0173-1#01-AHF582#003
+   0.50     13     26   no  https://admin-shell.io/idta/HierarchicalStructures/H
+   0.50      2      4  yes  0173-1#02-AAN468#008
+    … 42 more, full table in --report-json
+  distribution — the threshold is the reader's to set, not a constant:
+     0.0-0.1     11  ############################
+     0.1-0.2     11  ############################
+     0.2-0.3     16  ########################################
+     0.5-0.6      8  ####################
+     0.6-0.7      2  #####
+     0.7-0.8      2  #####
+     0.8-0.9      2  #####
+     0.9-1.0      1  ##
+     1.0-1.0     14  ###################################
+
+SEMANTIC IDS BY :DECLARES IN-DEGREE  (junk detection)
+    617 shapes  0173-1#02-ABI500#001/0173-1#01-AHF579#001*01
+    377 shapes  https://admin-shell.io/idta/nameplate/3/0/Nameplate
+    376 shapes  0173-1#01-AHX837#002
+    375 shapes  0173-1#02-AAQ837#005
+    338 shapes  0173-1#01-AHF578#003
+    296 shapes  https://admin-shell.io/idta/HierarchicalStructures/Node/1/0
+    165 shapes  0173-1#02-AAY811#001
+    114 shapes  https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation
+     61 shapes  0173-1#02-AAQ683#013
+     60 shapes  0173-1#02-AAQ675#008
+
+TOP-DEGREE NODES
+     1,755  :Vendor       sick
+       955  :Vendor       phoenix_contact
+       756  :Vendor       r_stahl
+       727  :Vendor       abb
+       630  :Shape        DocumentVersion
+       618  :SemanticId   0173-1#02-ABI500#001/0173-1#01-AHF579#001*01
+       617  :Shape        DocumentClassification
+       611  :Shape        DocumentId
+       468  :Vendor       harting
+       378  :SemanticId   0173-1#01-AHX837#002
+
+WRITES
+  Shape                     8,202 rows     0.65 s
+  CONTAINS                  8,137 rows     0.24 s
+  DECLARES                  8,053 rows     0.15 s
+  SemanticId                4,871 rows     0.15 s
+  DECLARES_SHAPE            8,664 rows     0.13 s
+  USES                      5,318 rows     0.12 s
+  CONTAINS(template)        4,662 rows     0.11 s
+  Concept                   1,049 rows     0.09 s
+  CONTAINS support              0 rows     0.09 s
+  Shape counters                0 rows     0.06 s
+  CONTAINS submodels            0 rows     0.06 s
+  RESOLVES_TO                   0 rows     0.03 s
+  DECLARES_SUPPLEMENTAL        523 rows     0.03 s
+  Template                    194 rows     0.02 s
+
+FAILED DOCUMENTS (first 1)
+  ParseError: junk after document element: line 4505, column 14
+    /Users/igorgarmaev/PycharmProjects/aas-corpus/instances/vendors/buerkert/loose/Burkert_0142_000067684_type_20260401_112138CET.xml.gz
+========================================================================

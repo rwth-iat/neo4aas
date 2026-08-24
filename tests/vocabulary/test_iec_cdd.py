@@ -64,32 +64,32 @@ def parsed(tmp_path):
     return parse_iec_cdd([write_jsonl(tmp_path / "d.jsonl", [PROPERTY, CLASS, UNIT])])
 
 
-def rows_by_irdi(result):
-    return {row["irdi"]: row for row in concepts_from_iec_cdd(result)}
+def rows_by_id(result):
+    return {row["id"]: row for row in concepts_from_iec_cdd(result)}
 
 
 # -- identity ------------------------------------------------------------------
 
 
 def test_every_record_type_becomes_a_concept_of_its_own_kind(parsed):
-    rows = rows_by_irdi(parsed)
+    rows = rows_by_id(parsed)
     assert {r["kind"] for r in rows.values()} == {"property", "class", "unit"}
     assert all(r["source"] == "iec_cdd" for r in rows.values())
 
 
 def test_concepts_join_on_the_version_stripped_base(parsed):
-    """``irdi_base`` is the join key, and the export's own ``code`` agrees with it.
+    """``id_base`` is the join key, and the export's own ``code`` agrees with it.
 
     The two are computed independently — ``code`` by IEC, the base by
-    :func:`neo4aas.core.utils.irdi_base` — so their agreement is what says a
+    :func:`neo4aas.core.utils.id_base` — so their agreement is what says a
     ``0112/2///…`` identifier is version-stripped the way ECLASS's is.
     """
     for row in concepts_from_iec_cdd(parsed):
-        assert row["irdi_base"] == parsed.records[row["irdi"]]["code"]
+        assert row["id_base"] == parsed.records[row["id"]]["code"]
 
 
 def test_definition_and_name_come_from_the_english_fields(parsed):
-    row = rows_by_irdi(parsed)[PROPERTY["irdi"]]
+    row = rows_by_id(parsed)[PROPERTY["irdi"]]
     assert row["preferred_name"] == "comb depth"
     assert row["definition"].startswith("The minimum comb depth")
     assert row["data_type"] == "LEVEL(MIN) OF INT_MEASURE_TYPE"
@@ -108,14 +108,14 @@ def test_iec_cdd_concepts_have_no_coded_name(parsed):
 def test_unit_symbol_is_resolved_through_unit_irdi_when_no_symbol_is_given(tmp_path):
     silent = dict(PROPERTY, unit=None, unit_irdi="0112/2///62720#UAA033#001")
     result = parse_iec_cdd([write_jsonl(tmp_path / "d.jsonl", [silent, UNIT])])
-    assert rows_by_irdi(result)[PROPERTY["irdi"]]["unit"] == "°C"
+    assert rows_by_id(result)[PROPERTY["irdi"]]["unit"] == "°C"
 
 
 def test_unit_irdi_is_matched_version_agnostically(tmp_path):
     """The referenced version need not be the one the export ships."""
     silent = dict(PROPERTY, unit=None, unit_irdi="0112/2///62720#UAA033#007")
     result = parse_iec_cdd([write_jsonl(tmp_path / "d.jsonl", [silent, UNIT])])
-    assert rows_by_irdi(result)[PROPERTY["irdi"]]["unit"] == "°C"
+    assert rows_by_id(result)[PROPERTY["irdi"]]["unit"] == "°C"
 
 
 # -- hierarchy -----------------------------------------------------------------
@@ -186,7 +186,7 @@ def test_superseded_is_a_version_state_not_a_deprecation(tmp_path):
     superseded = dict(PROPERTY, status_level="Superseded")
     withdrawn = dict(CLASS, is_deprecated=True)
     result = parse_iec_cdd([write_jsonl(tmp_path / "d.jsonl", [superseded, withdrawn])])
-    rows = rows_by_irdi(result)
+    rows = rows_by_id(result)
     assert rows[PROPERTY["irdi"]]["deprecated"] is False
     assert rows[CLASS["irdi"]]["deprecated"] is True
 

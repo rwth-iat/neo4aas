@@ -21,10 +21,10 @@ prior measurements it rests on are in
 Layout is **edges between shapes**, not a node per layout.
 
 ```
-(:Shape     {shape_key, id_short, model_type, value_type, category,
-             occurrences, top_level})
+(:Shape     {shape_key, id_short, id_short_norm, id_short_base,
+             model_type, value_type, category, occurrences, top_level})
 (:SemanticId{value, base, key_types, ref_types})
-(:Concept   {irdi, irdi_base, coded_name, level, source, kind,
+(:Concept   {id, id_base, coded_name, level, source, kind,
              preferred_name, definition, unit, data_type, deprecated})
 (:Template  {template_id, family, version, status})        -- published | deprecated
 (:Vendor    {name})
@@ -167,7 +167,7 @@ space after the host or with the separators left as `#` after all. All of these 
 properties; the join key simply could not see through the wrapper, so they named nothing.
 
 `core.utils.canonical_irdi()` trims surrounding whitespace and strips the known wrappers,
-and `irdi_base()` and `is_irdi()` both go through it so they cannot disagree about what is
+and `id_base()` and `is_irdi()` both go through it so they cannot disagree about what is
 an IRDI. The trim matters on its own: nine ECLASS IRDIs in the corpus are shipped padded
 (`' 0173-1#02-AAN468#008'` on a `Language` property), and whitespace is never part of an
 identifier. The stored `value` stays
@@ -191,17 +191,101 @@ concept, against 3 337 unresolved. The point is not the count — it is that a v
 announces itself as an IRDI stops being treated as an opaque string, and that the rule now
 lives in one place for the next corpus.
 
-**Changing what `irdi_base()` normalises is a re-import.** Its output is stored
-(`SemanticId.base`, `Concept.irdi_base`, and `Reference.target_id_base` /
+**Changing what `id_base()` normalises is a re-import.** Its output is stored
+(`SemanticId.value_base`, `Concept.id_base`, and `Reference.target_id_base` /
 `ConceptDescription.id_base` in the instance graph) *and* recomputed by query-time callers,
 so a changed function against un-refreshed data is worse than either state alone: the caller
 computes the new base and misses the stale stored one.
+
+### The idShort, stored three ways
+
+`shape_key` hashes the idShort **verbatim**, which is right — normalising the key would merge
+two real vocabularies — and which leaves `ValueID` and `ValueId` as two unrelated shapes with
+nothing in the graph able to see them as one name. Two *derived, indexed* properties sit beside
+the verbatim one and pay that back without touching the key:
+
+| property | `AAQ672-Connector__00__` | `Document01_BedienungsanleitungDE` |
+|---|---|---|
+| `id_short` | `AAQ672-Connector__00__` | `Document01_BedienungsanleitungDE` |
+| `id_short_norm` | `aaq 672 connector 00` | `document 01 bedienungsanleitung de` |
+| `id_short_base` | `connector` | `document bedienungsanleitung` |
+
+`normalize_id_short()` is NFC + separator runs (including the en-dash — `DFM–CleanRoomClass` is
+real corpus data) + camelCase, acronym-then-word and letter↔digit splits + lowercase + a fold of
+non-ASCII letters (below).
+`id_short_base()` runs **on the norm**, never on the raw string, and strips enumeration,
+trailing language *tags* and a leading ECLASS coded name. Both are pure and public
+(`neo4aas.vocabulary.idshort`), because **every comparison must normalise both sides**: a raw
+query term matched against a normalised property silently returns nothing, and a test that only
+feeds it normalised input never sees the bug.
+
+Four rules are not guessable and were read off the corpus rather than invented:
+
+- **An acronym glued to a lowercase word needs a lexicon.** No lexical rule splits `ACvoltage`
+  correctly — `A` + `Cvoltage` is what camelCase says. `AC DC IP URI URL ID EMC RPM PLC IO USB
+  LED RFID EAN GTIN MAC IEC ISO DIN`, matched longest-first at a word start, case-sensitively,
+  and only before two lowercase letters. Case-sensitivity is the whole guard: it keeps
+  `Identification` whole (`Id` is not `ID`).
+- **38 % of distinct idShorts end in an opaque hex identifier** (1 731 of 4 510 in the sample):
+  `ContactInformation_0041b5db…`, SICK's `Nameplate_0226303791c8…`. Splitting an MD5 on its
+  letter/digit boundaries yields twenty tokens of noise, so a hex run of 8+ characters is kept
+  whole by the norm and dropped by the base — it is per-product identity, exactly what a base
+  is for.
+- **701 start with an ECLASS coded name** (`AAQ326-address_of_additional_link`). The digits
+  split off and the base strips the three-letter/three-digit pair off the head.
+- **A number after `ip`, `m`, `rs` or `ik` is part of the name, not a counter.** Vendor idShorts
+  rarely carry these (10 of 4 510: Festo's `CPX-AP-I-4IOL-M12`) but the dictionaries the
+  semanticIds point at are full of them — IEC CDD preferred names carry `IP00`…`IP69` (70),
+  `IK00`…`IK10` (45), `M10`/`M12`/`M16` (29), `RS422`/`RS485` (7). Without
+  `DIGIT_SIGNIFICANT_PREFIXES`, `Rating_IP65` bases to `rating ip`.
+
+**Umlauts expand to two characters; every other diacritic folds to its base letter.**
+`Handbücher` → `handbuecher`, `Baugröße` → `baugroesse`, `Målestørrelse` → `maalestoerrelse`,
+`résumé` → `resume`. The corpus decides this rather than taste: of eight vendors only Festo ships
+non-ASCII idShorts, and what it ships is `Document01_HandbücherDE` **and** `Baugroeße` — its own
+half-transliteration, `ö` written `oe` with the `ß` left standing. One name already exists in the
+data in spellings only a fold can join, and a query typed on an ASCII keyboard has to reach all of
+them. The two-character form is not decoration: it keeps `Höhe` (`hoehe`) apart from `Hohe`
+(`hohe`), which a naive accent-strip merges. The expansion therefore runs **before** the NFD mark
+strip — decomposing first would turn `ü` into `u` and lose the distinction.
+
+Symbols are **not** folded. `I²TTimeMotor` → `i ² t time motor` (`"²".isdigit()` is True, so the
+letter↔digit rule splits it; `re`'s `\d` does not match it, so it is never taken for an
+enumeration counter) and `RepetitionAccuracyIn±%FS` → `repetition accuracy in±%fs`. Both are real
+Festo idShorts and both are pinned by a test, so deciding otherwise stays a deliberate act.
+
+**The language *word* is identity; the language *tag* is not.**
+`Document01_BedienungsanleitungDE` bases to `document bedienungsanleitung` — a
+*Bedienungsanleitung* is a different document type from a *Manual*, not a translation of one —
+while the trailing `de` goes. **An all-lowercase run is left alone**: `Backpressureresistantversion`
+has no recoverable boundary, and a compound splitter would mis-cut German.
+
+### `id`, not `irdi`
+
+A `:Concept` is keyed on **`id`**, and its version-stripped join key is **`id_base`** —
+matching `ConceptDescription.id_base` in the instance graph, which had it right first. The names
+were `irdi` / `irdi_base` and that was a claim the data does not support: of 1 049 concepts in a
+3 000-file load, **615 (59 %) are not identified by an IRDI at all** but by an IDTA or vendor URL
+(`https://admin-shell.io/zvei/nameplate/2/0/Nameplate`), taken from ConceptDescriptions embedded in
+AAS files. Only the two dictionary *sources* speak IRDI, and their exports keep their own field
+names — `iec_cdd.py` reads `record["irdi"]` because that is what IEC publishes.
+
+`SemanticId.base` is likewise **`value_base`**: the node's identity is `value`, so the base needs
+to say which property it is the base *of* rather than leaving the reader to infer it.
+
+`core.utils.id_base()` (was `irdi_base()`) follows the same reasoning: it is named for what it
+takes, not for the one identifier scheme whose version suffix it knows how to strip.
+
+Upgrading is one `vocab clear` and one re-import. `clear` now also drops the constraints and
+indexes created under the old property names (`schema.LEGACY_CONSTRAINTS` / `LEGACY_INDEXES`) —
+a uniqueness constraint on a property nothing writes is satisfied by every node holding `null`,
+so it lingers as a false statement about the model.
 
 ### Two dictionaries, one identifier space
 
 ECLASS is not the only dictionary vendors point at. IEC CDD publishes IEC 61360-4/-7,
 61987, 62683, 62720, 63213 and 63508 under the ICD `0112`, and the corpus ships it as one
-JSONL file per standard. Both load into the same `:Concept` label, merged on `irdi` and
+JSONL file per standard. Both load into the same `:Concept` label, merged on `id` and
 joined to semanticIds on the same version-stripped base, and they rank *equally* in
 `SOURCE_PRECEDENCE` — safe only because the two ICDs never name the same concept, which
 `test_the_two_dictionaries_do_not_contest_each_other` pins.
@@ -480,7 +564,7 @@ Three quarters are IDTA or vendor-defined URLs, which no dictionary defines by c
 46 are IEC CDD IRDIs, which `--iec-cdd` now resolves. The 411 ECLASS IRDIs are the
 interesting ones: their version-stripped base is absent from ECLASS 15.0 entirely
 (`0173-1#02-AAQ661`, `0173-1#02-AAS425` and their neighbours return zero concepts on
-`irdi_base`), so those are vendors citing identifiers that the current release has retired.
+`id_base`), so those are vendors citing identifiers that the current release has retired.
 That is a data-quality finding, and it is one query.
 
 ### 5. The six traversals
@@ -792,6 +876,120 @@ WRITES
   RESOLVES_TO                   0 rows     0.08 s
 ========================================================================
 ```
+
+
+### 7. The derived idShort forms
+
+`./scripts/bench/vocab_acceptance.sh idshort` — 3 000 stratified files (2 999 shells,
+2 140 930 elements, 8 vendors, 26 s), full lists in `docs/evidence/idshort-forms.json`.
+
+**The collapse is small, and that is the acceptance criterion.** These are matching keys, not
+a merge; a hard collapse would mean the normaliser is destroying distinctions the corpus makes.
+
+```
+raw idShorts         7,072
+normalised forms     7,008   1.009x collapse
+bases                3,486   2.029x collapse
+```
+
+The base collapsing 2.03x where the norm collapses 1.009x is the split doing its job: the norm
+keeps `ContactInformation_0041b5db…` and `Document01` apart, the base files them under
+`contact information` and `document`.
+
+**64 normalised forms merge more than one raw spelling.** Two kinds, and both are the payoff:
+one vendor's own inconsistency, and the hyphen/underscore disagreement that runs through the
+ECLASS-derived names.
+
+```
+  aab 787 max connectable conductor cross sect AAB787-max__connectable_conductor_cross-section_fine_wire_with_conductor_end_sleeve | AAB787-max__connectable_conductor_cross_section_fine_wire_with_conductor_end_sleeve
+  aab 789 max connectable conductor cross sect AAB789-max__connectable_conductor_cross-section_multiple_wire | AAB789-max__connectable_conductor_cross_section_multiple_wire
+  aab 937 min connectable conductor cross sect AAB937-min__connectable_conductor_cross-section_fine_wire_with_conductor_end_sleeve | AAB937-min__connectable_conductor_cross_section_fine_wire_with_conductor_end_sleeve
+  aab 940 min connectable conductor cross sect AAB940-min__connectable_conductor_cross-section_multiple_wire | AAB940-min__connectable_conductor_cross_section_multiple_wire
+  aac 034 shock hazard protection present      AAC034-shock-hazard_protection_present | AAC034-shock_hazard_protection_present
+  aaf 677 child protection present             AAF677-child-protection_present | AAF677-child_protection_present
+  arbitrary                                    Arbitrary | arbitrary
+  article number                               ArticleNumber | articleNumber
+  certificate approval                         CertificateApproval | Certificate_Approval
+  city town                                    CityTown | City_Town
+  current value                                CurrentValue | currentValue
+  digital file 00                              DigitalFile00 | DigitalFile__00__
+```
+
+**207 forms span more than one vendor** — bridges found with no semanticId at all. Eight of
+eight vendors write these:
+
+```
+  city town                                    abb, buerkert, sick, festo, harting, wago, r_stahl, phoenix_contact
+  class id                                     r_stahl, abb, phoenix_contact, wago, harting, festo, buerkert, sick
+  class name                                   phoenix_contact, r_stahl, wago, abb, festo, buerkert, harting, sick
+  classification system                        harting, r_stahl, festo, abb, phoenix_contact, wago, buerkert, sick
+  status set date                              abb, buerkert, festo, phoenix_contact, harting, r_stahl, wago, sick
+  status value                                 r_stahl, abb, festo, phoenix_contact, wago, buerkert, harting, sick
+  street                                       r_stahl, abb, festo, sick, wago, harting, buerkert, phoenix_contact
+  title                                        festo, harting, abb, r_stahl, phoenix_contact, buerkert, wago, sick
+```
+
+**Junk-semanticId detection: the ratio, not the in-degree.** `distinct id_short_base` divided
+by declaring shapes, over the 67 semanticIds declared by four or more shapes:
+
+```
+  ratio  stems shapes  res  semanticId
+   1.00     36     36  yes  0173-1#02-AAO259#006
+   1.00     21     21   no  https://admin-shell.io/idta/cds/attributeContainer/1
+   1.00     14     14   no  https://admin-shell.io
+   0.90    149    165  yes  0173-1#02-AAY811#001     <- the catch-all
+   0.58      7     12   no  http://admin-shell.io/DEXPI/1/0/TagMapping
+   0.19     22    114  yes  …/nameplate/1/0/ContactInformations/ContactInformation
+   0.05     15    296  yes  …/idta/HierarchicalStructures/Node/1/0
+   0.02      1     56   no  0173-1#02-AAQ672#013     <- an enumeration
+   0.01      4    617  yes  0173-1#02-ABI500#001/0173-1#01-AHF579#001*01
+   0.00      1    376  yes  0173-1#01-AHX837#002
+```
+
+`AAY811` is declared by 165 shapes carrying 149 different stems — a genuine catch-all, a vendor
+filing unrelated things under one identifier. `AAQ672` is declared by 56 shapes carrying **one**
+stem (`connector`, enumerated `__00__`…`__47__`), which is what a shared identifier is *for*.
+In-degree alone cannot tell those apart; the ratio can, and it needs `id_short_base` to exist.
+
+The distribution, so the threshold is the reader's to set rather than a constant chosen on one
+sample:
+
+```
+     0.0-0.1     11  ############################
+     0.1-0.2     11  ############################
+     0.2-0.3     16  ########################################
+     0.5-0.6      8  ####################
+     0.6-0.7      2  #####
+     0.7-0.8      2  #####
+     0.8-0.9      2  #####
+     0.9-1.0      1  ##
+     1.0-1.0     14  ###################################
+```
+
+**What the umlaut fold moved here: nothing.** This sample contains **zero** non-ASCII idShorts
+(0 of 4 510 distinct), so folding them changed none of the numbers above — `raw`, `norm`, the 64
+merged forms and the 207 bridges are identical before and after. The fold is justified by the
+corpus-wide scan rather than by this table: across 815 stratified files only **Festo** ships
+non-ASCII idShorts, and what it ships is `Document01_HandbücherDE`…`Document93_HandbücherDE`
+beside `Baugroeße` — its own half-transliteration, `ö` written `oe` with the `ß` left standing. A
+Festo-scoped import of 2 000 files (`docs/evidence/idshort-festo.json`) carries 284 such shapes,
+all folded (`Document05_HandbücherDE` → `document 05 handbuecher de`, base `document handbuecher`),
+and merges none of them: Festo never writes the ASCII spelling itself. The guarantee the fold buys
+is therefore query-side — `normalize_id_short` is public so that a term typed `Handbuecher` reaches
+`Handbücher` — and it costs nothing measurable, which the unchanged collapse ratio is evidence for.
+
+Reading that Festo report is also what found a defect in `id_short_base`: `Document05_…` based to
+`document handbuecher` while `Document29_…` based to `document 29 handbuecher`, because only
+zero-padded numbers were being stripped mid-string. One name, counted twice, in two different
+groups — the exact failure the property exists to prevent. Every unprotected integer token is now
+dropped wherever it sits, which is what moved the base count from 3 535 to 3 486 and `AAY811`'s
+ratio from 0.98 to 0.90.
+
+**The known false positive is in the table, not filtered out of it.** `0173-1#02-AAO259#006`
+scores 1.00 with 36 stems — `Australia`, `Austria`, `Belgium`, … — a collection legitimately
+named after its content, not misuse. Separating it from a real catch-all needs the `:CONTAINS`
+parent test (do these shapes share a parent shape?), which is a separate piece of work and is
+**not** implemented here. Until it is, a 1.00 score is a candidate to look at, not a verdict.
 
 ---
 

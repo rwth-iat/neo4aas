@@ -6,7 +6,7 @@ It is what makes a vendor's ``Betriebsspannung`` and another's
 ``OperatingVoltage`` the same thing: 92 % of shapes are vendor-private, and the
 only thing bridging them is the concept both point at.
 
-Two sources, both idempotent, both merged on ``irdi``:
+Two sources, both idempotent, both merged on ``id``:
 
 **ECLASS OntoML** — parsed by :class:`neo4aas.eclass.ontoml_parser.EclassOntomlParser`,
 which is basyx-free (the vocabulary importer never needs the SDK). Class hierarchy
@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import Any, Iterable, Iterator
 
-from neo4aas.core.utils import irdi_base
+from neo4aas.core.utils import id_base
 
 #: Higher wins when the same IRDI arrives from two sources. A dictionary export is
 #: authoritative; a CD embedded in a vendor file is a copy of unknown vintage. The
@@ -105,11 +105,18 @@ def coded_name_parent(coded_name: str | None) -> str | None:
     return coded_name[: (level - 1) * 2].ljust(8, "0")
 
 
-def concept(irdi: str, source: str, *, kind: str = "concept", **fields: Any) -> dict:
-    """One ``:Concept`` row. ``irdi_base`` is what semanticIds are joined on."""
+def concept(identifier: str, source: str, *, kind: str = "concept", **fields: Any) -> dict:
+    """One ``:Concept`` row, keyed on ``id``. ``id_base`` is what semanticIds join on.
+
+    ``id``, not ``irdi``: most concepts are not identified by one. 59 % of the concepts
+    in a 3 000-file load are IDTA or vendor URLs, taken from ConceptDescriptions
+    embedded in AAS files, and only the two dictionary sources speak IRDI. The
+    dictionary *exports* keep their own field name — :mod:`neo4aas.vocabulary.iec_cdd`
+    reads ``record["irdi"]`` because that is what the CDD publishes.
+    """
     row = {
-        "irdi": irdi,
-        "irdi_base": irdi_base(irdi),
+        "id": identifier,
+        "id_base": id_base(identifier),
         "source": source,
         "kind": kind,
         "coded_name": None,
@@ -188,7 +195,7 @@ def parse_eclass(package_dir: str, segments: Iterable[int] | None = None):
 def concepts_from_eclass(result) -> Iterator[dict]:
     """``ParseResult`` → ``:Concept`` rows for classes, properties and units."""
     units = {unit.irdi: unit for unit in result.units}
-    unit_bases = {irdi_base(unit.irdi): unit for unit in result.units}
+    unit_bases = {id_base(unit.irdi): unit for unit in result.units}
 
     for cls in result.classes:
         yield concept(
@@ -203,7 +210,7 @@ def concepts_from_eclass(result) -> Iterator[dict]:
         )
 
     for prop in result.properties:
-        unit = units.get(prop.unit_irdi or "") or unit_bases.get(irdi_base(prop.unit_irdi or ""))
+        unit = units.get(prop.unit_irdi or "") or unit_bases.get(id_base(prop.unit_irdi or ""))
         yield concept(
             prop.irdi,
             "eclass",
@@ -226,7 +233,7 @@ def concepts_from_eclass(result) -> Iterator[dict]:
 
 
 def property_class_pairs(result) -> Iterator[tuple[str, str]]:
-    """``(property_irdi_base, class_irdi_base)`` from ECLASS's ``described_by`` block.
+    """``(property_id_base, class_id_base)`` from ECLASS's ``described_by`` block.
 
     This is the one ``:BROADER`` edge that is *not* CodedName prefix containment: a
     property's broader concept is the class that describes it. Without it a
@@ -236,7 +243,7 @@ def property_class_pairs(result) -> Iterator[tuple[str, str]]:
     versions that need not match the property's own.
     """
     for cls in result.classes:
-        class_base = irdi_base(cls.irdi)
+        class_base = id_base(cls.irdi)
         for ref in cls.property_refs:
             if ref:
-                yield irdi_base(ref), class_base
+                yield id_base(ref), class_base

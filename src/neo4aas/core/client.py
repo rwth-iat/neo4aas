@@ -6,7 +6,7 @@ import json
 from neo4aas.core.base import Neo4jModelConfig
 from neo4aas.core.serialization.json.exporter import JsonFromNeo4jExporter
 from neo4aas.core.serialization.json.importer import JsonToNeo4jImporter
-from neo4aas.core.utils import NEO4J_INTERNAL_NODE_KEYS, irdi_base
+from neo4aas.core.utils import NEO4J_INTERNAL_NODE_KEYS, id_base
 from neo4aas.core.fixers import apply_fixers
 from neo4aas.core.serialization.xml.importer import XmlToNeo4jImporter
 
@@ -66,7 +66,7 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
         "CREATE INDEX reference_target_id IF NOT EXISTS FOR (r:Reference) ON (r.target_id);",
         # Version-agnostic ECLASS/IRDI discovery: indexed equality on the IRDI base
         # (IRDI minus its trailing '#<version>'), so the same property matches across
-        # ECLASS releases. See irdi_base() and the import path.
+        # ECLASS releases. See id_base() and the import path.
         "CREATE INDEX reference_target_id_base IF NOT EXISTS FOR (r:Reference) ON (r.target_id_base);",
         "CREATE INDEX conceptdescription_id_base IF NOT EXISTS FOR (c:ConceptDescription) ON (c.id_base);",
         # Backing hash indexes for cross-import deduplication are derived from
@@ -354,7 +354,7 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         (``id`` is null for nested SubmodelElements, which have no global id).
         """
         if version_agnostic:
-            cond, key = "ref.target_id_base = $key", irdi_base(irdi)
+            cond, key = "ref.target_id_base = $key", id_base(irdi)
         else:
             cond, key = "ref.target_id = $key", irdi
         cypher = (

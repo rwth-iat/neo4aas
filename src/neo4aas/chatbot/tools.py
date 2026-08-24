@@ -16,7 +16,7 @@ from typing import Optional
 import requests
 from langchain_core.tools import tool
 
-from neo4aas.core.utils import irdi_base
+from neo4aas.core.utils import id_base
 from .config import neo4j_enabled, get_aas_client, get_repo, log
 from .llm import util_model
 from .system_prompt import SYSTEM_PROMPT
@@ -447,7 +447,7 @@ def _neo4j_tools(repo) -> list:
             return {"error": "Neo4j backend not configured."}
         # Resolve the element-selection MATCH+WHERE: semanticId (preferred) or idShort tokens.
         if semantic_id:
-            base = irdi_base(semantic_id.strip())
+            base = id_base(semantic_id.strip())
             sel = f"{_JOIN}-[:semanticId]->(rf:Reference) WHERE rf.target_id_base = $base"
             params: dict = {"base": base}
             label = {"semantic_id": base}
@@ -596,7 +596,7 @@ def _neo4j_tools(repo) -> list:
         is_irdi = ("#" in f) or ("/" in f)
         if is_irdi:
             base = "MATCH (cd:ConceptDescription {id_base: $base})"
-            params = {"base": irdi_base(f)}
+            params = {"base": id_base(f)}
             id_short = None
         else:
             # idShort → its semanticId Reference → CD (version-agnostic via id_base).
@@ -665,7 +665,7 @@ def _neo4j_tools(repo) -> list:
         client = get_aas_client(repo.id)
         if client is None:
             return {"error": "Neo4j backend not configured."}
-        base = irdi_base(semantic_id.strip())
+        base = id_base(semantic_id.strip())
         where = ["rf.target_id_base = $base"]
         params: dict = {"base": base}
         if value_min is not None:
@@ -710,7 +710,7 @@ def _neo4j_tools(repo) -> list:
                 return {"error": f"Criterion {i} has no semantic_id."}
             op = crit.get("op", ">=")
             val = crit.get("value")
-            base = irdi_base(sid)
+            base = id_base(sid)
             params: dict = {"base": base}
             preds = ["rf.target_id_base = $base"]
             if val is not None:

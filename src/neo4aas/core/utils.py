@@ -70,7 +70,7 @@ def canonical_irdi(value: str | None) -> str | None:
     return value
 
 
-def irdi_base(value: str) -> str:
+def id_base(value: str) -> str:
     """Return the version-agnostic IRDI base: the IRDI minus its trailing '#<version>'.
 
     Known wrappers are removed first by :func:`canonical_irdi` — an ECLASS-CDP URL or a
@@ -78,7 +78,7 @@ def irdi_base(value: str) -> str:
     IRDI of that property, rather than splitting the concept in two.
 
     **This function's output is stored** (``Reference.target_id_base``,
-    ``ConceptDescription.id_base``, ``SemanticId.base``, ``Concept.irdi_base``) *and*
+    ``ConceptDescription.id_base``, ``SemanticId.value_base``, ``Concept.id_base``) *and*
     recomputed by query-time callers. Changing what it normalizes therefore invalidates
     those stored values: a caller computes the new base and misses the stale stored one,
     which is worse than either state alone. Such a change must ship with a re-import.
@@ -96,7 +96,7 @@ def irdi_base(value: str) -> str:
 def is_irdi(value: str | None) -> bool:
     """Whether a value is an IRDI at all — i.e. carries the 4-digit ICD prefix.
 
-    :func:`irdi_base` deliberately returns a non-IRDI unchanged so callers can
+    :func:`id_base` deliberately returns a non-IRDI unchanged so callers can
     store a base unconditionally. A caller that must *reject* a malformed
     identifier needs the question asked directly: the IEC CDD export ships 1 547
     properties scraped without their prefix (``AAE930#001``), which no amount of

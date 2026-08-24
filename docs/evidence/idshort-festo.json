@@ -1,0 +1,393 @@
+{
+  "started": 1787586701.398251,
+  "seconds": 3.9667464169906452,
+  "files": 2000,
+  "documents": 2000,
+  "failed_documents": 0,
+  "failures": [],
+  "shells": 2000,
+  "submodels": 11868,
+  "elements": 646928,
+  "vendors": [
+    "festo"
+  ],
+  "nodes": {
+    "Shape": 1780,
+    "SemanticId": 630,
+    "Concept": 612,
+    "Template": 0,
+    "Vendor": 1
+  },
+  "relationships": {
+    "DECLARES": 1778,
+    "DECLARES_SUPPLEMENTAL": 0,
+    "RESOLVES_TO": 616,
+    "BROADER": 0,
+    "CONTAINS": 3765,
+    "DECLARES_SHAPE": 0,
+    "USES": 1780
+  },
+  "resolution": {
+    "total": 630,
+    "resolved": 612
+  },
+  "resolution_used": {
+    "total": 630,
+    "resolved": 612
+  },
+  "quality": {
+    "shapes": 1780,
+    "singletons": 279,
+    "numbered": 975,
+    "plain": 805
+  },
+  "containment": {
+    "edges": 3765,
+    "multi_vendor": 0,
+    "seen_once": 632,
+    "in_template": 0,
+    "declared_only": 0
+  },
+  "ambiguity": {
+    "parents": 945,
+    "branching": 941,
+    "widest": 614
+  },
+  "numbered_by_vendor": [
+    {
+      "vendor": "festo",
+      "shapes": 1780,
+      "numbered": 975,
+      "pct": 54
+    }
+  ],
+  "unresolved": [
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/HasPart/1/0",
+      "shapes": 25
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/Node/1/0",
+      "shapes": 25
+    },
+    {
+      "value": "0173-1#02-ABI504#001/0173-1#01-AHF583#001",
+      "shapes": 2
+    },
+    {
+      "value": "0173-1#01-AHF578#001",
+      "shapes": 1
+    },
+    {
+      "value": "0173-1#02-ABI505#001/0173-1#01-AHF584#001",
+      "shapes": 1
+    },
+    {
+      "value": "https://admin-shell.io/ZVEI/TechnicalData/ManufacturerLogo/1/1",
+      "shapes": 1
+    },
+    {
+      "value": "https://admin-shell.io/ZVEI/TechnicalData/ProductImage/1/1",
+      "shapes": 1
+    },
+    {
+      "value": "https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2",
+      "shapes": 1
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Submodel",
+      "shapes": 1
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/ArcheType/1/0",
+      "shapes": 1
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0",
+      "shapes": 1
+    },
+    {
+      "value": "https://admin-shell.io/sandbox/idta/handover/EFCAD/0/1/",
+      "shapes": 1
+    },
+    {
+      "value": "https://admin-shell.io/sandbox/idta/handover/MCAD/0/1/",
+      "shapes": 1
+    },
+    {
+      "value": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations",
+      "shapes": 1
+    },
+    {
+      "value": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate",
+      "shapes": 1
+    },
+    {
+      "value": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate/CompanyLogo ",
+      "shapes": 1
+    },
+    {
+      "value": "https://admin-shell.io/zvei/nameplate/2/0/Nameplate/Markings/Marking/MarkingFile",
+      "shapes": 1
+    },
+    {
+      "value": "https://automationml.org/aas/1/0/AmlFile",
+      "shapes": 1
+    }
+  ],
+  "top_degree": [
+    {
+      "labels": [
+        "Vendor"
+      ],
+      "key": "festo",
+      "degree": 1780
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "DocumentVersion01",
+      "degree": 911
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "DocumentClassification01",
+      "degree": 896
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "DocumentId01",
+      "degree": 895
+    },
+    {
+      "labels": [
+        "SemanticId"
+      ],
+      "key": "0173-1#02-ABI500#001/0173-1#01-AHF579#001*01",
+      "degree": 894
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "TechnicalProperties",
+      "degree": 616
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "GeneralTechnicalData",
+      "degree": 88
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "EntryNode",
+      "degree": 52
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "OperatingAndEnvironmentalConditions",
+      "degree": 49
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "Electrical",
+      "degree": 28
+    }
+  ],
+  "top_declares": [
+    {
+      "value": "0173-1#02-ABI500#001/0173-1#01-AHF579#001*01",
+      "shapes": 893
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/HasPart/1/0",
+      "shapes": 25
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/Node/1/0",
+      "shapes": 25
+    },
+    {
+      "value": "https://admin-shell.io/ZVEI/TechnicalData/MainSection/1/1",
+      "shapes": 15
+    },
+    {
+      "value": "0173-1#01-AHD206#001",
+      "shapes": 14
+    },
+    {
+      "value": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation",
+      "shapes": 6
+    },
+    {
+      "value": "https://smart.festo.com/ids/mychar/MYCHAR_3034_01",
+      "shapes": 4
+    },
+    {
+      "value": "0173-1#02-AAO102#003",
+      "shapes": 3
+    },
+    {
+      "value": "0173-1#02-ABH999#001",
+      "shapes": 3
+    },
+    {
+      "value": "0173-1#02-AAO105#002",
+      "shapes": 3
+    }
+  ],
+  "concepts_by_source": [
+    {
+      "source": "aas",
+      "kind": "description",
+      "concepts": 612,
+      "asked_for": 612
+    }
+  ],
+  "supplemental": {
+    "values": 0,
+    "edges": 0,
+    "resolved": 0,
+    "only": 0,
+    "only_resolved": 0
+  },
+  "supplemental_top": [],
+  "unresolved_forms": [
+    {
+      "form": "IDTA / vendor URL (not a concept)",
+      "values": 15,
+      "declared_by": 63
+    },
+    {
+      "form": "compound IRDI (not collapsed)",
+      "values": 2,
+      "declared_by": 3
+    },
+    {
+      "form": "IRDI absent from the dictionary",
+      "values": 1,
+      "declared_by": 1
+    }
+  ],
+  "id_short_forms": {
+    "raw": 1630,
+    "norm": 1630,
+    "base": 1498
+  },
+  "id_short_merged": [],
+  "id_short_cross_vendor": [],
+  "semantic_id_stems": [
+    {
+      "value": "https://admin-shell.io/ZVEI/TechnicalData/MainSection/1/1",
+      "shapes": 15,
+      "stems": 15,
+      "ratio": 1.0,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-ABI500#001/0173-1#01-AHF579#001*01",
+      "shapes": 893,
+      "stems": 810,
+      "ratio": 0.907,
+      "resolves": true
+    },
+    {
+      "value": "https://smart.festo.com/ids/mychar/MYCHAR_3034_01",
+      "shapes": 4,
+      "stems": 2,
+      "ratio": 0.5,
+      "resolves": true
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/HasPart/1/0",
+      "shapes": 25,
+      "stems": 12,
+      "ratio": 0.48,
+      "resolves": false
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/Node/1/0",
+      "shapes": 25,
+      "stems": 12,
+      "ratio": 0.48,
+      "resolves": false
+    },
+    {
+      "value": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation",
+      "shapes": 6,
+      "stems": 1,
+      "ratio": 0.167,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#01-AHD206#001",
+      "shapes": 14,
+      "stems": 1,
+      "ratio": 0.071,
+      "resolves": true
+    }
+  ],
+  "semantic_id_stem_histogram": [
+    {
+      "bucket": 0,
+      "semantic_ids": 1
+    },
+    {
+      "bucket": 1,
+      "semantic_ids": 1
+    },
+    {
+      "bucket": 4,
+      "semantic_ids": 2
+    },
+    {
+      "bucket": 5,
+      "semantic_ids": 1
+    },
+    {
+      "bucket": 9,
+      "semantic_ids": 1
+    },
+    {
+      "bucket": 10,
+      "semantic_ids": 1
+    }
+  ],
+  "write_seconds": {
+    "Shape": 0.21798625000519678,
+    "SemanticId": 0.10551616695011035,
+    "DECLARES": 0.07413200003793463,
+    "USES": 0.10359924996737391,
+    "CONTAINS": 0.13240737502928823,
+    "Concept": 0.06545866600936279,
+    "RESOLVES_TO": 0.031491917034145445,
+    "Shape counters": 0.02824775001499802,
+    "CONTAINS support": 0.03181462496286258,
+    "CONTAINS submodels": 0.024248583998996764
+  },
+  "rows_written": {
+    "Shape": 1780,
+    "SemanticId": 630,
+    "DECLARES": 1778,
+    "USES": 1780,
+    "CONTAINS": 3765,
+    "Concept": 612,
+    "RESOLVES_TO": 0,
+    "Shape counters": 0,
+    "CONTAINS support": 0,
+    "CONTAINS submodels": 0
+  }
+}

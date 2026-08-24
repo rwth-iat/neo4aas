@@ -14,7 +14,7 @@ import logging
 from typing import Iterable
 
 from neo4aas.eclass.models import EclassClass, EclassProperty
-from neo4aas.core.utils import irdi_base
+from neo4aas.core.utils import id_base
 
 logger = logging.getLogger(__name__)
 
@@ -58,9 +58,9 @@ def derive_has_property_edges(
     seen: set[tuple[str, str]] = set()
     rows = []
     for cls in classes:
-        cb = irdi_base(cls.irdi)
+        cb = id_base(cls.irdi)
         for prop_irdi in cls.property_refs:
-            key = (cb, irdi_base(prop_irdi))
+            key = (cb, id_base(prop_irdi))
             if key not in seen:
                 seen.add(key)
                 rows.append({"cls": key[0], "prop": key[1]})
@@ -97,7 +97,7 @@ def derive_has_unit_edges(
     for prop in properties:
         if not prop.unit_irdi:
             continue
-        key = (irdi_base(prop.irdi), irdi_base(prop.unit_irdi))
+        key = (id_base(prop.irdi), id_base(prop.unit_irdi))
         if key not in seen:
             seen.add(key)
             rows.append({"prop": key[0], "unit": key[1]})

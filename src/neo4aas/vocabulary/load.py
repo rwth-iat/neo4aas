@@ -53,6 +53,7 @@ from neo4aas.vocabulary.schema import (
     LEGACY_RELATIONSHIPS,
     VOCABULARY_LABELS,
     VOCABULARY_RELATIONSHIPS,
+    drop_legacy_statements,
     schema_statements,
 )
 
@@ -65,10 +66,10 @@ DEFAULT_BATCH_SIZE = 10_000
 CLEAR_BATCH_SIZE = 10_000
 
 #: Concept properties a higher-precedence source overwrites and a lower one only
-#: fills in when missing. ``irdi`` is the identity and never moves; ``irdi_base`` is a
-#: pure function of it (:func:`neo4aas.core.utils.irdi_base`) and is therefore
+#: fills in when missing. ``id`` is the identity and never moves; ``id_base`` is a
+#: pure function of it (:func:`neo4aas.core.utils.id_base`) and is therefore
 #: **recomputed on every write**, not frozen on first sight — the incoming row always
-#: carries the current answer, and freezing it means a change to what ``irdi_base``
+#: carries the current answer, and freezing it means a change to what ``id_base``
 #: normalises can never reach a node that already exists.
 CONCEPT_FIELDS: tuple[str, ...] = (
     "source", "kind", "coded_name", "level", "preferred_name", "definition",
@@ -90,9 +91,9 @@ def _concept_merge_clause() -> str:
     )
     return f"""
     UNWIND $rows AS row
-    MERGE (c:Concept {{irdi: row.irdi}})
+    MERGE (c:Concept {{id: row.id}})
     WITH c, row, coalesce(row.precedence, 0) > coalesce(c.precedence, 0) AS wins
-    SET c.irdi_base = row.irdi_base,
+    SET c.id_base = row.id_base,
         c.precedence = CASE WHEN wins THEN row.precedence ELSE c.precedence END,
         {assignments}
     """
@@ -131,10 +132,16 @@ def _vendor_slot_clause(rel: str, fields: Sequence[str], accumulate: bool) -> st
     """
 
 
+#: ``id_short_norm`` / ``id_short_base`` are derived at import, never at query time:
+#: they are lookup keys (indexed in :mod:`neo4aas.vocabulary.schema`), and a Cypher
+#: expression cannot reproduce the normaliser. The ``SET`` is unconditional, so a
+#: re-import writes the same value rather than accumulating one.
 MERGE_SHAPES = """
 UNWIND $rows AS row
 MERGE (s:Shape {shape_key: row.shape_key})
 SET s.id_short = row.id_short,
+    s.id_short_norm = row.id_short_norm,
+    s.id_short_base = row.id_short_base,
     s.model_type = row.model_type,
     s.value_type = row.value_type,
     s.category = coalesce(row.category, s.category)
@@ -143,7 +150,7 @@ SET s.id_short = row.id_short,
 MERGE_SEMANTIC_IDS = """
 UNWIND $rows AS row
 MERGE (n:SemanticId {value: row.value})
-SET n.base = row.base,
+SET n.value_base = row.value_base,
     n.key_types = [t IN coalesce(n.key_types, []) WHERE NOT t IN row.key_types] + row.key_types,
     n.ref_types = [t IN coalesce(n.ref_types, []) WHERE NOT t IN row.ref_types] + row.ref_types
 """
@@ -206,9 +213,9 @@ MERGE (t)-[:DECLARES_SHAPE]->(s)
 
 MERGE_BROADER_PREFIX = """
 UNWIND $rows AS row
-MATCH (child:Concept {irdi: row.irdi})
+MATCH (child:Concept {id: row.id})
 MATCH (parent:Concept) WHERE parent.coded_name = row.parent_coded_name
-  AND parent.irdi <> child.irdi
+  AND parent.id <> child.id
 MERGE (child)-[:BROADER]->(parent)
 """
 
@@ -218,9 +225,9 @@ MERGE (child)-[:BROADER]->(parent)
 #: ``superclass_irdi`` and class/property references.
 MERGE_BROADER_BASE = """
 UNWIND $rows AS row
-MATCH (child:Concept) WHERE child.irdi_base = row.child_base
-MATCH (parent:Concept) WHERE parent.irdi_base = row.parent_base
-  AND parent.irdi <> child.irdi
+MATCH (child:Concept) WHERE child.id_base = row.child_base
+MATCH (parent:Concept) WHERE parent.id_base = row.parent_base
+  AND parent.id <> child.id
 MERGE (child)-[:BROADER]->(parent)
 """
 
@@ -230,8 +237,8 @@ MERGE (child)-[:BROADER]->(parent)
 #: version on effectively every shared base between releases.
 MERGE_RESOLVES_TO = """
 MATCH (n:SemanticId)
-WITH n WHERE n.base IS NOT NULL
-MATCH (c:Concept) WHERE c.irdi_base = n.base
+WITH n WHERE n.value_base IS NOT NULL
+MATCH (c:Concept) WHERE c.id_base = n.value_base
 MERGE (n)-[:RESOLVES_TO]->(c)
 """
 
@@ -353,6 +360,8 @@ class VocabularyLoader:
     def load_shapes(self, records: VocabularyRecords) -> None:
         rows = [
             {"shape_key": rec.shape.key, "id_short": rec.shape.id_short,
+             "id_short_norm": rec.shape.id_short_norm,
+             "id_short_base": rec.shape.id_short_base,
              "model_type": rec.shape.model_type, "value_type": rec.shape.value_type,
              "category": rec.category}
             for rec in records.shapes.values()
@@ -361,7 +370,7 @@ class VocabularyLoader:
 
     def load_semantic_ids(self, records: VocabularyRecords) -> None:
         rows = [
-            {"value": rec.value, "base": rec.base,
+            {"value": rec.value, "value_base": rec.value_base,
              "key_types": sorted(rec.key_types), "ref_types": sorted(rec.ref_types)}
             for rec in records.semantic_ids.values()
         ]
@@ -421,7 +430,7 @@ class VocabularyLoader:
     def load_broader_prefix(self, concepts: Iterable[dict]) -> int:
         """ECLASS CodedName prefix hierarchy: ``27210101 -> 27210100 -> …``."""
         rows = (
-            {"irdi": row["irdi"], "parent_coded_name": coded_name_parent(row["coded_name"])}
+            {"id": row["id"], "parent_coded_name": coded_name_parent(row["coded_name"])}
             for row in concepts if coded_name_parent(row.get("coded_name"))
         )
         return self._write_stream("BROADER(prefix)", MERGE_BROADER_PREFIX, rows)
@@ -498,8 +507,10 @@ class VocabularyLoader:
         a batch of 10 000 shapes asks one transaction to drop far more edges than it
         can hold. Once the edges are gone the nodes are isolated and cheap.
 
-        Labels this importer *used* to own are removed as well, so upgrading a
-        database written by the ``:Structure`` version needs no manual cleanup.
+        Labels this importer *used* to own are removed as well, and so are the
+        constraints and indexes it used to create under property names it no longer
+        writes, so upgrading a database written by an earlier version needs no manual
+        cleanup.
         """
         removed = {}
         with self._session() as session:
@@ -514,4 +525,6 @@ class VocabularyLoader:
                     f"MATCH (n:{label}) CALL (n) {{ DETACH DELETE n }} "
                     f"IN TRANSACTIONS OF {CLEAR_BATCH_SIZE} ROWS").consume()
                 removed[label] = before
+            for statement in drop_legacy_statements():
+                session.run(statement).consume()
         return removed

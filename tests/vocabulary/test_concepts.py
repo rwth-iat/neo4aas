@@ -45,12 +45,12 @@ def test_coded_name_parent_is_prefix_containment(child, parent):
 def test_concept_carries_the_version_stripped_base():
     """Resolution joins on the base; ECLASS bumps the version on every release."""
     row = concept("0173-1#02-BAF016#006", "eclass")
-    assert row["irdi_base"] == "0173-1#02-BAF016"
+    assert row["id_base"] == "0173-1#02-BAF016"
 
 
 def test_concept_from_description_prefers_iec61360():
     row = concept_from_description(IEC61360_CD)
-    assert row["irdi"] == "0173-1#02-BAF016#006"
+    assert row["id"] == "0173-1#02-BAF016#006"
     assert row["preferred_name"] == "operating voltage"      # en before de
     assert row["definition"] == "voltage during operation"
     assert row["unit"] == "V" and row["data_type"] == "REAL_MEASURE"

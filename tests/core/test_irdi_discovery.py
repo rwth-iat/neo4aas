@@ -1,13 +1,13 @@
 """Version-agnostic ECLASS/IRDI discovery.
 
-Unit tests for `irdi_base` (no Neo4j) plus integration tests that the IRDI base
+Unit tests for `id_base` (no Neo4j) plus integration tests that the IRDI base
 is stored/indexed at import and lets the same property be discovered across
 ECLASS versions.
 """
 
 import pytest
 
-from neo4aas.core.utils import irdi_base, is_irdi
+from neo4aas.core.utils import id_base, is_irdi
 
 
 # ---------------------------------------------------------------------------
@@ -52,16 +52,16 @@ from neo4aas.core.utils import irdi_base, is_irdi
         ("", ""),
     ],
 )
-def test_irdi_base(value, expected):
-    assert irdi_base(value) == expected
+def test_id_base(value, expected):
+    assert id_base(value) == expected
 
 
-def test_irdi_base_collapses_iec_cdd_versions():
-    assert irdi_base("0112/2///61987#ABN590#001") == irdi_base("0112/2///61987#ABN590#004")
+def test_id_base_collapses_iec_cdd_versions():
+    assert id_base("0112/2///61987#ABN590#001") == id_base("0112/2///61987#ABN590#004")
 
 
-def test_irdi_base_collapses_versions():
-    assert irdi_base("0173-1#02-AAO677#001") == irdi_base("0173-1#02-AAO677#007")
+def test_id_base_collapses_versions():
+    assert id_base("0173-1#02-AAO677#001") == id_base("0173-1#02-AAO677#007")
 
 
 @pytest.mark.parametrize("value", [
@@ -76,7 +76,7 @@ def test_irdi_base_collapses_versions():
 ])
 def test_scope_of_normalisation(value):
     """Forms deliberately *not* normalised. These guard the scope decision."""
-    assert irdi_base(value) == value
+    assert id_base(value) == value
     assert not is_irdi(value)
 
 
@@ -85,13 +85,13 @@ def test_a_compound_irdi_is_not_collapsed_to_its_head():
     concept. The trailing version is stripped as on any IRDI — that is unchanged —
     but the pair is never reduced to one member."""
     compound = "0173-1#02-ABI503#003~0/0173-1#01-AHF582#003"
-    assert irdi_base(compound) == "0173-1#02-ABI503#003~0/0173-1#01-AHF582"
-    assert irdi_base(compound) != irdi_base("0173-1#02-ABI503#003")
+    assert id_base(compound) == "0173-1#02-ABI503#003~0/0173-1#01-AHF582"
+    assert id_base(compound) != id_base("0173-1#02-ABI503#003")
 
 
 def test_a_padded_irdi_and_its_trimmed_form_are_one_base():
     """Whitespace is never part of an identifier, so it must not split a concept."""
-    assert irdi_base(" 0173-1#02-AAN468#008") == irdi_base("0173-1#02-AAN468#012")
+    assert id_base(" 0173-1#02-AAN468#008") == id_base("0173-1#02-AAN468#012")
     assert is_irdi("  0173-1#02-AAN468#008  ")
 
 
@@ -100,12 +100,12 @@ def test_trimming_does_not_repair_a_malformed_icd():
     '173-1' are shipped by real files and are not repairable without guessing."""
     for value in (" 0173a-1#02-ABK288#002 ", " 173-1#02-AAW627#001 "):
         assert not is_irdi(value)
-        assert irdi_base(value) == value.strip()
+        assert id_base(value) == value.strip()
 
 
 def test_a_wrapped_irdi_and_its_plain_form_are_one_base():
     """The join property: the wrapper must not split a concept in two."""
-    assert irdi_base("urn:irdi:0173-1#02-AAN920#003") == irdi_base("0173-1#02-AAN920#007")
+    assert id_base("urn:irdi:0173-1#02-AAN920#003") == id_base("0173-1#02-AAN920#007")
 
 
 @pytest.mark.parametrize("value", [
@@ -115,13 +115,13 @@ def test_a_wrapped_irdi_and_its_plain_form_are_one_base():
     "https://api.eclass-cdp.com/0173-1#02-ABL775#001",
     "0112/2///61987#ABN590#002",
 ])
-def test_is_irdi_agrees_with_irdi_base_about_wrappers(value):
+def test_is_irdi_agrees_with_id_base_about_wrappers(value):
     """The two must not disagree: one decides what joins, the other what is rejected."""
     assert is_irdi(value)
 
 
-def test_irdi_base_cdp_url_matches_plain_irdi():
-    assert irdi_base("https://api.eclass-cdp.com/0173-1-01-AHX837-002") == irdi_base(
+def test_id_base_cdp_url_matches_plain_irdi():
+    assert id_base("https://api.eclass-cdp.com/0173-1-01-AHX837-002") == id_base(
         "0173-1#01-AHX837#002"
     )
 
@@ -196,7 +196,7 @@ def test_concept_description_id_base_matches_across_versions(_eclass_env):
 
 
 @pytest.mark.integration
-def test_irdi_base_props_stripped_on_export(_eclass_env):
+def test_id_base_props_stripped_on_export(_eclass_env):
     sm = _eclass_env.get_identifiable("urn:sm/v1")
     sem = sm["submodelElements"][0]["semanticId"]
     assert "target_id_base" not in sem and "target_id" not in sem

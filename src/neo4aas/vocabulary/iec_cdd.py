@@ -14,8 +14,8 @@ the parent outright in ``superclass_irdi``. So a CDD concept carries no
 ``coded_name``, and its ``:BROADER`` edges come from the export's own references
 rather than from a naming convention.
 
-Everything else is the same shape as ECLASS: ``:Concept`` rows merged on ``irdi``,
-joined to declared semanticIds on the version-stripped :func:`irdi_base`, with
+Everything else is the same shape as ECLASS: ``:Concept`` rows merged on ``id``,
+joined to declared semanticIds on the version-stripped :func:`id_base`, with
 properties linked to the classes that use them so query expansion has something to
 expand through.
 
@@ -41,7 +41,7 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator
 
 from neo4aas.core.io import read_bytes
-from neo4aas.core.utils import irdi_base, is_irdi
+from neo4aas.core.utils import id_base, is_irdi
 
 #: The dictionary source name, and its rank in
 #: :data:`neo4aas.vocabulary.concepts.SOURCE_PRECEDENCE`.
@@ -165,8 +165,8 @@ def _absorb(result: CddResult, record: Any) -> None:
 
 def _unit_index(result: CddResult) -> dict[str, dict]:
     """Unit records by version-stripped base — a property may cite another version."""
-    return {irdi_base(irdi): record
-            for irdi, record in result.records.items()
+    return {id_base(identifier): record
+            for identifier, record in result.records.items()
             if record.get("_type") == "unit"}
 
 
@@ -204,7 +204,7 @@ def _unit_of(record: dict, kind: str, units: dict[str, dict]) -> str | None:
     symbol = _text(record.get("unit"))
     if symbol:
         return symbol
-    referenced = units.get(irdi_base(_text(record.get("unit_irdi")) or ""))
+    referenced = units.get(id_base(_text(record.get("unit_irdi")) or ""))
     if not referenced:
         return None
     return (_text(referenced.get("short_name_en"))
@@ -226,7 +226,7 @@ def class_broader_pairs(result: CddResult) -> Iterator[tuple[str, str]]:
             continue
         superclass = _text(record.get("superclass_irdi"))
         if superclass and is_irdi(superclass):
-            child, parent = irdi_base(identifier), irdi_base(superclass)
+            child, parent = id_base(identifier), id_base(superclass)
             if child != parent:
                 yield child, parent
 
@@ -261,5 +261,5 @@ def property_class_pairs(result: CddResult) -> Iterator[tuple[str, str]]:
 def _pair(property_irdi: Any, class_irdi: Any) -> tuple[str, str] | None:
     if not (is_irdi(property_irdi) and is_irdi(class_irdi)):
         return None
-    property_base, class_base = irdi_base(property_irdi), irdi_base(class_irdi)
+    property_base, class_base = id_base(property_irdi), id_base(class_irdi)
     return None if property_base == class_base else (property_base, class_base)

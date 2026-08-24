@@ -16,22 +16,28 @@ from __future__ import annotations
 #: ``(name, label, property)`` — one uniqueness constraint per node key.
 KEY_CONSTRAINTS: tuple[tuple[str, str, str], ...] = (
     ("vocab_shape_key", "Shape", "shape_key"),
-    ("vocab_concept_irdi", "Concept", "irdi"),
+    ("vocab_concept_id", "Concept", "id"),
     ("vocab_template_id", "Template", "template_id"),
     ("vocab_vendor_name", "Vendor", "name"),
     ("vocab_semantic_id_value", "SemanticId", "value"),
 )
 
 #: ``(name, label, property)`` — the lookups the load and the traversals do.
-#: ``Concept.irdi_base`` backs semanticId resolution (the version-stripped join,
+#: ``Concept.id_base`` backs semanticId resolution (the version-stripped join,
 #: which lifts the resolution rate roughly 10x) and ``Concept.coded_name`` backs
-#: the ECLASS prefix hierarchy.
+#: the ECLASS prefix hierarchy. ``Shape.id_short_norm`` and ``Shape.id_short_base``
+#: are the idShort join: matching a spelling across vendors is an equality on the
+#: first, grouping a shape's variants is an equality on the second, and both are
+#: only useful if they are indexed — an unindexed grouping is a full label scan of
+#: the whole shape vocabulary.
 LOOKUP_INDEXES: tuple[tuple[str, str, str], ...] = (
-    ("vocab_concept_irdi_base", "Concept", "irdi_base"),
+    ("vocab_concept_id_base", "Concept", "id_base"),
     ("vocab_concept_coded_name", "Concept", "coded_name"),
     ("vocab_concept_kind", "Concept", "kind"),
-    ("vocab_semantic_id_base", "SemanticId", "base"),
+    ("vocab_semantic_id_value_base", "SemanticId", "value_base"),
     ("vocab_shape_id_short", "Shape", "id_short"),
+    ("vocab_shape_id_short_norm", "Shape", "id_short_norm"),
+    ("vocab_shape_id_short_base", "Shape", "id_short_base"),
     ("vocab_template_family", "Template", "family"),
 )
 
@@ -40,6 +46,7 @@ LOOKUP_INDEXES: tuple[tuple[str, str, str], ...] = (
 #: on ``Shape.id_short`` over the whole shape vocabulary.
 TEXT_INDEXES: tuple[tuple[str, str, str], ...] = (
     ("vocab_shape_id_short_text", "Shape", "id_short"),
+    ("vocab_shape_id_short_norm_text", "Shape", "id_short_norm"),
 )
 
 #: Labels this importer owns. ``vocab clear`` removes these and nothing else, so a
@@ -63,6 +70,18 @@ VOCABULARY_RELATIONSHIPS: tuple[str, ...] = (
 LEGACY_LABELS: tuple[str, ...] = ("Structure",)
 LEGACY_RELATIONSHIPS: tuple[str, ...] = ("HAS_SLOT", "SHIPS", "PRECEDES")
 
+#: Constraints and indexes this importer used to create, under property names it no
+#: longer writes: ``Concept.irdi`` / ``Concept.irdi_base`` (renamed to ``id`` /
+#: ``id_base`` — most concepts are identified by a URL, not an IRDI) and
+#: ``SemanticId.base`` (``value_base``). A uniqueness constraint on a property nothing
+#: writes any more is not harmless: every node satisfies it with ``null``, so it lingers
+#: as a false statement about the model and shows up in ``SHOW CONSTRAINTS``. ``vocab
+#: clear`` drops them, so upgrading is one ``clear`` and one re-import.
+LEGACY_CONSTRAINTS: tuple[str, ...] = ("vocab_concept_irdi",)
+LEGACY_INDEXES: tuple[str, ...] = (
+    "vocab_concept_irdi_base", "vocab_semantic_id_base",
+)
+
 
 def constraint_statements() -> list[str]:
     return [
@@ -80,6 +99,12 @@ def index_statements() -> list[str]:
         f"CREATE TEXT INDEX {name} IF NOT EXISTS FOR (n:{label}) ON (n.{prop})"
         for name, label, prop in TEXT_INDEXES
     ]
+
+
+def drop_legacy_statements() -> list[str]:
+    """Drop what an earlier version of this schema created. Idempotent."""
+    return [f"DROP CONSTRAINT {name} IF EXISTS" for name in LEGACY_CONSTRAINTS] + \
+           [f"DROP INDEX {name} IF EXISTS" for name in LEGACY_INDEXES]
 
 
 def schema_statements() -> list[str]:

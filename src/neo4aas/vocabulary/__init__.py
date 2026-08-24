@@ -38,6 +38,10 @@ Modules
 -------
 
 ``extract``    documents → shape/containment/vendor records. Pure: no driver.
+``idshort``    ``normalize_id_short`` / ``id_short_base`` — the two derived idShort
+               forms stored on every ``:Shape``. Public because **every comparison
+               must normalise both sides**: a raw query term matched against a
+               normalised property silently returns nothing.
 ``concepts``   ECLASS OntoML + AAS-embedded ConceptDescriptions → ``:Concept``.
 ``templates``  IDTA submodel templates → ``:Template`` + ``:DECLARES_SHAPE``.
 ``schema``     the uniqueness constraints every ``MERGE`` needs to not be a scan.
@@ -55,6 +59,7 @@ from neo4aas.vocabulary.extract import (
     shape_key,
     walk_submodel,
 )
+from neo4aas.vocabulary.idshort import id_short_base, normalize_id_short
 
 __all__ = [
     "Shape",
@@ -62,6 +67,8 @@ __all__ = [
     "SubmodelWalk",
     "VocabularyRecords",
     "extract_paths",
+    "id_short_base",
+    "normalize_id_short",
     "shape_key",
     "walk_submodel",
 ]

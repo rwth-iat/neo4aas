@@ -11,7 +11,7 @@ from neo4j import Session
 
 from neo4aas.core.base import BaseNeo4JClient, Neo4jModelConfig
 from neo4aas.core.io import list_aas_files, read_bytes
-from neo4aas.core.utils import UploadStats, irdi_base
+from neo4aas.core.utils import UploadStats, id_base
 
 logger = logging.getLogger(__name__)
 
@@ -532,15 +532,15 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         # addressed/immutable, so this never needs re-syncing. Used for indexed lookup of
         # "references targeting id X" during incremental resolution.
         # `target_id_base` is the version-agnostic IRDI base of target_id, so ECLASS
-        # semanticIds can be matched across versions by indexed equality (see irdi_base).
+        # semanticIds can be matched across versions by indexed equality (see id_base).
         if "Reference" in node_labels and node_properties.get("keys_value"):
             node_properties["target_id"] = node_properties["keys_value"][0]
-            node_properties["target_id_base"] = irdi_base(node_properties["target_id"])
+            node_properties["target_id_base"] = id_base(node_properties["target_id"])
 
         # Version-agnostic IRDI base for ConceptDescription ids, so an ECLASS concept can
         # be looked up across all its versions by indexed equality on `id_base`.
         if "ConceptDescription" in node_labels and node_properties.get("id"):
-            node_properties["id_base"] = irdi_base(node_properties["id"])
+            node_properties["id_base"] = id_base(node_properties["id"])
 
         nodes.append(node_properties)
         return nodes, relationships

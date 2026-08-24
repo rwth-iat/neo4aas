@@ -1,0 +1,3426 @@
+{
+  "started": 1787595151.179019,
+  "seconds": 23.53309799998533,
+  "files": 3000,
+  "documents": 3180,
+  "failed_documents": 1,
+  "failures": [
+    [
+      "/Users/igorgarmaev/PycharmProjects/aas-corpus/instances/vendors/buerkert/loose/Burkert_0142_000067684_type_20260401_112138CET.xml.gz",
+      "ParseError: junk after document element: line 4505, column 14"
+    ]
+  ],
+  "shells": 2999,
+  "submodels": 13979,
+  "elements": 2140930,
+  "vendors": [
+    "abb",
+    "buerkert",
+    "festo",
+    "harting",
+    "phoenix_contact",
+    "r_stahl",
+    "sick",
+    "wago"
+  ],
+  "nodes": {
+    "Shape": 8202,
+    "SemanticId": 4871,
+    "Concept": 1049,
+    "Template": 194,
+    "Vendor": 8
+  },
+  "relationships": {
+    "DECLARES": 8053,
+    "DECLARES_SUPPLEMENTAL": 523,
+    "RESOLVES_TO": 1339,
+    "BROADER": 0,
+    "CONTAINS": 12507,
+    "DECLARES_SHAPE": 8664,
+    "USES": 5318
+  },
+  "resolution": {
+    "total": 4871,
+    "resolved": 1226
+  },
+  "resolution_used": {
+    "total": 1796,
+    "resolved": 1176
+  },
+  "quality": {
+    "shapes": 8202,
+    "singletons": 1984,
+    "numbered": 4206,
+    "plain": 3996
+  },
+  "containment": {
+    "edges": 12507,
+    "multi_vendor": 0,
+    "seen_once": 1234,
+    "in_template": 4662,
+    "declared_only": 4582
+  },
+  "ambiguity": {
+    "parents": 2257,
+    "branching": 1979,
+    "widest": 292
+  },
+  "numbered_by_vendor": [
+    {
+      "vendor": "sick",
+      "shapes": 1755,
+      "numbered": 1468,
+      "pct": 83
+    },
+    {
+      "vendor": "phoenix_contact",
+      "shapes": 955,
+      "numbered": 900,
+      "pct": 94
+    },
+    {
+      "vendor": "r_stahl",
+      "shapes": 756,
+      "numbered": 677,
+      "pct": 89
+    },
+    {
+      "vendor": "abb",
+      "shapes": 727,
+      "numbered": 689,
+      "pct": 94
+    },
+    {
+      "vendor": "harting",
+      "shapes": 468,
+      "numbered": 287,
+      "pct": 61
+    },
+    {
+      "vendor": "wago",
+      "shapes": 240,
+      "numbered": 14,
+      "pct": 5
+    },
+    {
+      "vendor": "festo",
+      "shapes": 217,
+      "numbered": 73,
+      "pct": 33
+    },
+    {
+      "vendor": "buerkert",
+      "shapes": 200,
+      "numbered": 9,
+      "pct": 4
+    }
+  ],
+  "unresolved": [
+    {
+      "value": "https://admin-shell.io/idta/nameplate/3/0/Nameplate",
+      "shapes": 378
+    },
+    {
+      "value": "0173-1#02-AAQ683#013",
+      "shapes": 61
+    },
+    {
+      "value": "0173-1#02-AAQ675#008",
+      "shapes": 60
+    },
+    {
+      "value": "0173-1#02-AAQ672#013",
+      "shapes": 56
+    },
+    {
+      "value": "http://admin-shell.io/dexpi/1/0/SubTagMapping",
+      "shapes": 31
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/HasPart/1/0",
+      "shapes": 26
+    },
+    {
+      "value": "https://admin-shell.io/idta/cds/attributeContainer/1",
+      "shapes": 22
+    },
+    {
+      "value": "https://admin-shell.io/smt-dropin/smt-dropin-use/1/0",
+      "shapes": 19
+    },
+    {
+      "value": "0173-1#02-AAQ661#013",
+      "shapes": 15
+    },
+    {
+      "value": "https://admin-shell.io",
+      "shapes": 14
+    },
+    {
+      "value": "http://admin-shell.io/DEXPI/1/0/TagMapping",
+      "shapes": 12
+    },
+    {
+      "value": "0173-1#02-AAZ760#004",
+      "shapes": 9
+    },
+    {
+      "value": "http://admin-shell.io/vdi/2770/1/0/Document",
+      "shapes": 9
+    },
+    {
+      "value": "https://admin-shell.io/idta/EnergyFlexibilityDataModel/1/0/UUID",
+      "shapes": 9
+    },
+    {
+      "value": "0173-1#02-AAQ680#012",
+      "shapes": 8
+    },
+    {
+      "value": "https://admin-shell.io/SMT/General/Arbitrary",
+      "shapes": 8
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+      "shapes": 8
+    },
+    {
+      "value": "0173-1#02-AAQ671#011",
+      "shapes": 7
+    },
+    {
+      "value": "0173-1#02-AAQ680#010",
+      "shapes": 7
+    },
+    {
+      "value": "0173-1#02-ABI503#003~0/0173-1#01-AHF582#003",
+      "shapes": 7
+    },
+    {
+      "value": "0173-1#02-AAQ673#013",
+      "shapes": 6
+    },
+    {
+      "value": "0173-1#02-AAS435#006",
+      "shapes": 6
+    },
+    {
+      "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Interface",
+      "shapes": 6
+    },
+    {
+      "value": "https://www.w3.org/2019/wot/td",
+      "shapes": 6
+    },
+    {
+      "value": "urn:irdi:0173-1#02-ABL821#001",
+      "shapes": 6
+    }
+  ],
+  "top_degree": [
+    {
+      "labels": [
+        "Vendor"
+      ],
+      "key": "sick",
+      "degree": 1755
+    },
+    {
+      "labels": [
+        "Vendor"
+      ],
+      "key": "phoenix_contact",
+      "degree": 955
+    },
+    {
+      "labels": [
+        "Vendor"
+      ],
+      "key": "r_stahl",
+      "degree": 756
+    },
+    {
+      "labels": [
+        "Vendor"
+      ],
+      "key": "abb",
+      "degree": 727
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "DocumentVersion",
+      "degree": 630
+    },
+    {
+      "labels": [
+        "SemanticId"
+      ],
+      "key": "0173-1#02-ABI500#001/0173-1#01-AHF579#001*01",
+      "degree": 618
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "DocumentClassification",
+      "degree": 617
+    },
+    {
+      "labels": [
+        "Shape"
+      ],
+      "key": "DocumentId",
+      "degree": 611
+    },
+    {
+      "labels": [
+        "Vendor"
+      ],
+      "key": "harting",
+      "degree": 468
+    },
+    {
+      "labels": [
+        "SemanticId"
+      ],
+      "key": "0173-1#01-AHX837#002",
+      "degree": 378
+    }
+  ],
+  "top_declares": [
+    {
+      "value": "0173-1#02-ABI500#001/0173-1#01-AHF579#001*01",
+      "shapes": 617
+    },
+    {
+      "value": "https://admin-shell.io/idta/nameplate/3/0/Nameplate",
+      "shapes": 377
+    },
+    {
+      "value": "0173-1#01-AHX837#002",
+      "shapes": 376
+    },
+    {
+      "value": "0173-1#02-AAQ837#005",
+      "shapes": 375
+    },
+    {
+      "value": "0173-1#01-AHF578#003",
+      "shapes": 338
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/Node/1/0",
+      "shapes": 296
+    },
+    {
+      "value": "0173-1#02-AAY811#001",
+      "shapes": 165
+    },
+    {
+      "value": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation",
+      "shapes": 114
+    },
+    {
+      "value": "0173-1#02-AAQ683#013",
+      "shapes": 61
+    },
+    {
+      "value": "0173-1#02-AAQ675#008",
+      "shapes": 60
+    }
+  ],
+  "concepts_by_source": [
+    {
+      "source": "aas",
+      "kind": "description",
+      "concepts": 1049,
+      "asked_for": 1049
+    }
+  ],
+  "supplemental": {
+    "values": 379,
+    "edges": 523,
+    "resolved": 80,
+    "only": 325,
+    "only_resolved": 60
+  },
+  "supplemental_top": [
+    {
+      "value": "https://admin-shell.io/smt-dropin/smt-dropin-use/1/0",
+      "shapes": 19,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-ABI503#003~0/0173-1#01-AHF582#003",
+      "shapes": 7,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-ABL358#002/0173-1#01-AHX773#002",
+      "shapes": 6,
+      "resolves": true
+    },
+    {
+      "value": "https://www.w3.org/2019/wot/td",
+      "shapes": 6,
+      "resolves": false
+    },
+    {
+      "value": "urn:irdi:0173-1#02-ABL821#001",
+      "shapes": 6,
+      "resolves": false
+    },
+    {
+      "value": "urn:irdi:0173-1#02-ABL840#001",
+      "shapes": 6,
+      "resolves": false
+    },
+    {
+      "value": "urn:irdi:0173-1#02-ABL847#001",
+      "shapes": 6,
+      "resolves": false
+    },
+    {
+      "value": "urn:irdi:0173-1#02-ABL849#001",
+      "shapes": 6,
+      "resolves": false
+    },
+    {
+      "value": "urn:irdi:0173-1#02-ABL850#001",
+      "shapes": 6,
+      "resolves": false
+    },
+    {
+      "value": "urn:irdi:0173-1#02-ABL868#001",
+      "shapes": 6,
+      "resolves": false
+    }
+  ],
+  "unresolved_forms": [
+    {
+      "form": "IDTA / vendor URL (not a concept)",
+      "values": 2347,
+      "declared_by": 3017
+    },
+    {
+      "form": "IRDI absent from the dictionary",
+      "values": 869,
+      "declared_by": 1235
+    },
+    {
+      "form": "SAMM aspect model (other system)",
+      "values": 292,
+      "declared_by": 299
+    },
+    {
+      "form": "compound IRDI (not collapsed)",
+      "values": 110,
+      "declared_by": 134
+    },
+    {
+      "form": "other",
+      "values": 19,
+      "declared_by": 19
+    },
+    {
+      "form": "other URN (incl. misspelled wrapper)",
+      "values": 5,
+      "declared_by": 7
+    },
+    {
+      "form": "ECLASS-CDP URL the key cannot read",
+      "values": 3,
+      "declared_by": 3
+    }
+  ],
+  "id_short_forms": {
+    "raw": 7072,
+    "norm": 7008,
+    "base": 3486
+  },
+  "id_short_merged": [
+    {
+      "form": "aab 787 max connectable conductor cross section fine wire with conductor end sleeve",
+      "spellings": [
+        "AAB787-max__connectable_conductor_cross-section_fine_wire_with_conductor_end_sleeve",
+        "AAB787-max__connectable_conductor_cross_section_fine_wire_with_conductor_end_sleeve"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "aab 789 max connectable conductor cross section multiple wire",
+      "spellings": [
+        "AAB789-max__connectable_conductor_cross-section_multiple_wire",
+        "AAB789-max__connectable_conductor_cross_section_multiple_wire"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "aab 937 min connectable conductor cross section fine wire with conductor end sleeve",
+      "spellings": [
+        "AAB937-min__connectable_conductor_cross-section_fine_wire_with_conductor_end_sleeve",
+        "AAB937-min__connectable_conductor_cross_section_fine_wire_with_conductor_end_sleeve"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "aab 940 min connectable conductor cross section multiple wire",
+      "spellings": [
+        "AAB940-min__connectable_conductor_cross-section_multiple_wire",
+        "AAB940-min__connectable_conductor_cross_section_multiple_wire"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "aac 034 shock hazard protection present",
+      "spellings": [
+        "AAC034-shock-hazard_protection_present",
+        "AAC034-shock_hazard_protection_present"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "aaf 677 child protection present",
+      "spellings": [
+        "AAF677-child-protection_present",
+        "AAF677-child_protection_present"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "aas 575 power loss per pole current dependent pl ip",
+      "spellings": [
+        "AAS575-Power_loss_per_pole__current-dependent__PlIp_",
+        "AAS575-Power_loss_per_pole__current_dependent__PlIp_"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "aaz 343 min conductor cross section flexible wire with ferrule without plastic collar",
+      "spellings": [
+        "AAZ343-min__conductor_cross-section__flexible_wire_with_ferrule_without_plastic_collar_",
+        "AAZ343-min__conductor_cross_section__flexible_wire_with_ferrule_without_plastic_collar_"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "aaz 344 max conductor cross section flexible wire with ferrule without plastic collar",
+      "spellings": [
+        "AAZ344-max__conductor_cross-section__flexible_wire_with_ferrule_without_plastic_collar_",
+        "AAZ344-max__conductor_cross_section__flexible_wire_with_ferrule_without_plastic_collar_"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "aaz 345 min conductor cross section flexible wire with ferrule with plastic collar",
+      "spellings": [
+        "AAZ345-min__conductor_cross-section__flexible_wire_with_ferrule_with_plastic_collar_",
+        "AAZ345-min__conductor_cross_section__flexible_wire_with_ferrule_with_plastic_collar_"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "aaz 346 max conductor cross section flexible wire with ferrule with plastic collar",
+      "spellings": [
+        "AAZ346-max__conductor_cross-section__flexible_wire_with_ferrule_with_plastic_collar_",
+        "AAZ346-max__conductor_cross_section__flexible_wire_with_ferrule_with_plastic_collar_"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "aaz 358 plug in direction",
+      "spellings": [
+        "AAZ358-Plug-in_direction",
+        "AAZ358-Plug_in_direction"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "abh 266 direct plug in connection possible",
+      "spellings": [
+        "ABH266-direct_plug-in_connection_possible",
+        "ABH266-direct_plug_in_connection_possible"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "abh 270 rated current at nominal cross section in",
+      "spellings": [
+        "ABH270-rated_current_at_nominal_cross-section__In_",
+        "ABH270-rated_current_at_nominal_cross_section__In_"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "abh 271 rated current at max conductor cross section in",
+      "spellings": [
+        "ABH271-rated_current_at_max__conductor_cross-section__In",
+        "ABH271-rated_current_at_max__conductor_cross_section__In"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "arbitrary",
+      "spellings": [
+        "Arbitrary",
+        "arbitrary"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "article number",
+      "spellings": [
+        "ArticleNumber",
+        "articleNumber"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "certificate approval",
+      "spellings": [
+        "CertificateApproval",
+        "Certificate_Approval"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "city town",
+      "spellings": [
+        "CityTown",
+        "City_Town"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "comment",
+      "spellings": [
+        "Comment",
+        "comment"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "current value",
+      "spellings": [
+        "CurrentValue",
+        "currentValue"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "description",
+      "spellings": [
+        "Description",
+        "description"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "digital file 00",
+      "spellings": [
+        "DigitalFile00",
+        "DigitalFile__00__"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "document 00",
+      "spellings": [
+        "Document00",
+        "Document__00__"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "document classification 00",
+      "spellings": [
+        "DocumentClassification00",
+        "DocumentClassification__00__"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "document id 00",
+      "spellings": [
+        "DocumentId00",
+        "DocumentId__00__"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "document version 00",
+      "spellings": [
+        "DocumentVersion00",
+        "DocumentVersion__00__"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "duration",
+      "spellings": [
+        "Duration",
+        "duration"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "file name",
+      "spellings": [
+        "FileName",
+        "fileName"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "flow",
+      "spellings": [
+        "Flow",
+        "flow"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "format",
+      "spellings": [
+        "Format",
+        "format"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "identity",
+      "spellings": [
+        "Identity",
+        "identity"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "inherited from",
+      "spellings": [
+        "InheritedFrom",
+        "inheritedFrom"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "items",
+      "spellings": [
+        "Items",
+        "items"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "language 00",
+      "spellings": [
+        "Language00",
+        "Language__00__"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "last update",
+      "spellings": [
+        "LastUpdate",
+        "lastUpdate"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "location",
+      "spellings": [
+        "Location",
+        "location"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "max ambient temperature",
+      "spellings": [
+        "MaxAmbientTemperature",
+        "max_ambient_temperature"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "mcad",
+      "spellings": [
+        "MCAD",
+        "Mcad"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "metadata",
+      "spellings": [
+        "Metadata",
+        "metadata"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "name",
+      "spellings": [
+        "Name",
+        "name"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "name of supplier",
+      "spellings": [
+        "NameOfSupplier",
+        "nameOfSupplier"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "on off",
+      "spellings": [
+        "OnOff",
+        "onOff"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "origin",
+      "spellings": [
+        "Origin",
+        "origin"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "pcf calculation method",
+      "spellings": [
+        "PCFCalculationMethod",
+        "PcfCalculationMethod"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "pcf co 2 eq",
+      "spellings": [
+        "PcfCO2Eq",
+        "PcfCO2eq"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "plant",
+      "spellings": [
+        "Plant",
+        "plant"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "power capability at",
+      "spellings": [
+        "PowerCapabilityAt",
+        "powerCapabilityAt"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "product classification item 00",
+      "spellings": [
+        "ProductClassificationItem00",
+        "ProductClassificationItem__00__"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "product classification item 01",
+      "spellings": [
+        "ProductClassificationItem01",
+        "ProductClassificationItem__01__"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "product classification item 02",
+      "spellings": [
+        "ProductClassificationItem02",
+        "ProductClassificationItem_02"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "properties",
+      "spellings": [
+        "Properties",
+        "properties"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "state county",
+      "spellings": [
+        "StateCounty",
+        "State_County"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "status",
+      "spellings": [
+        "Status",
+        "status"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "storage",
+      "spellings": [
+        "Storage",
+        "storage"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "tax number",
+      "spellings": [
+        "TaxNumber",
+        "Tax_Number"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "timestamp",
+      "spellings": [
+        "Timestamp",
+        "timestamp"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "title",
+      "spellings": [
+        "Title",
+        "title"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "type",
+      "spellings": [
+        "Type",
+        "type"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "unit",
+      "spellings": [
+        "Unit",
+        "unit"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "uri of the product",
+      "spellings": [
+        "URIOfTheProduct",
+        "UriOfTheProduct"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "value id",
+      "spellings": [
+        "ValueID",
+        "ValueId"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "variable name",
+      "spellings": [
+        "VariableName",
+        "variableName"
+      ],
+      "spelling_count": 2
+    },
+    {
+      "form": "zip code",
+      "spellings": [
+        "ZIPCode",
+        "ZipCode"
+      ],
+      "spelling_count": 2
+    }
+  ],
+  "id_short_cross_vendor": [
+    {
+      "form": "city town",
+      "vendors": [
+        "abb",
+        "buerkert",
+        "wago",
+        "festo",
+        "harting",
+        "r_stahl",
+        "sick",
+        "phoenix_contact"
+      ],
+      "vendor_count": 8
+    },
+    {
+      "form": "class id",
+      "vendors": [
+        "phoenix_contact",
+        "abb",
+        "harting",
+        "r_stahl",
+        "wago",
+        "festo",
+        "buerkert",
+        "sick"
+      ],
+      "vendor_count": 8
+    },
+    {
+      "form": "class name",
+      "vendors": [
+        "abb",
+        "phoenix_contact",
+        "festo",
+        "wago",
+        "r_stahl",
+        "buerkert",
+        "harting",
+        "sick"
+      ],
+      "vendor_count": 8
+    },
+    {
+      "form": "classification system",
+      "vendors": [
+        "wago",
+        "phoenix_contact",
+        "festo",
+        "r_stahl",
+        "abb",
+        "harting",
+        "buerkert",
+        "sick"
+      ],
+      "vendor_count": 8
+    },
+    {
+      "form": "status set date",
+      "vendors": [
+        "abb",
+        "buerkert",
+        "festo",
+        "phoenix_contact",
+        "wago",
+        "harting",
+        "r_stahl",
+        "sick"
+      ],
+      "vendor_count": 8
+    },
+    {
+      "form": "status value",
+      "vendors": [
+        "festo",
+        "wago",
+        "r_stahl",
+        "phoenix_contact",
+        "abb",
+        "buerkert",
+        "sick",
+        "harting"
+      ],
+      "vendor_count": 8
+    },
+    {
+      "form": "street",
+      "vendors": [
+        "abb",
+        "harting",
+        "festo",
+        "wago",
+        "sick",
+        "r_stahl",
+        "buerkert",
+        "phoenix_contact"
+      ],
+      "vendor_count": 8
+    },
+    {
+      "form": "title",
+      "vendors": [
+        "festo",
+        "harting",
+        "abb",
+        "phoenix_contact",
+        "r_stahl",
+        "buerkert",
+        "wago",
+        "sick"
+      ],
+      "vendor_count": 8
+    },
+    {
+      "form": "digital file",
+      "vendors": [
+        "festo",
+        "r_stahl",
+        "harting",
+        "abb",
+        "wago",
+        "buerkert",
+        "sick"
+      ],
+      "vendor_count": 7
+    },
+    {
+      "form": "document domain id",
+      "vendors": [
+        "abb",
+        "phoenix_contact",
+        "festo",
+        "harting",
+        "r_stahl",
+        "buerkert",
+        "sick"
+      ],
+      "vendor_count": 7
+    },
+    {
+      "form": "document version",
+      "vendors": [
+        "festo",
+        "abb",
+        "buerkert",
+        "r_stahl",
+        "wago",
+        "harting",
+        "sick"
+      ],
+      "vendor_count": 7
+    },
+    {
+      "form": "general information",
+      "vendors": [
+        "buerkert",
+        "r_stahl",
+        "festo",
+        "phoenix_contact",
+        "harting",
+        "sick",
+        "wago"
+      ],
+      "vendor_count": 7
+    },
+    {
+      "form": "manufacturer name",
+      "vendors": [
+        "buerkert",
+        "r_stahl",
+        "festo",
+        "phoenix_contact",
+        "harting",
+        "wago",
+        "sick"
+      ],
+      "vendor_count": 7
+    },
+    {
+      "form": "manufacturer order code",
+      "vendors": [
+        "buerkert",
+        "r_stahl",
+        "phoenix_contact",
+        "festo",
+        "harting",
+        "sick",
+        "wago"
+      ],
+      "vendor_count": 7
+    },
+    {
+      "form": "manufacturer product designation",
+      "vendors": [
+        "buerkert",
+        "festo",
+        "harting",
+        "wago",
+        "r_stahl",
+        "phoenix_contact",
+        "sick"
+      ],
+      "vendor_count": 7
+    },
+    {
+      "form": "national code",
+      "vendors": [
+        "abb",
+        "harting",
+        "festo",
+        "wago",
+        "sick",
+        "r_stahl",
+        "buerkert"
+      ],
+      "vendor_count": 7
+    },
+    {
+      "form": "organization name",
+      "vendors": [
+        "r_stahl",
+        "abb",
+        "festo",
+        "phoenix_contact",
+        "harting",
+        "buerkert",
+        "wago"
+      ],
+      "vendor_count": 7
+    },
+    {
+      "form": "uri of the product",
+      "vendors": [
+        "phoenix_contact",
+        "harting",
+        "r_stahl",
+        "buerkert",
+        "abb",
+        "festo",
+        "sick"
+      ],
+      "vendor_count": 7
+    },
+    {
+      "form": "address of additional link",
+      "vendors": [
+        "sick",
+        "festo",
+        "r_stahl",
+        "wago",
+        "harting",
+        "abb"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "company",
+      "vendors": [
+        "abb",
+        "wago",
+        "sick",
+        "harting",
+        "festo",
+        "r_stahl"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "document classification",
+      "vendors": [
+        "abb",
+        "festo",
+        "buerkert",
+        "r_stahl",
+        "harting",
+        "sick"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "document id",
+      "vendors": [
+        "abb",
+        "harting",
+        "r_stahl",
+        "buerkert",
+        "wago",
+        "sick"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "document version id",
+      "vendors": [
+        "festo",
+        "phoenix_contact",
+        "r_stahl",
+        "abb",
+        "harting",
+        "buerkert"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "handover documentation",
+      "vendors": [
+        "harting",
+        "r_stahl",
+        "phoenix_contact",
+        "abb",
+        "festo",
+        "buerkert"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "language",
+      "vendors": [
+        "harting",
+        "abb",
+        "festo",
+        "buerkert",
+        "wago",
+        "sick"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "manufacturer article number",
+      "vendors": [
+        "buerkert",
+        "phoenix_contact",
+        "festo",
+        "harting",
+        "r_stahl",
+        "sick"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "manufacturer logo",
+      "vendors": [
+        "buerkert",
+        "festo",
+        "phoenix_contact",
+        "r_stahl",
+        "harting",
+        "wago"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "nameplate",
+      "vendors": [
+        "phoenix_contact",
+        "festo",
+        "r_stahl",
+        "wago",
+        "harting",
+        "buerkert"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "order code of manufacturer",
+      "vendors": [
+        "buerkert",
+        "wago",
+        "festo",
+        "r_stahl",
+        "harting",
+        "sick"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "organization official name",
+      "vendors": [
+        "r_stahl",
+        "festo",
+        "phoenix_contact",
+        "abb",
+        "harting",
+        "sick"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "phone",
+      "vendors": [
+        "abb",
+        "wago",
+        "harting",
+        "sick",
+        "r_stahl",
+        "festo"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "product article number of manufacturer",
+      "vendors": [
+        "buerkert",
+        "harting",
+        "phoenix_contact",
+        "wago",
+        "festo",
+        "r_stahl"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "product class id",
+      "vendors": [
+        "festo",
+        "phoenix_contact",
+        "r_stahl",
+        "harting",
+        "sick",
+        "wago"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "product classification system",
+      "vendors": [
+        "festo",
+        "harting",
+        "r_stahl",
+        "phoenix_contact",
+        "sick",
+        "wago"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "product classifications",
+      "vendors": [
+        "r_stahl",
+        "harting",
+        "festo",
+        "phoenix_contact",
+        "sick",
+        "wago"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "summary",
+      "vendors": [
+        "festo",
+        "harting",
+        "abb",
+        "phoenix_contact",
+        "r_stahl",
+        "wago"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "technical data",
+      "vendors": [
+        "harting",
+        "r_stahl",
+        "festo",
+        "wago",
+        "buerkert",
+        "phoenix_contact"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "technical properties",
+      "vendors": [
+        "buerkert",
+        "festo",
+        "harting",
+        "phoenix_contact",
+        "r_stahl",
+        "wago"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "telephone number",
+      "vendors": [
+        "r_stahl",
+        "festo",
+        "wago",
+        "sick",
+        "harting",
+        "abb"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "value id",
+      "vendors": [
+        "buerkert",
+        "abb",
+        "phoenix_contact",
+        "festo",
+        "harting",
+        "r_stahl"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "zipcode",
+      "vendors": [
+        "buerkert",
+        "sick",
+        "wago",
+        "festo",
+        "r_stahl",
+        "harting"
+      ],
+      "vendor_count": 6
+    },
+    {
+      "form": "classification system version",
+      "vendors": [
+        "harting",
+        "phoenix_contact",
+        "festo",
+        "sick",
+        "wago"
+      ],
+      "vendor_count": 5
+    },
+    {
+      "form": "company logo",
+      "vendors": [
+        "harting",
+        "abb",
+        "buerkert",
+        "sick",
+        "festo"
+      ],
+      "vendor_count": 5
+    },
+    {
+      "form": "contact information",
+      "vendors": [
+        "r_stahl",
+        "festo",
+        "wago",
+        "harting",
+        "buerkert"
+      ],
+      "vendor_count": 5
+    },
+    {
+      "form": "document 01",
+      "vendors": [
+        "buerkert",
+        "abb",
+        "festo",
+        "r_stahl",
+        "phoenix_contact"
+      ],
+      "vendor_count": 5
+    },
+    {
+      "form": "document 02",
+      "vendors": [
+        "buerkert",
+        "abb",
+        "festo",
+        "r_stahl",
+        "phoenix_contact"
+      ],
+      "vendor_count": 5
+    },
+    {
+      "form": "email",
+      "vendors": [
+        "abb",
+        "wago",
+        "sick",
+        "harting",
+        "festo"
+      ],
+      "vendor_count": 5
+    },
+    {
+      "form": "email address",
+      "vendors": [
+        "abb",
+        "harting",
+        "wago",
+        "festo",
+        "sick"
+      ],
+      "vendor_count": 5
+    },
+    {
+      "form": "key words",
+      "vendors": [
+        "festo",
+        "phoenix_contact",
+        "r_stahl",
+        "harting",
+        "wago"
+      ],
+      "vendor_count": 5
+    },
+    {
+      "form": "contact informations",
+      "vendors": [
+        "harting",
+        "abb",
+        "festo",
+        "r_stahl"
+      ],
+      "vendor_count": 4
+    },
+    {
+      "form": "country of origin",
+      "vendors": [
+        "buerkert",
+        "festo",
+        "harting",
+        "wago"
+      ],
+      "vendor_count": 4
+    },
+    {
+      "form": "document 03",
+      "vendors": [
+        "buerkert",
+        "abb",
+        "r_stahl",
+        "phoenix_contact"
+      ],
+      "vendor_count": 4
+    },
+    {
+      "form": "document 04",
+      "vendors": [
+        "buerkert",
+        "abb",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 4
+    },
+    {
+      "form": "document 05",
+      "vendors": [
+        "abb",
+        "buerkert",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 4
+    },
+    {
+      "form": "document 06",
+      "vendors": [
+        "buerkert",
+        "abb",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 4
+    },
+    {
+      "form": "document 07",
+      "vendors": [
+        "abb",
+        "buerkert",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 4
+    },
+    {
+      "form": "document 08",
+      "vendors": [
+        "buerkert",
+        "abb",
+        "r_stahl",
+        "phoenix_contact"
+      ],
+      "vendor_count": 4
+    },
+    {
+      "form": "is primary",
+      "vendors": [
+        "festo",
+        "abb",
+        "harting",
+        "wago"
+      ],
+      "vendor_count": 4
+    },
+    {
+      "form": "marking name",
+      "vendors": [
+        "buerkert",
+        "harting",
+        "r_stahl",
+        "sick"
+      ],
+      "vendor_count": 4
+    },
+    {
+      "form": "markings",
+      "vendors": [
+        "harting",
+        "festo",
+        "r_stahl",
+        "sick"
+      ],
+      "vendor_count": 4
+    },
+    {
+      "form": "carbon footprint",
+      "vendors": [
+        "wago",
+        "harting",
+        "phoenix_contact"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "contact information 01",
+      "vendors": [
+        "abb",
+        "festo",
+        "wago"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "department",
+      "vendors": [
+        "abb",
+        "wago",
+        "festo"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 09",
+      "vendors": [
+        "abb",
+        "r_stahl",
+        "phoenix_contact"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 10",
+      "vendors": [
+        "abb",
+        "r_stahl",
+        "phoenix_contact"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 11",
+      "vendors": [
+        "abb",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 12",
+      "vendors": [
+        "abb",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 13",
+      "vendors": [
+        "abb",
+        "r_stahl",
+        "phoenix_contact"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 14",
+      "vendors": [
+        "abb",
+        "r_stahl",
+        "phoenix_contact"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 15",
+      "vendors": [
+        "abb",
+        "r_stahl",
+        "phoenix_contact"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 16",
+      "vendors": [
+        "abb",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 17",
+      "vendors": [
+        "abb",
+        "r_stahl",
+        "phoenix_contact"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 18",
+      "vendors": [
+        "abb",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 19",
+      "vendors": [
+        "abb",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 20",
+      "vendors": [
+        "abb",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 21",
+      "vendors": [
+        "abb",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 22",
+      "vendors": [
+        "abb",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 23",
+      "vendors": [
+        "abb",
+        "r_stahl",
+        "phoenix_contact"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 24",
+      "vendors": [
+        "abb",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "document 25",
+      "vendors": [
+        "abb",
+        "phoenix_contact",
+        "r_stahl"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "manufacturer product type",
+      "vendors": [
+        "buerkert",
+        "festo",
+        "phoenix_contact"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "marking file",
+      "vendors": [
+        "harting",
+        "r_stahl",
+        "sick"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "mcad",
+      "vendors": [
+        "wago",
+        "festo",
+        "harting"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "number of documents",
+      "vendors": [
+        "abb",
+        "buerkert",
+        "festo"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "organization short name",
+      "vendors": [
+        "sick",
+        "harting",
+        "festo"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "preview file",
+      "vendors": [
+        "r_stahl",
+        "festo",
+        "phoenix_contact"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "product classification item 01",
+      "vendors": [
+        "r_stahl",
+        "festo",
+        "wago"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "product image",
+      "vendors": [
+        "buerkert",
+        "harting",
+        "wago"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "publication date",
+      "vendors": [
+        "wago",
+        "phoenix_contact",
+        "harting"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "role of contact person",
+      "vendors": [
+        "wago",
+        "festo",
+        "abb"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "state county",
+      "vendors": [
+        "harting",
+        "festo",
+        "wago"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "sub title",
+      "vendors": [
+        "festo",
+        "harting",
+        "wago"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "year of construction",
+      "vendors": [
+        "buerkert",
+        "festo",
+        "harting"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "zip code",
+      "vendors": [
+        "harting",
+        "wago",
+        "phoenix_contact"
+      ],
+      "vendor_count": 3
+    },
+    {
+      "form": "arche type",
+      "vendors": [
+        "festo",
+        "harting"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 02",
+      "vendors": [
+        "abb",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 03",
+      "vendors": [
+        "festo",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 04",
+      "vendors": [
+        "abb",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 05",
+      "vendors": [
+        "abb",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 10",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 11",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 12",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 13",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 14",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 15",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 16",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 17",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 18",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 19",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 20",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 21",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 22",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 23",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 24",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 25",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 26",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 27",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 28",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 29",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 30",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 31",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 32",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 33",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 34",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 35",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 36",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 37",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 38",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 39",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 40",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 41",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 42",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 43",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 44",
+      "vendors": [
+        "r_stahl",
+        "abb"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 45",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 46",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "contact information 47",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "country",
+      "vendors": [
+        "wago",
+        "phoenix_contact"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "depth",
+      "vendors": [
+        "wago",
+        "harting"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "description",
+      "vendors": [
+        "sick",
+        "harting"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "designation of certificate or approval",
+      "vendors": [
+        "buerkert",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 00",
+      "vendors": [
+        "wago",
+        "phoenix_contact"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 00 step",
+      "vendors": [
+        "harting",
+        "wago"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 26",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 27",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 28",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 29",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 30",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 31",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 32",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 33",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 34",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 35",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 36",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 37",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 38",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 39",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 40",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 41",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 42",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 43",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 44",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 45",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 46",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 47",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document 48",
+      "vendors": [
+        "abb",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document classification 00",
+      "vendors": [
+        "wago",
+        "phoenix_contact"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document classification 01",
+      "vendors": [
+        "festo",
+        "wago"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "document identifier",
+      "vendors": [
+        "sick",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "electrical and fluid cad",
+      "vendors": [
+        "festo",
+        "wago"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "entry node",
+      "vendors": [
+        "festo",
+        "harting"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "fax",
+      "vendors": [
+        "festo",
+        "r_stahl"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "fax number",
+      "vendors": [
+        "r_stahl",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "further information",
+      "vendors": [
+        "wago",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "height",
+      "vendors": [
+        "wago",
+        "harting"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "house number",
+      "vendors": [
+        "wago",
+        "phoenix_contact"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "language 01",
+      "vendors": [
+        "r_stahl",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "manufacturer product description",
+      "vendors": [
+        "harting",
+        "wago"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "manufacturer product family",
+      "vendors": [
+        "r_stahl",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "manufacturer product root",
+      "vendors": [
+        "r_stahl",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "material",
+      "vendors": [
+        "sick",
+        "harting"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "material of insulation",
+      "vendors": [
+        "harting",
+        "wago"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "materials",
+      "vendors": [
+        "buerkert",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "max ambient temperature",
+      "vendors": [
+        "r_stahl",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "name of supplier",
+      "vendors": [
+        "harting",
+        "wago"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "net weight",
+      "vendors": [
+        "harting",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "official name of the organization",
+      "vendors": [
+        "harting",
+        "wago"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "pcf calculation method",
+      "vendors": [
+        "wago",
+        "phoenix_contact"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "pcf co 2 eq",
+      "vendors": [
+        "harting",
+        "phoenix_contact"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "po box",
+      "vendors": [
+        "festo",
+        "wago"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "product carbon footprint",
+      "vendors": [
+        "wago",
+        "phoenix_contact"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "product class coded name",
+      "vendors": [
+        "sick",
+        "phoenix_contact"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "product image 01",
+      "vendors": [
+        "phoenix_contact",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "quantity of measure for calculation",
+      "vendors": [
+        "phoenix_contact",
+        "harting"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "rated current",
+      "vendors": [
+        "harting",
+        "wago"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "reference impact unit for calculation",
+      "vendors": [
+        "phoenix_contact",
+        "harting"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "reference to technical property area",
+      "vendors": [
+        "sick",
+        "phoenix_contact"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "technical property areas",
+      "vendors": [
+        "phoenix_contact",
+        "sick"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "text statement",
+      "vendors": [
+        "buerkert",
+        "wago"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "type of communication",
+      "vendors": [
+        "wago",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "type of email address",
+      "vendors": [
+        "harting",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "type of telephone",
+      "vendors": [
+        "festo",
+        "harting"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "valid date",
+      "vendors": [
+        "wago",
+        "festo"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "version",
+      "vendors": [
+        "sick",
+        "harting"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "weight",
+      "vendors": [
+        "buerkert",
+        "wago"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "width",
+      "vendors": [
+        "wago",
+        "harting"
+      ],
+      "vendor_count": 2
+    },
+    {
+      "form": "zip code of po box",
+      "vendors": [
+        "festo",
+        "wago"
+      ],
+      "vendor_count": 2
+    }
+  ],
+  "semantic_id_stems": [
+    {
+      "value": "0173-1#02-AAO259#006",
+      "shapes": 36,
+      "stems": 36,
+      "ratio": 1.0,
+      "resolves": true
+    },
+    {
+      "value": "https://admin-shell.io/idta/cds/attributeContainer/1",
+      "shapes": 21,
+      "stems": 21,
+      "ratio": 1.0,
+      "resolves": false
+    },
+    {
+      "value": "https://admin-shell.io",
+      "shapes": 14,
+      "stems": 14,
+      "ratio": 1.0,
+      "resolves": false
+    },
+    {
+      "value": "https://admin-shell.io/idta/EnergyFlexibilityDataModel/1/0/UUID",
+      "shapes": 9,
+      "stems": 9,
+      "ratio": 1.0,
+      "resolves": false
+    },
+    {
+      "value": "https://admin-shell.io/SMT/General/Arbitrary",
+      "shapes": 8,
+      "stems": 8,
+      "ratio": 1.0,
+      "resolves": false
+    },
+    {
+      "value": "https://admin-shell.io/ZVEI/TechnicalData/MainSection/1/1",
+      "shapes": 8,
+      "stems": 8,
+      "ratio": 1.0,
+      "resolves": true
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/Template/1/1/Submodel",
+      "shapes": 8,
+      "stems": 8,
+      "ratio": 1.0,
+      "resolves": false
+    },
+    {
+      "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Interface",
+      "shapes": 6,
+      "stems": 6,
+      "ratio": 1.0,
+      "resolves": false
+    },
+    {
+      "value": "https://admin-shell.io/SemanticIdNotAvailable /1/1 ",
+      "shapes": 5,
+      "stems": 5,
+      "ratio": 1.0,
+      "resolves": false
+    },
+    {
+      "value": "https://example.com/ids/ConceptDescription/4353_1815_4842_4689",
+      "shapes": 5,
+      "stems": 5,
+      "ratio": 1.0,
+      "resolves": false
+    },
+    {
+      "value": "0112/2///61987#ABA950#008",
+      "shapes": 4,
+      "stems": 4,
+      "ratio": 1.0,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#01-AHD206#001",
+      "shapes": 4,
+      "stems": 4,
+      "ratio": 1.0,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-AAQ326#004",
+      "shapes": 4,
+      "stems": 4,
+      "ratio": 1.0,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-ABF198#001",
+      "shapes": 4,
+      "stems": 4,
+      "ratio": 1.0,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAY811#001",
+      "shapes": 165,
+      "stems": 149,
+      "ratio": 0.903,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-ABK162#002/0173-1#01-AHX839#002",
+      "shapes": 6,
+      "stems": 5,
+      "ratio": 0.833,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-ABL358#002/0173-1#01-AHX773#002",
+      "shapes": 6,
+      "stems": 5,
+      "ratio": 0.833,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-ABI501#001/0173-1#01-AHF580#001",
+      "shapes": 4,
+      "stems": 3,
+      "ratio": 0.75,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-BAG640#013",
+      "shapes": 4,
+      "stems": 3,
+      "ratio": 0.75,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-ABI000#001",
+      "shapes": 5,
+      "stems": 3,
+      "ratio": 0.6,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-ABI501#001/0173-1#01-AHF580#001*01",
+      "shapes": 5,
+      "stems": 3,
+      "ratio": 0.6,
+      "resolves": true
+    },
+    {
+      "value": "http://admin-shell.io/DEXPI/1/0/TagMapping",
+      "shapes": 12,
+      "stems": 7,
+      "ratio": 0.583,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-ABI503#003/0173-1#01-AHF582#003",
+      "shapes": 7,
+      "stems": 4,
+      "ratio": 0.571,
+      "resolves": true
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/HasPart/1/0",
+      "shapes": 26,
+      "stems": 13,
+      "ratio": 0.5,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAN468#008",
+      "shapes": 4,
+      "stems": 2,
+      "ratio": 0.5,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-AAO677#002",
+      "shapes": 4,
+      "stems": 2,
+      "ratio": 0.5,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-AAZ820#001",
+      "shapes": 4,
+      "stems": 2,
+      "ratio": 0.5,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-BAA039#010",
+      "shapes": 4,
+      "stems": 2,
+      "ratio": 0.5,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-BAB577#008",
+      "shapes": 4,
+      "stems": 2,
+      "ratio": 0.5,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-AAC311#005",
+      "shapes": 4,
+      "stems": 1,
+      "ratio": 0.25,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAS425#008",
+      "shapes": 4,
+      "stems": 1,
+      "ratio": 0.25,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAS431#005",
+      "shapes": 4,
+      "stems": 1,
+      "ratio": 0.25,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-ABI504#001/0173-1#01-AHF583#001",
+      "shapes": 4,
+      "stems": 1,
+      "ratio": 0.25,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-BAB577#010",
+      "shapes": 4,
+      "stems": 1,
+      "ratio": 0.25,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-BAC140#011",
+      "shapes": 4,
+      "stems": 1,
+      "ratio": 0.25,
+      "resolves": true
+    },
+    {
+      "value": "https://admin-shell.io/ZVEI/TechnicalData/ProductClassificationItem/1/1",
+      "shapes": 4,
+      "stems": 1,
+      "ratio": 0.25,
+      "resolves": true
+    },
+    {
+      "value": "https://admin-shell.io/sandbox/SG2/TechnicalData/ProductClassificationItem/1/1",
+      "shapes": 4,
+      "stems": 1,
+      "ratio": 0.25,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAC341#006",
+      "shapes": 5,
+      "stems": 1,
+      "ratio": 0.2,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAN466#004",
+      "shapes": 5,
+      "stems": 1,
+      "ratio": 0.2,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-AAP003#005",
+      "shapes": 5,
+      "stems": 1,
+      "ratio": 0.2,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-AAQ535#007",
+      "shapes": 5,
+      "stems": 1,
+      "ratio": 0.2,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAQ665#006",
+      "shapes": 5,
+      "stems": 1,
+      "ratio": 0.2,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAQ669#013",
+      "shapes": 5,
+      "stems": 1,
+      "ratio": 0.2,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAQ676#011",
+      "shapes": 5,
+      "stems": 1,
+      "ratio": 0.2,
+      "resolves": false
+    },
+    {
+      "value": "https://admin-shell.io/ZVEI/TechnicalData/ProductImage/1/1",
+      "shapes": 5,
+      "stems": 1,
+      "ratio": 0.2,
+      "resolves": false
+    },
+    {
+      "value": "https://admin-shell.io/zvei/nameplate/1/0/ContactInformations/ContactInformation",
+      "shapes": 114,
+      "stems": 22,
+      "ratio": 0.193,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-AAQ673#013",
+      "shapes": 6,
+      "stems": 1,
+      "ratio": 0.167,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAS435#006",
+      "shapes": 6,
+      "stems": 1,
+      "ratio": 0.167,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#01-AGZ673#001",
+      "shapes": 14,
+      "stems": 2,
+      "ratio": 0.143,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-AAQ671#011",
+      "shapes": 7,
+      "stems": 1,
+      "ratio": 0.143,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAQ680#010",
+      "shapes": 7,
+      "stems": 1,
+      "ratio": 0.143,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAN468#006",
+      "shapes": 15,
+      "stems": 2,
+      "ratio": 0.133,
+      "resolves": true
+    },
+    {
+      "value": "http://admin-shell.io/dexpi/1/0/SubTagMapping",
+      "shapes": 31,
+      "stems": 4,
+      "ratio": 0.129,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAQ680#012",
+      "shapes": 8,
+      "stems": 1,
+      "ratio": 0.125,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAZ760#004",
+      "shapes": 9,
+      "stems": 1,
+      "ratio": 0.111,
+      "resolves": false
+    },
+    {
+      "value": "http://admin-shell.io/vdi/2770/1/0/Document",
+      "shapes": 9,
+      "stems": 1,
+      "ratio": 0.111,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-ABI500#001/0173-1#01-AHF579#001",
+      "shapes": 52,
+      "stems": 4,
+      "ratio": 0.077,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-AAQ661#013",
+      "shapes": 15,
+      "stems": 1,
+      "ratio": 0.067,
+      "resolves": false
+    },
+    {
+      "value": "https://admin-shell.io/idta/HierarchicalStructures/Node/1/0",
+      "shapes": 296,
+      "stems": 15,
+      "ratio": 0.051,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-AAQ672#013",
+      "shapes": 56,
+      "stems": 1,
+      "ratio": 0.018,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAQ675#008",
+      "shapes": 60,
+      "stems": 1,
+      "ratio": 0.017,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-AAQ683#013",
+      "shapes": 61,
+      "stems": 1,
+      "ratio": 0.016,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#02-ABI500#001/0173-1#01-AHF579#001*01",
+      "shapes": 617,
+      "stems": 4,
+      "ratio": 0.006,
+      "resolves": true
+    },
+    {
+      "value": "https://admin-shell.io/idta/nameplate/3/0/Nameplate",
+      "shapes": 377,
+      "stems": 2,
+      "ratio": 0.005,
+      "resolves": false
+    },
+    {
+      "value": "0173-1#01-AHX837#002",
+      "shapes": 376,
+      "stems": 1,
+      "ratio": 0.003,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#02-AAQ837#005",
+      "shapes": 375,
+      "stems": 1,
+      "ratio": 0.003,
+      "resolves": true
+    },
+    {
+      "value": "0173-1#01-AHF578#003",
+      "shapes": 338,
+      "stems": 1,
+      "ratio": 0.003,
+      "resolves": true
+    }
+  ],
+  "semantic_id_stem_histogram": [
+    {
+      "bucket": 0,
+      "semantic_ids": 11
+    },
+    {
+      "bucket": 1,
+      "semantic_ids": 11
+    },
+    {
+      "bucket": 2,
+      "semantic_ids": 16
+    },
+    {
+      "bucket": 5,
+      "semantic_ids": 8
+    },
+    {
+      "bucket": 6,
+      "semantic_ids": 2
+    },
+    {
+      "bucket": 7,
+      "semantic_ids": 2
+    },
+    {
+      "bucket": 8,
+      "semantic_ids": 2
+    },
+    {
+      "bucket": 9,
+      "semantic_ids": 1
+    },
+    {
+      "bucket": 10,
+      "semantic_ids": 14
+    }
+  ],
+  "write_seconds": {
+    "Shape": 0.6484954170300625,
+    "SemanticId": 0.15168866602471098,
+    "DECLARES": 0.15285854099784046,
+    "DECLARES_SUPPLEMENTAL": 0.029992708994541317,
+    "USES": 0.11832720797974616,
+    "CONTAINS": 0.24380674998974428,
+    "CONTAINS(template)": 0.10664983303286135,
+    "Concept": 0.09032774996012449,
+    "Template": 0.018643249990418553,
+    "DECLARES_SHAPE": 0.13349308399483562,
+    "RESOLVES_TO": 0.03054050001082942,
+    "Shape counters": 0.060853834031149745,
+    "CONTAINS support": 0.08693658304400742,
+    "CONTAINS submodels": 0.058074458967894316
+  },
+  "rows_written": {
+    "Shape": 8202,
+    "SemanticId": 4871,
+    "DECLARES": 8053,
+    "DECLARES_SUPPLEMENTAL": 523,
+    "USES": 5318,
+    "CONTAINS": 8137,
+    "CONTAINS(template)": 4662,
+    "Concept": 1049,
+    "Template": 194,
+    "DECLARES_SHAPE": 8664,
+    "RESOLVES_TO": 0,
+    "Shape counters": 0,
+    "CONTAINS support": 0,
+    "CONTAINS submodels": 0
+  }
+}

@@ -8,7 +8,7 @@ corpus rather than of how many times it has been run.
 
 import pytest
 
-from neo4aas.vocabulary.extract import extract_paths
+from neo4aas.vocabulary.extract import Shape, VocabularyRecords, extract_paths
 from neo4aas.vocabulary.load import VocabularyLoader
 from neo4aas.vocabulary.schema import (
     KEY_CONSTRAINTS,
@@ -47,8 +47,9 @@ def _snapshot(loader: VocabularyLoader) -> dict:
         "nodes": loader.node_counts(),
         "relationships": loader.relationship_counts(),
         "occurrences": {
-            r["k"]: r["o"] for r in loader.run(
-                "MATCH (s:Shape) RETURN s.shape_key AS k, s.occurrences AS o")
+            r["k"]: (r["o"], r["norm"], r["base"]) for r in loader.run(
+                "MATCH (s:Shape) RETURN s.shape_key AS k, s.occurrences AS o, "
+                "s.id_short_norm AS norm, s.id_short_base AS base")
         },
         "uses": {
             (r["v"], r["k"]): r["o"] for r in loader.run(
@@ -162,6 +163,63 @@ def test_a_shape_used_by_two_vendors_is_one_node(loader, json_files):
     assert row["shared"] > 0 and row["most"] == 2
 
 
+def test_the_derived_idshort_forms_are_written_and_queryable(loader, corpus_records):
+    """The two forms exist on every named shape, and the lookup they exist for works.
+
+    A stored property nobody can query is dead weight, so this asserts the actual
+    hop: an equality on ``id_short_norm`` finds every spelling of one name.
+    """
+    from neo4aas.vocabulary.idshort import normalize_id_short
+
+    loader.load_records(corpus_records)
+    loader.finalize()
+    missing = loader.run("""
+        MATCH (s:Shape)
+        WHERE s.id_short IS NOT NULL
+          AND (s.id_short_norm IS NULL OR s.id_short_base IS NULL)
+        RETURN count(s) AS n""")[0]["n"]
+    assert missing == 0
+
+    # Two spellings of one name, written the way two vendors write them. A ten-file
+    # sample contains no natural collision (111 of 4 510 forms merge, corpus-wide),
+    # so the pair is stated rather than hoped for.
+    spelled = VocabularyRecords()
+    for vendor, raw in (("a", "ValueID"), ("b", "ValueId")):
+        spelled.add_shape(Shape.of({"idShort": raw, "modelType": "Property"}), vendor)
+    loader.load_records(spelled)
+    loader.finalize()
+
+    form = normalize_id_short("ValueID")
+    found = loader.run(
+        "MATCH (s:Shape {id_short_norm: $f}) RETURN collect(s.id_short) AS raw",
+        f=form)[0]["raw"]
+    # A superset, not an equality: the corpus sample ships its own ``ValueId`` shape
+    # under a different modelType, and one lookup finding all three is the point.
+    assert {"ValueID", "ValueId"} <= set(found), "the normalised lookup misses a spelling"
+
+
+def test_the_stem_ratio_separates_a_catch_all_from_an_enumeration(loader, corpus_records):
+    """The junk-semanticId signal, on real data: ratio, not in-degree.
+
+    An enumeration (``…-Connector__00__`` … ``__47__``) shares one identifier by
+    design and scores low; a catch-all files unrelated names under one identifier
+    and scores near 1. A high in-degree alone cannot tell them apart.
+    """
+    loader.load_records(corpus_records)
+    loader.finalize()
+    rows = loader.run("""
+        MATCH (s:Shape)-[:DECLARES]->(n:SemanticId)
+        WHERE s.id_short_base IS NOT NULL
+        WITH n, count(s) AS shapes, count(DISTINCT s.id_short_base) AS stems
+        WHERE shapes >= 4
+        RETURN n.value AS value, shapes, stems, 1.0 * stems / shapes AS ratio
+        ORDER BY ratio DESC""")
+    assert rows, "no semanticId is declared by four shapes in this sample"
+    assert max(r["ratio"] for r in rows) > min(r["ratio"] for r in rows), \
+        "the ratio does not discriminate — every semanticId scores the same"
+    assert all(0.0 < r["ratio"] <= 1.0 for r in rows)
+
+
 def test_semantic_ids_resolve_on_the_version_stripped_base(loader):
     """The join that lifts resolution roughly tenfold."""
     from neo4aas.vocabulary.concepts import concept
@@ -176,7 +234,7 @@ def test_semantic_ids_resolve_on_the_version_stripped_base(loader):
     assert loader.run("""
         MATCH (:SemanticId {value: '0173-1#02-BAF016#006'})
               -[:RESOLVES_TO]->(c:Concept)
-        RETURN c.irdi AS irdi""")[0]["irdi"] == "0173-1#02-BAF016#009"
+        RETURN c.id AS id""")[0]["id"] == "0173-1#02-BAF016#009"
 
 
 def test_an_unresolvable_semantic_id_stays_in_the_graph(loader):
@@ -373,18 +431,18 @@ def test_a_cdd_semantic_id_resolves_on_the_version_stripped_base(loader, cdd_res
     That is the whole reason the join is on the base — and it is why IEC CDD is
     worth loading at all: those semanticIds resolve nowhere without it.
     """
-    from neo4aas.core.utils import irdi_base
+    from neo4aas.core.utils import id_base
 
     entry = next(r for r in cdd_result.records.values() if r["_type"] == "property")
-    declared = f"{irdi_base(entry['irdi'])}#999"
+    declared = f"{id_base(entry['irdi'])}#999"
 
-    loader.run("CREATE (:SemanticId {value: $v, base: $b})",
-               v=declared, b=irdi_base(declared))
+    loader.run("CREATE (:SemanticId {value: $v, value_base: $b})",
+               v=declared, b=id_base(declared))
     _load_cdd(loader, cdd_result)
 
     assert loader.run("""
         MATCH (:SemanticId {value: $v})-[:RESOLVES_TO]->(c:Concept)
-        RETURN c.irdi AS irdi""", v=declared)[0]["irdi"] == entry["irdi"]
+        RETURN c.id AS id""", v=declared)[0]["id"] == entry["irdi"]
 
 
 def test_reimporting_the_dictionary_changes_nothing(loader, cdd_result):
@@ -401,7 +459,7 @@ def test_the_two_dictionaries_do_not_contest_each_other(loader, cdd_result):
     _load_cdd(loader, cdd_result)
     assert loader.run("""
         MATCH (c:Concept {source: 'iec_cdd'})
-        WHERE NOT c.irdi STARTS WITH '0112'
+        WHERE NOT c.id STARTS WITH '0112'
         RETURN count(*) AS c""")[0]["c"] == 0
 
 
@@ -441,7 +499,7 @@ def test_a_supplemental_only_id_resolves_into_the_dictionary(loader,
     """The point of the change: an identifier reachable *only* as a supplemental
     still joins the dictionary on the version-stripped base."""
     loader.load_concepts([{
-        "irdi": "0112/2///61987#ABA286#007", "irdi_base": "0112/2///61987#ABA286",
+        "id": "0112/2///61987#ABA286#007", "id_base": "0112/2///61987#ABA286",
         "source": "iec_cdd", "kind": "property", "precedence": 2,
         "coded_name": None, "level": None, "preferred_name": "materials number",
         "definition": None, "unit": None, "data_type": None, "deprecated": False,
@@ -470,14 +528,14 @@ def test_a_wrapped_irdi_resolves_and_a_samm_urn_does_not(loader, corpus_records)
     a misspelled wrapper is not repaired. Both IDTA Battery Passport templates ship
     all three.
     """
-    from neo4aas.core.utils import irdi_base
+    from neo4aas.core.utils import id_base
 
     for value in ("urn:irdi:0173-1#02-AAN920#003",
                   "urn:samm:io.admin-shell.idta.batterypass.technical_data:1.0.0#batteryMass",
                   "urn:iridi:0173-1#02-ABL851#001"):
         corpus_records.add_semantic_id(value, "GlobalReference", "ExternalReference")
     loader.load_concepts([{
-        "irdi": "0173-1#02-AAN920#007", "irdi_base": "0173-1#02-AAN920",
+        "id": "0173-1#02-AAN920#007", "id_base": "0173-1#02-AAN920",
         "source": "eclass", "kind": "property", "precedence": 2, "coded_name": None,
         "level": None, "preferred_name": "material name", "definition": None,
         "unit": None, "data_type": None, "deprecated": False,
@@ -485,7 +543,7 @@ def test_a_wrapped_irdi_resolves_and_a_samm_urn_does_not(loader, corpus_records)
     loader.load_records(corpus_records)
     loader.finalize()
 
-    assert irdi_base("urn:irdi:0173-1#02-AAN920#003") == "0173-1#02-AAN920"
+    assert id_base("urn:irdi:0173-1#02-AAN920#003") == "0173-1#02-AAN920"
     assert loader.run("""
         MATCH (:SemanticId {value: 'urn:irdi:0173-1#02-AAN920#003'})
               -[:RESOLVES_TO]->(c:Concept)
@@ -502,22 +560,22 @@ def test_a_wrapped_irdi_resolves_and_a_samm_urn_does_not(loader, corpus_records)
 
 
 def test_a_concept_base_is_recomputed_not_frozen(loader):
-    """``irdi_base`` is a pure function of ``irdi``, so the row always carries the
+    """``id_base`` is a pure function of ``id``, so the row always carries the
     current answer and the stored one must yield to it.
 
     Freezing it with ``coalesce`` looked like protecting an identity, but it meant a
-    change to what :func:`neo4aas.core.utils.irdi_base` normalises could never reach a
+    change to what :func:`neo4aas.core.utils.id_base` normalises could never reach a
     node that already existed — the graph would keep a base no current code computes,
     while query-time callers computed the new one and missed it. Found in the live
     graph: one embedded ConceptDescription kept a whitespace-padded base across a
     re-import that was supposed to refresh exactly that.
     """
-    row = {"irdi": "0173-1#02-AAW338#001 ", "irdi_base": "0173-1#02-AAW338",
+    row = {"id": "0173-1#02-AAW338#001 ", "id_base": "0173-1#02-AAW338",
            "source": "aas", "kind": "description", "precedence": 1, "coded_name": None,
            "level": None, "preferred_name": "designation", "definition": None,
            "unit": None, "data_type": None, "deprecated": False}
-    loader.load_concepts([dict(row, irdi_base="0173-1#02-AAW338#001 ")])   # stale
+    loader.load_concepts([dict(row, id_base="0173-1#02-AAW338#001 ")])   # stale
     loader.load_concepts([row])                                            # current
 
-    assert loader.run("MATCH (c:Concept {irdi: $i}) RETURN c.irdi_base AS b",
-                      i=row["irdi"])[0]["b"] == "0173-1#02-AAW338"
+    assert loader.run("MATCH (c:Concept {id: $i}) RETURN c.id_base AS b",
+                      i=row["id"])[0]["b"] == "0173-1#02-AAW338"

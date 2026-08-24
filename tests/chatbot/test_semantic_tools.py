@@ -95,7 +95,7 @@ def test_semantic_threshold_finds_german_idshort(tools):
 @pytest.mark.integration
 @pytest.mark.parametrize("sid", ["0173-1#02-BAA039", "0173-1#02-BAA039#010"])
 def test_semantic_id_base_is_version_agnostic(tools, sid):
-    """Versionless and versioned IRDIs must resolve to the same concept (irdi_base, not a
+    """Versionless and versioned IRDIs must resolve to the same concept (id_base, not a
     naive rsplit that would strip the structural '#' of a versionless IRDI)."""
     f = tools["find_submodel_elements_by_semantic_id"]
     r = f.invoke({"semantic_id": sid, "value_min": 100})
