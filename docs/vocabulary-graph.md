@@ -158,6 +158,41 @@ exactly as the primary one is, and it is the *more* likely of the two to name a 
 concept. The unresolved list counts both edge types too, so a supplemental-only identifier
 no longer prints `shapes: 0`.
 
+### Wrapped IRDIs, and what is deliberately left broken
+
+Some sources do not write an IRDI plainly. The IDTA Battery Passport templates wrap it in a
+URN — `urn:irdi:0173-1#02-AAN920#003` on `BatteryMaterialName` — and the ECLASS-CDP URL
+serves the same IRDIs with the two `#` separators replaced by `-`, sometimes with a stray
+space after the host or with the separators left as `#` after all. All of these *are* ECLASS
+properties; the join key simply could not see through the wrapper, so they named nothing.
+
+`core.utils.canonical_irdi()` strips the known wrappers, and `irdi_base()` and `is_irdi()`
+both go through it so they cannot disagree about what is an IRDI. The stored `value` stays
+**verbatim** — the graph records what the vendor wrote — and only the derived `base` is
+canonical, which is exactly how the CDP URL has always behaved.
+
+Three forms are deliberately *not* normalised, and the report keeps them visible:
+
+- **Compound IRDIs** (`0173-1#02-ABI503#003~0/0173-1#01-AHF582#003`, 37 values). The tail
+  qualifies the head — a property *in the context of* a class — so collapsing to the head
+  would silently rename the concept.
+- **Misspelled wrappers** (`urn:iridi:`, `urn:idi:`, `urn:samurn:`, 5 values). Repairing a
+  typo is inventing an identifier: the same rule that drops IEC CDD's 1 547 prefix-less
+  IRDIs rather than guessing their ICD.
+- **`urn:samm:`** (292 values). An Eclipse SAMM aspect-model identifier — a different
+  identifier system, with no dictionary entry to find. Unresolved is the correct answer.
+
+The reach is small and worth stating plainly: 35 values normalise, 29 of them newly find a
+concept, against 3 337 unresolved. The point is not the count — it is that a value which
+announces itself as an IRDI stops being treated as an opaque string, and that the rule now
+lives in one place for the next corpus.
+
+**Changing what `irdi_base()` normalises is a re-import.** Its output is stored
+(`SemanticId.base`, `Concept.irdi_base`, and `Reference.target_id_base` /
+`ConceptDescription.id_base` in the instance graph) *and* recomputed by query-time callers,
+so a changed function against un-refreshed data is worse than either state alone: the caller
+computes the new base and misses the stale stored one.
+
 ### Two dictionaries, one identifier space
 
 ECLASS is not the only dictionary vendors point at. IEC CDD publishes IEC 61360-4/-7,

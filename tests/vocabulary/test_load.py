@@ -460,3 +460,42 @@ def test_reimporting_supplementals_changes_nothing(loader, supplemented_records)
     loader.load_records(supplemented_records)
     loader.finalize()
     assert _snapshot(loader) == first
+
+
+def test_a_wrapped_irdi_resolves_and_a_samm_urn_does_not(loader, corpus_records):
+    """The scope decision, end to end.
+
+    ``urn:irdi:`` wraps an ECLASS IRDI and must join through it; ``urn:samm:`` is an
+    Eclipse SAMM aspect-model identifier, a different system with nothing to find, and
+    a misspelled wrapper is not repaired. Both IDTA Battery Passport templates ship
+    all three.
+    """
+    from neo4aas.core.utils import irdi_base
+
+    for value in ("urn:irdi:0173-1#02-AAN920#003",
+                  "urn:samm:io.admin-shell.idta.batterypass.technical_data:1.0.0#batteryMass",
+                  "urn:iridi:0173-1#02-ABL851#001"):
+        corpus_records.add_semantic_id(value, "GlobalReference", "ExternalReference")
+    loader.load_concepts([{
+        "irdi": "0173-1#02-AAN920#007", "irdi_base": "0173-1#02-AAN920",
+        "source": "eclass", "kind": "property", "precedence": 2, "coded_name": None,
+        "level": None, "preferred_name": "material name", "definition": None,
+        "unit": None, "data_type": None, "deprecated": False,
+    }])
+    loader.load_records(corpus_records)
+    loader.finalize()
+
+    assert irdi_base("urn:irdi:0173-1#02-AAN920#003") == "0173-1#02-AAN920"
+    assert loader.run("""
+        MATCH (:SemanticId {value: 'urn:irdi:0173-1#02-AAN920#003'})
+              -[:RESOLVES_TO]->(c:Concept)
+        RETURN c.preferred_name AS name""")[0]["name"] == "material name"
+
+    for unresolvable in (
+        "urn:samm:io.admin-shell.idta.batterypass.technical_data:1.0.0#batteryMass",
+        "urn:iridi:0173-1#02-ABL851#001",
+    ):
+        assert loader.run("""
+            MATCH (n:SemanticId {value: $v})
+            RETURN count { (n)-[:RESOLVES_TO]->() } AS hits""",
+            v=unresolvable)[0]["hits"] == 0

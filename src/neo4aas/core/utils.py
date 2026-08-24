@@ -24,24 +24,64 @@ _IRDI_VERSION_RE = re.compile(r"#\d+$")
 # '-', e.g. "https://api.eclass-cdp.com/0173-1-01-AHX837-002" is the IRDI
 # "0173-1#01-AHX837#002". Normalizing the URL back to canonical IRDI form lets the
 # CDP-URL and plain-IRDI references of the same property share one base.
-_ECLASS_CDP_RE = re.compile(
-    r"^https?://api\.eclass-cdp\.com/(\d{4}-\d)-(\d{2}-[0-9A-Za-z]+)-(\d+)$"
-)
+_ECLASS_CDP_HOST_RE = re.compile(r"^https?://api\.eclass-cdp\.com/\s*(.+?)\s*$")
+_ECLASS_CDP_DASHED_RE = re.compile(r"^(\d{4}-\d)-(\d{2}-[0-9A-Za-z]+)-(\d+)$")
+
+# The IDTA Battery Passport templates write an IRDI inside a URN: the wrapper states
+# outright that the payload is one, so unwrapping it invents nothing. Misspellings of
+# the scheme (urn:iridi:, urn:idi:) are deliberately *not* matched — repairing a typo
+# would be inventing an identifier, and urn:samm: is a different identifier system
+# altogether (Eclipse SAMM aspect models), not an IRDI in a wrapper.
+_URN_IRDI_RE = re.compile(r"(?i)^urn:irdi:(.+)$")
+
+
+def canonical_irdi(value: str | None) -> str | None:
+    """Strip a known wrapper off an IRDI, leaving canonical ``ICD#item#version`` form.
+
+    Some sources do not write an IRDI plainly. The wrappers seen in real AAS data are
+    a URN (``urn:irdi:0173-1#02-AAN920#003``) and the ECLASS-CDP URL, which serves the
+    same IRDIs with the two ``#`` separators replaced by ``-`` — and, in the IDTA
+    templates, sometimes with a stray space after the host or with the separators left
+    as ``#`` after all.
+
+    Only whole, unambiguous wrappers are removed. Anything else is returned unchanged,
+    so a caller can canonicalise every value it sees.
+    """
+    if not value:
+        return value
+    urn = _URN_IRDI_RE.match(value)
+    if urn:
+        value = urn.group(1).strip()
+    host = _ECLASS_CDP_HOST_RE.match(value)
+    if host:
+        payload = host.group(1)
+        # Already canonical apart from the host: the separators were never encoded.
+        if "#" in payload:
+            return payload
+        dashed = _ECLASS_CDP_DASHED_RE.match(payload)
+        if dashed:
+            return f"{dashed.group(1)}#{dashed.group(2)}#{dashed.group(3)}"
+    return value
 
 
 def irdi_base(value: str) -> str:
     """Return the version-agnostic IRDI base: the IRDI minus its trailing '#<version>'.
 
-    ECLASS-CDP URLs (dash-encoded IRDIs) are first normalized to canonical IRDI
-    form, so they collapse to the same base as the plain IRDI of that property.
+    Known wrappers are removed first by :func:`canonical_irdi` — an ECLASS-CDP URL or a
+    ``urn:irdi:`` prefix — so a wrapped IRDI collapses to the same base as the plain
+    IRDI of that property, rather than splitting the concept in two.
+
+    **This function's output is stored** (``Reference.target_id_base``,
+    ``ConceptDescription.id_base``, ``SemanticId.base``, ``Concept.irdi_base``) *and*
+    recomputed by query-time callers. Changing what it normalizes therefore invalidates
+    those stored values: a caller computes the new base and misses the stale stored one,
+    which is worse than either state alone. Such a change must ship with a re-import.
 
     Non-IRDI values (no 4-digit ICD prefix, or no trailing numeric version) are
     returned unchanged, so callers can store the base unconditionally — for a
     non-IRDI id the base simply equals the id and equality behaves as before.
     """
-    cdp = _ECLASS_CDP_RE.match(value) if value else None
-    if cdp:
-        value = f"{cdp.group(1)}#{cdp.group(2)}#{cdp.group(3)}"
+    value = canonical_irdi(value)
     if value and _IRDI_PREFIX_RE.match(value) and _IRDI_VERSION_RE.search(value):
         return _IRDI_VERSION_RE.sub("", value)
     return value
@@ -56,7 +96,8 @@ def is_irdi(value: str | None) -> bool:
     properties scraped without their prefix (``AAE930#001``), which no amount of
     version-stripping makes joinable.
     """
-    return bool(value and _IRDI_PREFIX_RE.match(value))
+    canonical = canonical_irdi(value)
+    return bool(canonical and _IRDI_PREFIX_RE.match(canonical))
 
 
 def rm_quotes(s: str):

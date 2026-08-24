@@ -84,6 +84,38 @@ ORDER BY shapes DESC, value ASC
 LIMIT $limit
 """
 
+#: Unresolved semanticIds grouped by the *form* of the identifier, because "3 337
+#: resolve nowhere" is not one finding but several with different answers:
+#:
+#: * an IDTA or vendor URL names a template, not a concept — nothing to resolve;
+#: * a plain IRDI absent from the loaded dictionary is a vendor citing a retired or
+#:   unloaded segment — a real finding about the corpus;
+#: * a SAMM aspect-model URN belongs to a different identifier system entirely;
+#: * a compound ``A~0/B`` names B in the context of A and is deliberately not collapsed;
+#: * an unjoinable wrapper is a *defect* — an IRDI the join key cannot see through.
+#:
+#: The last bucket is the one that should stay at zero. Printing the buckets means a new
+#: bad form in a future corpus shows up as a bucket instead of hiding in a long tail.
+UNRESOLVED_FORMS_QUERY = """
+MATCH (n:SemanticId)
+WHERE NOT (n)-[:RESOLVES_TO]->(:Concept)
+WITH n, count { (n)<-[:DECLARES|DECLARES_SUPPLEMENTAL]-(:Shape) } AS shapes
+WITH CASE
+       // Keyed on the *base*, because that is what the join uses: a wrapper the key
+       // can now read has an IRDI base and belongs under "absent", not "unreadable".
+       WHEN n.base =~ '^[0-9]{4}[-/].*[~/].*' THEN 'compound IRDI (not collapsed)'
+       WHEN n.base =~ '^[0-9]{4}[-/].*'    THEN 'IRDI absent from the dictionary'
+       WHEN n.base =~ '(?i)^urn:irdi:.*'   THEN 'wrapper the join key cannot read'
+       WHEN n.base =~ '(?i)^urn:samm:.*'   THEN 'SAMM aspect model (other system)'
+       WHEN n.base =~ '(?i)^urn:.*'        THEN 'other URN (incl. misspelled wrapper)'
+       WHEN n.base CONTAINS 'eclass-cdp.com' THEN 'ECLASS-CDP URL the key cannot read'
+       WHEN n.base STARTS WITH 'http'      THEN 'IDTA / vendor URL (not a concept)'
+       ELSE 'other'
+     END AS form, shapes
+RETURN form, count(*) AS values, sum(shapes) AS declared_by
+ORDER BY values DESC
+"""
+
 TOP_DEGREE_QUERY = """
 MATCH (n)
 WHERE any(l IN labels(n) WHERE l IN $labels)
@@ -194,6 +226,7 @@ class RunReport:
     concepts_by_source: list[dict] = field(default_factory=list)
     supplemental: dict[str, Any] = field(default_factory=dict)
     supplemental_top: list[dict] = field(default_factory=list)
+    unresolved_forms: list[dict] = field(default_factory=list)
     write_seconds: dict[str, float] = field(default_factory=dict)
     rows_written: dict[str, int] = field(default_factory=dict)
 
@@ -263,6 +296,13 @@ class RunReport:
                     f"{self.ambiguity['widest']:,}) — the merge cannot say which")
                 add("  combinations of those children actually co-occur; the support "
                     "counters are what is left to rank them by.")
+
+        if self.unresolved_forms:
+            add("")
+            add("UNRESOLVED SEMANTIC IDS BY FORM")
+            for row in self.unresolved_forms:
+                add(f"  {row['form']:<38}{row['values']:>6} values"
+                    f"{row['declared_by']:>8} declaring shapes")
 
         if self.supplemental.get("values"):
             add("")
@@ -359,6 +399,7 @@ def collect(loader, report: RunReport, *, top: int = TOP_DEGREE_LIMIT,
                                     labels=list(VOCABULARY_LABELS), limit=top)]
     report.top_declares = [dict(r) for r in loader.run(DECLARES_DEGREE_QUERY, limit=top)]
     report.concepts_by_source = [dict(r) for r in loader.run(CONCEPTS_BY_SOURCE_QUERY)]
+    report.unresolved_forms = [dict(r) for r in loader.run(UNRESOLVED_FORMS_QUERY)]
     supplemental = loader.run(SUPPLEMENTAL_QUERY)
     if supplemental:
         report.supplemental = dict(supplemental[0])

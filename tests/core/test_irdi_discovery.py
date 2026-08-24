@@ -7,7 +7,7 @@ ECLASS versions.
 
 import pytest
 
-from neo4aas.core.utils import irdi_base
+from neo4aas.core.utils import irdi_base, is_irdi
 
 
 # ---------------------------------------------------------------------------
@@ -31,6 +31,17 @@ from neo4aas.core.utils import irdi_base
         ("0112/2///61360_4#AAF120#001", "0112/2///61360_4#AAF120"),
         ("0112/2///61987#ABN590#002", "0112/2///61987#ABN590"),
         ("0112/2///61987#ABN590", "0112/2///61987#ABN590"),  # no version -> unchanged
+        # Wrapped IRDIs: forms that *are* an ECLASS IRDI written inside a wrapper the
+        # join key must see through. The IDTA Battery Passport template wraps them in a
+        # URN; the CDP URL turns up with a stray space and in already-'#' form.
+        ("urn:irdi:0173-1#02-AAN920#003", "0173-1#02-AAN920"),
+        ("URN:IRDI:0173-1#02-AAN920#003", "0173-1#02-AAN920"),   # scheme is case-insensitive
+        ("urn:irdi:0112/2///61987#ABN590#002", "0112/2///61987#ABN590"),
+        ("https://api.eclass-cdp.com/0173-1#02-ABL775#001", "0173-1#02-ABL775"),
+        ("https://api.eclass-cdp.com/ 0173-1-02-ABK163-002", "0173-1#02-ABK163"),
+        # Not wrappers, and deliberately left alone — see test_scope_of_normalisation.
+        ("urn:samm:io.admin-shell.idta.batterypass.technical_data:1.0.0#batteryMass",
+         "urn:samm:io.admin-shell.idta.batterypass.technical_data:1.0.0#batteryMass"),
         ("https://example.com/foo#bar", "https://example.com/foo#bar"),  # not IRDI
         ("https://admin-shell.io/x#123", "https://admin-shell.io/x#123"),  # no ICD prefix
         ("", ""),
@@ -46,6 +57,48 @@ def test_irdi_base_collapses_iec_cdd_versions():
 
 def test_irdi_base_collapses_versions():
     assert irdi_base("0173-1#02-AAO677#001") == irdi_base("0173-1#02-AAO677#007")
+
+
+@pytest.mark.parametrize("value", [
+    # A misspelled wrapper. Repairing it would be *inventing* an identifier — the same
+    # rule that drops IEC CDD's prefix-less IRDIs instead of guessing their ICD.
+    "urn:iridi:0173-1#02-ABL851#001",
+    "urn:idi:0173-1#02-ABL854#001",
+    "urn:samurn:samm:io.admin-shell.idta.generic.technical_data:2.0.0#manufacturerOrderCode",
+    # An Eclipse SAMM aspect-model id: a different identifier system, not an IRDI at all.
+    "urn:samm:io.admin-shell.idta.handover_documentation:2.0.0#DocumentIdentifier",
+    "https://api.eclass-cdp.com/0173-1-02-ABI501-003/0173-1-01-AHF580-003",
+])
+def test_scope_of_normalisation(value):
+    """Forms deliberately *not* normalised. These guard the scope decision."""
+    assert irdi_base(value) == value
+    assert not is_irdi(value)
+
+
+def test_a_compound_irdi_is_not_collapsed_to_its_head():
+    """``A~0/B`` names B *in the context of* A, so the head alone is a different
+    concept. The trailing version is stripped as on any IRDI — that is unchanged —
+    but the pair is never reduced to one member."""
+    compound = "0173-1#02-ABI503#003~0/0173-1#01-AHF582#003"
+    assert irdi_base(compound) == "0173-1#02-ABI503#003~0/0173-1#01-AHF582"
+    assert irdi_base(compound) != irdi_base("0173-1#02-ABI503#003")
+
+
+def test_a_wrapped_irdi_and_its_plain_form_are_one_base():
+    """The join property: the wrapper must not split a concept in two."""
+    assert irdi_base("urn:irdi:0173-1#02-AAN920#003") == irdi_base("0173-1#02-AAN920#007")
+
+
+@pytest.mark.parametrize("value", [
+    "0173-1#02-AAN920#003",
+    "urn:irdi:0173-1#02-AAN920#003",
+    "https://api.eclass-cdp.com/0173-1-01-AHX837-002",
+    "https://api.eclass-cdp.com/0173-1#02-ABL775#001",
+    "0112/2///61987#ABN590#002",
+])
+def test_is_irdi_agrees_with_irdi_base_about_wrappers(value):
+    """The two must not disagree: one decides what joins, the other what is rejected."""
+    assert is_irdi(value)
 
 
 def test_irdi_base_cdp_url_matches_plain_irdi():
