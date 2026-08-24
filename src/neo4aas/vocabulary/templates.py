@@ -160,6 +160,7 @@ def extract_templates(root: str | Path,
                     if use.shape.semantic_id:
                         records.add_semantic_id(use.shape.semantic_id,
                                                 use.key_type, use.ref_type)
+                    records.add_supplementals(use)
                 records.template_contains.update(walk.contains)
                 templates.append(template)
         records.documents += 1

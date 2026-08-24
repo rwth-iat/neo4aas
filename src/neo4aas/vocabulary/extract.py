@@ -132,6 +132,13 @@ class ShapeUse:
     category: str | None
     key_type: str | None
     ref_type: str | None
+    #: ``(value, Key.type, Reference.type)`` per ``supplementalSemanticIds`` entry —
+    #: "this element is *also* that concept", which is where a vendor bridges two
+    #: dictionaries. Sorted, because they are a set: an element's supplementals carry
+    #: no order, and sorting is what makes the fold independent of document order.
+    #: Deliberately **not** part of :attr:`shape`'s key — see
+    #: :func:`neo4aas.vocabulary.extract.shape_key`.
+    supplemental: tuple[tuple[str, str | None, str | None], ...] = ()
 
 
 @dataclass
@@ -212,6 +219,11 @@ class VocabularyRecords:
     contains: Counter = field(default_factory=Counter)
     #: ``(vendor, parent_key, child_key) -> submodels the pair was seen in``.
     contains_submodels: Counter = field(default_factory=Counter)
+    #: ``(shape_key, value)`` — the ``:DECLARES_SUPPLEMENTAL`` edge. A **set**, not a
+    #: counter: like ``:DECLARES`` it carries no support and no vendor, so there is
+    #: nothing a re-import could drift. One shape accumulates the union of the
+    #: supplementals its occurrences declare, since they are not part of its key.
+    supplemental_declarations: set[tuple[str, str]] = field(default_factory=set)
     #: ``(parent_key, child_key)`` pairs an IDTA template declares. No vendor: a
     #: template is not shipped by anyone, it is what shipping is measured against.
     template_contains: set = field(default_factory=set)
@@ -245,6 +257,7 @@ class VocabularyRecords:
         self.vendor_roots.update(other.vendor_roots)
         self.contains.update(other.contains)
         self.contains_submodels.update(other.contains_submodels)
+        self.supplemental_declarations |= other.supplemental_declarations
         self.template_contains |= other.template_contains
         self.vendors |= other.vendors
         self.documents += other.documents
@@ -277,12 +290,19 @@ class VocabularyRecords:
         if ref_type:
             rec.ref_types.add(ref_type)
 
+    def add_supplementals(self, use: ShapeUse) -> None:
+        """Record one occurrence's supplemental ids against its shape."""
+        for value, key_type, ref_type in use.supplemental:
+            self.add_semantic_id(value, key_type, ref_type)
+            self.supplemental_declarations.add((use.shape.key, value))
+
     def add_walk(self, walk: SubmodelWalk, vendor: str) -> None:
         """Fold one submodel's walk in under ``vendor``."""
         for use in walk.uses:
             self.add_shape(use.shape, vendor, use.category)
             if use.shape.semantic_id:
                 self.add_semantic_id(use.shape.semantic_id, use.key_type, use.ref_type)
+            self.add_supplementals(use)
         for key, count in walk.roots.items():
             self.vendor_roots[(vendor, key)] += count
         for pair, count in walk.contains.items():
@@ -335,6 +355,24 @@ def semantic_id_parts(element: Any) -> tuple[str | None, str | None, str | None]
     return _text(key.get("value")), _text(key.get("type")), ref_type
 
 
+def supplemental_semantic_id_parts(
+        element: Any) -> list[tuple[str, str | None, str | None]]:
+    """``(value, Key.type, Reference.type)`` for every ``supplementalSemanticIds`` entry.
+
+    Sorted, and entries without a usable first key are dropped — the same tolerance
+    :func:`semantic_id_parts` applies to the primary one.
+    """
+    parts: list[tuple[str, str | None, str | None]] = []
+    for reference in _as_list((element or {}).get("supplementalSemanticIds")):
+        key = _first_key(reference)
+        value = _text(key.get("value")) if key else None
+        if not value:
+            continue
+        ref_type = _text(reference.get("type")) if isinstance(reference, dict) else None
+        parts.append((value, _text(key.get("type")), ref_type))
+    return sorted(set(parts))
+
+
 def _as_list(value: Any) -> list:
     """AAS JSON lists survive the XML converter as a bare dict when they hold one item."""
     if isinstance(value, list):
@@ -385,7 +423,8 @@ def walk_submodel(submodel: dict) -> SubmodelWalk:
     def record(element: dict, model_type: str | None = None) -> Shape:
         shape = Shape.of(element, model_type)
         _, key_type, ref_type = semantic_id_parts(element)
-        walk.uses.append(ShapeUse(shape, _text(element.get("category")), key_type, ref_type))
+        walk.uses.append(ShapeUse(shape, _text(element.get("category")), key_type, ref_type,
+                                  tuple(supplemental_semantic_id_parts(element))))
         return shape
 
     def visit(element: dict) -> Shape:

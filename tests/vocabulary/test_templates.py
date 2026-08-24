@@ -2,6 +2,7 @@
 
 import pytest
 
+from neo4aas.vocabulary.extract import VocabularyRecords
 from neo4aas.vocabulary.templates import extract_templates, parse_version
 
 
@@ -45,3 +46,17 @@ def test_a_json_and_its_aasx_sibling_are_one_template(corpus_templates):
     assert len(sources) == len(set(f"{s}#{i}" for i, s in enumerate(sources)))
     aasx = [s for s in sources if s.endswith(".aasx")]
     assert 0 < len(aasx) < 20, "only the leaves with no JSON sibling"
+
+
+def test_templates_declare_supplemental_semantic_ids_too(corpus_templates):
+    """A template declaring a supplemental id is the same statement a vendor makes.
+
+    The IDTA tree is where most of them live — hundreds of distinct values against a
+    handful in the instances — mostly IEC CDD IRDIs beside an ECLASS primary.
+    """
+    _, records = extract_templates(corpus_templates, VocabularyRecords())
+    values = {value for _, value in records.supplemental_declarations}
+    assert len(values) > 100
+    assert any(v.startswith("0112/") for v in values)
+    assert values <= set(records.semantic_ids), \
+        "every declared supplemental must have its :SemanticId node"

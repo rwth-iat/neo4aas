@@ -151,6 +151,17 @@ MATCH (n:SemanticId {value: row.value})
 MERGE (s)-[:DECLARES]->(n)
 """
 
+#: "This element is *also* that concept." Kept apart from ``:DECLARES`` so that what
+#: an element **is** stays distinguishable from what it is additionally filed under —
+#: and because a shape has exactly one primary semanticId (it is in the key) but any
+#: number of supplemental ones.
+MERGE_DECLARES_SUPPLEMENTAL = """
+UNWIND $rows AS row
+MATCH (s:Shape {shape_key: row.shape_key})
+MATCH (n:SemanticId {value: row.value})
+MERGE (s)-[:DECLARES_SUPPLEMENTAL]->(n)
+"""
+
 MERGE_VENDOR_USES = """
 UNWIND $rows AS row
 MERGE (v:Vendor {name: row.vendor})
@@ -356,6 +367,11 @@ class VocabularyLoader:
             for rec in records.shapes.values() if rec.shape.semantic_id
         ]
         self._write("DECLARES", MERGE_DECLARES, declares)
+        supplemental = [
+            {"shape_key": shape_key, "value": value}
+            for shape_key, value in sorted(records.supplemental_declarations)
+        ]
+        self._write("DECLARES_SUPPLEMENTAL", MERGE_DECLARES_SUPPLEMENTAL, supplemental)
 
     def load_vendor_edges(self, records: VocabularyRecords) -> None:
         occurrences = "row.occurrences" if self.mode == "replace" \

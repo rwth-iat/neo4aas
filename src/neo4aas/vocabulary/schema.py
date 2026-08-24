@@ -50,7 +50,7 @@ VOCABULARY_LABELS: tuple[str, ...] = (
 
 #: Relationship types this importer owns, for reporting and for ``clear``.
 VOCABULARY_RELATIONSHIPS: tuple[str, ...] = (
-    "DECLARES", "RESOLVES_TO", "BROADER", "CONTAINS",
+    "DECLARES", "DECLARES_SUPPLEMENTAL", "RESOLVES_TO", "BROADER", "CONTAINS",
     "DECLARES_SHAPE", "USES",
 )
 

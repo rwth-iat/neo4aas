@@ -37,8 +37,12 @@ RETURN count(n) AS total, sum(CASE WHEN hits > 0 THEN 1 ELSE 0 END) AS resolved
 #: identifier (``https://admin-shell.io/idta/nameplate/3/0/Nameplate`` and its
 #: kin) has no dictionary entry by construction and would drag the figure down
 #: without saying anything about coverage of the corpus.
+#:
+#: Supplemental declarations count: a ``supplementalSemanticId`` is shipped by the
+#: vendor exactly as the primary one is, and it is the *more* likely of the two to
+#: name a dictionary concept.
 RESOLUTION_USED_QUERY = """
-MATCH (n:SemanticId)<-[:DECLARES]-(s:Shape)
+MATCH (n:SemanticId)<-[:DECLARES|DECLARES_SUPPLEMENTAL]-(s:Shape)
 WHERE coalesce(s.occurrences, 0) > 0
 WITH DISTINCT n
 WITH n, count { (n)-[:RESOLVES_TO]->(:Concept) } AS hits
@@ -74,7 +78,8 @@ ORDER BY shapes DESC
 UNRESOLVED_QUERY = """
 MATCH (n:SemanticId)
 WHERE NOT (n)-[:RESOLVES_TO]->(:Concept)
-RETURN n.value AS value, count { (n)<-[:DECLARES]-(:Shape) } AS shapes
+RETURN n.value AS value,
+       count { (n)<-[:DECLARES|DECLARES_SUPPLEMENTAL]-(:Shape) } AS shapes
 ORDER BY shapes DESC, value ASC
 LIMIT $limit
 """
@@ -127,6 +132,32 @@ RETURN source, kind, count(*) AS concepts,
 ORDER BY concepts DESC
 """
 
+#: What the supplemental edge bought. ``only`` is the number reachable *solely* as a
+#: supplemental — semanticIds the graph could not see at all before, which is the
+#: whole justification for the edge type.
+#:
+#: ``count {}`` is computed in a ``WITH`` before aggregating: left in the ``RETURN``
+#: beside ``count(*)`` it silently becomes a grouping key and splits the result.
+SUPPLEMENTAL_QUERY = """
+MATCH (:Shape)-[e:DECLARES_SUPPLEMENTAL]->(n:SemanticId)
+WITH n, count(e) AS shapes,
+     count { (n)-[:RESOLVES_TO]->(:Concept) } AS hits,
+     count { (n)<-[:DECLARES]-(:Shape) } AS primary
+RETURN count(n) AS values, sum(shapes) AS edges,
+       sum(CASE WHEN hits > 0 THEN 1 ELSE 0 END) AS resolved,
+       sum(CASE WHEN primary = 0 THEN 1 ELSE 0 END) AS only,
+       sum(CASE WHEN primary = 0 AND hits > 0 THEN 1 ELSE 0 END) AS only_resolved
+"""
+
+SUPPLEMENTAL_TOP_QUERY = """
+MATCH (:Shape)-[e:DECLARES_SUPPLEMENTAL]->(n:SemanticId)
+WITH n, count(e) AS shapes
+RETURN n.value AS value, shapes,
+       count { (n)-[:RESOLVES_TO]->(:Concept) } > 0 AS resolves
+ORDER BY shapes DESC, value ASC
+LIMIT $limit
+"""
+
 DECLARES_DEGREE_QUERY = """
 MATCH (n:SemanticId)
 RETURN n.value AS value, count { (n)<-[:DECLARES]-(:Shape) } AS shapes
@@ -161,6 +192,8 @@ class RunReport:
     top_degree: list[dict] = field(default_factory=list)
     top_declares: list[dict] = field(default_factory=list)
     concepts_by_source: list[dict] = field(default_factory=list)
+    supplemental: dict[str, Any] = field(default_factory=dict)
+    supplemental_top: list[dict] = field(default_factory=list)
     write_seconds: dict[str, float] = field(default_factory=dict)
     rows_written: dict[str, int] = field(default_factory=dict)
 
@@ -195,7 +228,7 @@ class RunReport:
         add("")
         add("EDGES")
         for rel, count in sorted(self.relationships.items(), key=lambda kv: -kv[1]):
-            add(f"  {rel:<16} {count:12,}")
+            add(f"  {rel:<21} {count:12,}")
 
         if self.resolution:
             total = self.resolution.get("total", 0)
@@ -230,6 +263,19 @@ class RunReport:
                     f"{self.ambiguity['widest']:,}) — the merge cannot say which")
                 add("  combinations of those children actually co-occur; the support "
                     "counters are what is left to rank them by.")
+
+        if self.supplemental.get("values"):
+            add("")
+            add("SUPPLEMENTAL SEMANTIC IDS — THE CROSS-DICTIONARY BRIDGE")
+            add(f"  {self.supplemental['values']:,} distinct values on "
+                f"{self.supplemental['edges']:,} :DECLARES_SUPPLEMENTAL edges, "
+                f"{self.supplemental['resolved']:,} resolve")
+            add(f"  {self.supplemental['only']:,} are reachable *only* as a supplemental "
+                f"— invisible before this edge existed, "
+                f"{self.supplemental['only_resolved']:,} of them resolve")
+            for row in self.supplemental_top:
+                mark = "->" if row["resolves"] else "  "
+                add(f"    {row['shapes']:>5} shapes {mark} {row['value']}")
 
         if self.concepts_by_source:
             add("")
@@ -313,6 +359,11 @@ def collect(loader, report: RunReport, *, top: int = TOP_DEGREE_LIMIT,
                                     labels=list(VOCABULARY_LABELS), limit=top)]
     report.top_declares = [dict(r) for r in loader.run(DECLARES_DEGREE_QUERY, limit=top)]
     report.concepts_by_source = [dict(r) for r in loader.run(CONCEPTS_BY_SOURCE_QUERY)]
+    supplemental = loader.run(SUPPLEMENTAL_QUERY)
+    if supplemental:
+        report.supplemental = dict(supplemental[0])
+    report.supplemental_top = [dict(r) for r in
+                               loader.run(SUPPLEMENTAL_TOP_QUERY, limit=top)]
     report.write_seconds = dict(loader.counts.seconds)
     report.rows_written = dict(loader.counts.written)
     return report

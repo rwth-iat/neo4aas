@@ -403,3 +403,60 @@ def test_the_two_dictionaries_do_not_contest_each_other(loader, cdd_result):
         MATCH (c:Concept {source: 'iec_cdd'})
         WHERE NOT c.irdi STARTS WITH '0112'
         RETURN count(*) AS c""")[0]["c"] == 0
+
+
+# -- supplemental semanticIds --------------------------------------------------
+
+
+@pytest.fixture
+def supplemented_records(json_files):
+    """A real fold with a supplemental id added to every shape it produced.
+
+    The corpus vendors sampled here ship none, and hand-building a second fold would
+    test the fixture rather than the loader — so the records are real and the extra
+    declaration is what is under test.
+    """
+    records = extract_paths(json_files, vendor="v")
+    for key in list(records.shapes):
+        records.supplemental_declarations.add((key, "0112/2///61987#ABA286#001"))
+    records.add_semantic_id("0112/2///61987#ABA286#001", "GlobalReference",
+                            "ExternalReference")
+    return records
+
+
+def test_supplemental_declarations_are_written_as_their_own_edge(loader,
+                                                                 supplemented_records):
+    loader.load_records(supplemented_records)
+    loader.finalize()
+    written = loader.run(
+        "MATCH ()-[r:DECLARES_SUPPLEMENTAL]->() RETURN count(r) AS c")[0]["c"]
+    assert written == len(supplemented_records.supplemental_declarations)
+    assert loader.run("""
+        MATCH (s:Shape)-[:DECLARES_SUPPLEMENTAL]->(n:SemanticId)
+        RETURN count(DISTINCT n) AS c""")[0]["c"] == 1
+
+
+def test_a_supplemental_only_id_resolves_into_the_dictionary(loader,
+                                                             supplemented_records):
+    """The point of the change: an identifier reachable *only* as a supplemental
+    still joins the dictionary on the version-stripped base."""
+    loader.load_concepts([{
+        "irdi": "0112/2///61987#ABA286#007", "irdi_base": "0112/2///61987#ABA286",
+        "source": "iec_cdd", "kind": "property", "precedence": 2,
+        "coded_name": None, "level": None, "preferred_name": "materials number",
+        "definition": None, "unit": None, "data_type": None, "deprecated": False,
+    }])
+    loader.load_records(supplemented_records)
+    loader.finalize()
+    assert loader.run("""
+        MATCH (:SemanticId {value: '0112/2///61987#ABA286#001'})-[:RESOLVES_TO]->(c:Concept)
+        RETURN c.preferred_name AS name""")[0]["name"] == "materials number"
+
+
+def test_reimporting_supplementals_changes_nothing(loader, supplemented_records):
+    loader.load_records(supplemented_records)
+    loader.finalize()
+    first = _snapshot(loader)
+    loader.load_records(supplemented_records)
+    loader.finalize()
+    assert _snapshot(loader) == first

@@ -172,6 +172,7 @@ def command_import(args) -> int:
         }
         report.relationships = {
             "CONTAINS": len({(p, c) for _, p, c in records.contains}),
+            "DECLARES_SUPPLEMENTAL": len(records.supplemental_declarations),
         }
         report.seconds = time.perf_counter() - started
         print(report.render())

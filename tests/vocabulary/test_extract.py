@@ -274,3 +274,113 @@ def test_extraction_in_worker_processes_matches_serial(json_files):
     assert serial.shapes.keys() == parallel.shapes.keys()
     assert serial.contains == parallel.contains
     assert serial.vendor_shapes == parallel.vendor_shapes
+
+
+# -- supplemental semanticIds --------------------------------------------------
+
+def _ref(value, key_type="GlobalReference", ref_type="ExternalReference"):
+    return {"type": ref_type, "keys": [{"type": key_type, "value": value}]}
+
+
+SUPPLEMENTED = dict(PROPERTY, supplementalSemanticIds=[
+    _ref("0112/2///61987#ABA286#001"),
+    _ref("https://api.eclass-cdp.com/0173-1-02-AAW001-001"),
+])
+
+
+def _env(*elements):
+    return {"submodels": [{"modelType": "Submodel", "idShort": "S",
+                           "submodelElements": list(elements)}]}
+
+
+def _folded(*elements):
+    from neo4aas.vocabulary.extract import extract_environment
+
+    records = VocabularyRecords()
+    extract_environment(_env(*elements), "v", records)
+    return records
+
+
+def test_supplemental_ids_become_semantic_ids_and_their_own_edge():
+    records = _folded(SUPPLEMENTED)
+    assert set(records.semantic_ids) == {
+        "0173-1#02-BAF016#006",
+        "0112/2///61987#ABA286#001",
+        "https://api.eclass-cdp.com/0173-1-02-AAW001-001",
+    }
+    key = Shape.of(SUPPLEMENTED).key
+    assert records.supplemental_declarations == {
+        (key, "0112/2///61987#ABA286#001"),
+        (key, "https://api.eclass-cdp.com/0173-1-02-AAW001-001"),
+    }
+
+
+def test_a_supplemental_id_does_not_change_the_shape_key():
+    """The migration guard.
+
+    Supplementals hang off the shape; they are never part of its identity. Putting
+    them in the key would orphan every node in every database already holding this
+    vocabulary — see :func:`test_keys_are_pinned_to_known_digests`.
+    """
+    assert Shape.of(SUPPLEMENTED).key == Shape.of(PROPERTY).key
+
+
+def test_two_elements_differing_only_in_supplementals_are_one_shape():
+    other = dict(PROPERTY, supplementalSemanticIds=[_ref("0173-1#02-OTHER#001")])
+    records = _folded(SUPPLEMENTED, other)
+    assert len(records.shapes) == 2, "the Submodel's own shape, and the Property's"
+    key = Shape.of(PROPERTY).key
+    assert {value for shape, value in records.supplemental_declarations
+            if shape == key} == {
+        "0112/2///61987#ABA286#001",
+        "https://api.eclass-cdp.com/0173-1-02-AAW001-001",
+        "0173-1#02-OTHER#001",
+    }
+
+
+def test_the_fold_does_not_depend_on_the_order_supplementals_are_written_in():
+    reversed_order = dict(PROPERTY, supplementalSemanticIds=list(
+        reversed(SUPPLEMENTED["supplementalSemanticIds"])))
+    assert (_folded(SUPPLEMENTED).supplemental_declarations
+            == _folded(reversed_order).supplemental_declarations)
+
+
+def test_key_and_reference_types_of_a_supplemental_are_recorded():
+    """Recorded on the node, never used for matching — vendors disagree on them."""
+    element = dict(PROPERTY, supplementalSemanticIds=[
+        _ref("0112/2///61987#ABA286#001", "ConceptDescription", "ModelReference")])
+    record = _folded(element).semantic_ids["0112/2///61987#ABA286#001"]
+    assert record.key_types == {"ConceptDescription"}
+    assert record.ref_types == {"ModelReference"}
+
+
+def test_one_value_used_both_ways_is_a_single_semantic_id():
+    shared = "0173-1#02-BAF016#006"
+    other = {"modelType": "Property", "idShort": "Other", "valueType": "xs:string",
+             "supplementalSemanticIds": [_ref(shared)]}
+    records = _folded(PROPERTY, other)
+    assert len([v for v in records.semantic_ids if v == shared]) == 1
+    assert (Shape.of(other).key, shared) in records.supplemental_declarations
+
+
+def test_an_eclass_cdp_url_supplemental_joins_on_the_canonical_irdi():
+    """`irdi_base` already normalises the dash-encoded CDP URL, which is the form
+    harting ships supplementals in — so it lands on the plain ECLASS concept."""
+    records = _folded(SUPPLEMENTED)
+    assert (records.semantic_ids["https://api.eclass-cdp.com/0173-1-02-AAW001-001"].base
+            == "0173-1#02-AAW001")
+
+
+def test_a_supplemental_without_a_usable_key_is_ignored():
+    element = dict(PROPERTY, supplementalSemanticIds=[
+        {"type": "ExternalReference", "keys": []},
+        {"type": "ExternalReference", "keys": [{"type": "GlobalReference", "value": ""}]},
+        "not-a-reference",
+    ])
+    assert not _folded(element).supplemental_declarations
+
+
+def test_a_single_supplemental_arriving_as_a_dict_is_read():
+    """The XML converter emits a one-item list as a bare dict."""
+    element = dict(PROPERTY, supplementalSemanticIds=_ref("0112/2///61987#ABA286#001"))
+    assert len(_folded(element).supplemental_declarations) == 1

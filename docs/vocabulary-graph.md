@@ -30,6 +30,7 @@ Layout is **edges between shapes**, not a node per layout.
 (:Vendor    {name})
 
 (:Shape)-[:DECLARES]->(:SemanticId)
+(:Shape)-[:DECLARES_SUPPLEMENTAL]->(:SemanticId)  -- "is also that concept"
 (:SemanticId)-[:RESOLVES_TO]->(:Concept)      -- absent when unresolvable; that is data
 (:Concept)-[:BROADER]->(:Concept)             -- ECLASS CodedName prefix / CDD superclass
 (:Template)-[:DECLARES_SHAPE]->(:Shape)
@@ -123,6 +124,39 @@ no broader concept has no siblings — so query expansion, the traversal the gra
 for, would have nothing to expand through. The class→property links come from ECLASS's own
 `described_by` block and are joined on the version-stripped base.
 `--no-property-class-edges` turns them off.
+
+### Supplemental semanticIds, and why they are an edge and not a key
+
+An element may carry `supplementalSemanticIds` beside its `semanticId`: additional
+identifiers naming the same thing in another vocabulary. In this corpus they are almost
+always the bridge between the two dictionaries — an IEC CDD `0112/2///61987#ABA286#001`
+or an ECLASS-CDP URL `https://api.eclass-cdp.com/0173-1-02-AAW001-001` sitting beside an
+ECLASS primary. The instance importer has always kept them; this one dropped them, which
+made exactly those cross-dictionary statements invisible to resolution and to query
+expansion.
+
+They now arrive as `(:Shape)-[:DECLARES_SUPPLEMENTAL]->(:SemanticId)`, and three things
+about that shape are deliberate:
+
+- **Separate from `:DECLARES`.** What an element *is* must stay distinguishable from what
+  it is additionally filed under. It is also a different cardinality: a shape has exactly
+  one primary semanticId, because it is *in* the key, but any number of supplemental ones.
+- **Not part of `shape_key`.** Folding them into the hash would re-key every node in every
+  database already holding this vocabulary — a migration, not a change. So two elements
+  differing only in supplementals remain one shape, and the union of their supplementals
+  hangs off it.
+- **A set, not a counter.** `supplemental_declarations` carries no vendor and no support,
+  like `:DECLARES`, so there is nothing a re-import could drift.
+
+The cost is bounded by *distinct values*, not occurrences, which is the rule the whole
+design rests on: 90 930 supplemental-bearing elements in a 4 000-file instance sample carry
+just **17** distinct values, and the 340-file IDTA template tree — where most of them live —
+carries **384**.
+
+Both resolution figures count them: a `supplementalSemanticId` is shipped by the vendor
+exactly as the primary one is, and it is the *more* likely of the two to name a dictionary
+concept. The unresolved list counts both edge types too, so a supplemental-only identifier
+no longer prints `shapes: 0`.
 
 ### Two dictionaries, one identifier space
 
