@@ -342,8 +342,88 @@ def test_submodel_support_is_not_the_occurrence_count(loader, corpus_records):
     assert row["edges"] > 0 and row["repeated"] > 0
 
 
+def test_the_top_level_hangs_off_a_merged_parent(loader, corpus_records):
+    """The merge must survive the submodel's per-product idShort.
+
+    The parent count is the whole test: rooting on the verbatim idShort gives one
+    subtree per product (140 515 parents and 1.67 M edges on the t100k tier),
+    rooting on ``(id_short_base, semanticId)`` gives tens.
+    """
+    loader.load_records(corpus_records)
+    loader.finalize()
+    row = loader.run("""
+        MATCH (g:SubmodelGroup)
+        RETURN count(g) AS groups,
+               count { (g)-[:CONTAINS]->() } AS edges""")[0]
+    submodels = corpus_records.submodels
+    assert row["groups"] > 0
+    assert row["groups"] < submodels, "the parent key is still per-product"
+
+    # Every group is a :Shape, so :CONTAINS needed no new edge type and every
+    # constraint and index written against shape_key still covers it.
+    assert loader.run(
+        "MATCH (g:SubmodelGroup) WHERE NOT g:Shape RETURN count(g) AS c")[0]["c"] == 0
+    assert loader.run("""
+        MATCH (g:SubmodelGroup)
+        WHERE g.model_type <> 'Submodel' OR g.shape_key IS NULL
+           OR (g.id_short_base IS NULL AND g.semantic_id IS NULL)
+        RETURN count(g) AS c""")[0]["c"] == 0
+
+
+def test_the_merged_parent_is_beside_the_per_product_shape_not_instead_of_it(
+        loader, corpus_records):
+    """``shape_key`` is a cross-repository seam. The group is an addition to it.
+
+    A per-product Submodel shape keeps its own key, its ``:DECLARES`` and its
+    ``:USES``; the group carries a different key and never steals them.
+    """
+    loader.load_records(corpus_records)
+    loader.finalize()
+    assert loader.run("""
+        MATCH (s:Shape) WHERE s.model_type = 'Submodel' AND NOT s:SubmodelGroup
+        RETURN count(s) AS c""")[0]["c"] > 0
+    # No group key equals a shape key — the two payloads are disjoint by design.
+    assert loader.run("""
+        MATCH (g:SubmodelGroup) WHERE g.id_short IS NOT NULL
+        RETURN count(g) AS c""")[0]["c"] == 0
+    # And nothing the group added reaches :DECLARES or :USES.
+    assert loader.run("""
+        MATCH (g:SubmodelGroup)
+        WHERE (g)-[:DECLARES]->() OR ()-[:USES]->(g)
+        RETURN count(g) AS c""")[0]["c"] == 0
+
+
+def test_every_top_level_element_now_has_a_parent(loader, corpus_records):
+    """The bug this exists to fix: a top-level SubmodelElementCollection had no
+    parent at all, so nothing connected it to the submodel type it belongs to."""
+    loader.load_records(corpus_records)
+    loader.finalize()
+    orphans = loader.run("""
+        MATCH (x:Shape)
+        WHERE NOT x:SubmodelGroup AND x.model_type <> 'Submodel'
+          AND NOT (x)<-[:CONTAINS]-()
+        RETURN count(x) AS c""")[0]["c"]
+    assert orphans == 0
+
+
+def test_the_group_edge_carries_the_same_per_vendor_support(loader, corpus_records):
+    """A merged parent's edge is a ``:CONTAINS`` like any other — same arrays, same
+    rules — or a multi-vendor load would stop being idempotent."""
+    loader.load_records(corpus_records)
+    loader.finalize()
+    assert loader.run("""
+        MATCH (:SubmodelGroup)-[e:CONTAINS]->()
+        WHERE e.vendor_names IS NULL
+           OR size(e.vendor_names) <> size(e.vendor_occurrences)
+           OR size(e.vendor_names) <> size(e.vendor_submodels)
+           OR e.occurrences <> reduce(t = 0, x IN e.vendor_occurrences | t + x)
+           OR e.submodels <> reduce(t = 0, x IN e.vendor_submodels | t + x)
+        RETURN count(e) AS c""")[0]["c"] == 0
+
+
 def test_top_level_shapes_are_counted_not_edged(loader, corpus_records):
-    """Containment has no node to hang the top level off, so roots are a count."""
+    """``Shape.top_level`` stays: it is what current consumers read, and the
+    merged parent is an addition beside it, not a replacement for it."""
     loader.load_records(corpus_records)
     loader.finalize()
     row = loader.run("""

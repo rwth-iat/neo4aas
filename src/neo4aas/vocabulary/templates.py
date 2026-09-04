@@ -161,6 +161,12 @@ def extract_templates(root: str | Path,
                         records.add_semantic_id(use.shape.semantic_id,
                                                 use.key_type, use.ref_type)
                     records.add_supplementals(use)
+                # The merged parent as well, or the template's own top-level pairs
+                # would name a node the load never writes and MERGE_TEMPLATE_CONTAINS
+                # would silently drop them. A template's group key collides with the
+                # instances' by design: that is the "vendors implement what IDTA
+                # declares" answer, now readable at the top level of a submodel too.
+                records.add_submodel_group(walk.group)
                 records.template_contains.update(walk.contains)
                 templates.append(template)
         records.documents += 1

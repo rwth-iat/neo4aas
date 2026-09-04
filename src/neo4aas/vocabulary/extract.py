@@ -39,6 +39,16 @@ disagrees across vendors for identical values (one vendor writes
 ``ConceptDescription``, another ``GlobalReference`` for the same IRDI), so it is
 recorded on the ``:SemanticId`` node and ignored for matching.
 
+``submodel_group_key`` is the **second** key, and the only other one. It keys the
+merged parent a submodel's top-level elements hang off
+(:class:`SubmodelGroup`) and it is deliberately *not* a ``shape_key``: it hashes
+a different payload (a literal marker, the ``id_short_base`` fold, the
+semanticId) so the two can never be confused or collide. ``shape_key`` is a
+cross-repository seam — discaas2 computes the same SHA-256 over the same
+verbatim values — and changing it would orphan every node in every database that
+already holds this vocabulary, so the merged parent is an *additional* node
+beside the per-product Submodel shape rather than a replacement for it.
+
 What is *not* extracted
 -----------------------
 
@@ -157,6 +167,58 @@ class ShapeUse:
     supplemental: tuple[tuple[str, str | None, str | None], ...] = ()
 
 
+def submodel_group_key(base: str | None, semantic_id: str | None) -> str:
+    """Stable key of the *merged* parent of a submodel's top-level elements.
+
+    A different payload from :func:`shape_key` — a literal marker, two components
+    instead of four — so a group key can never equal a shape key, and a reader
+    holding one can always tell which it has.
+    """
+    return _digest(["submodel-group", base, semantic_id])
+
+
+@dataclass(frozen=True, slots=True)
+class SubmodelGroup:
+    """The parent of a submodel's top-level elements, merged across products.
+
+    The submodel's *own* shape cannot be that parent. Several vendors put a
+    per-product token in the submodel ``idShort`` — SICK ships
+    ``Nameplate_0226303791c8a2efe04ed3e83865b6b7`` — and ``shape_key`` hashes the
+    ``idShort`` verbatim, so rooting containment there gives every product its own
+    subtree: 1 670 321 edges and 140 515 single-product parents on the t100k tier,
+    against ~2 195 for this key.
+
+    The key is ``(id_short_base, semanticId)`` and both halves are load-bearing:
+
+    * ``semanticId`` alone strands the 1 156 t100k submodels that declare none,
+      and their top-level elements would stay parentless;
+    * ``id_short_base`` alone merges submodels that are genuinely different — two
+      vendors can both ship an ``idShort`` folding to ``nameplate`` while
+      declaring different template ``semanticId``s.
+
+    Together they cost 28 edges over ``semanticId`` alone. Where *both* are
+    missing there is nothing left to merge on, so :meth:`of` returns ``None`` and
+    that submodel keeps the pre-existing behaviour: roots counted, no edge. It is
+    the only case that does.
+    """
+
+    key: str
+    #: :func:`~neo4aas.vocabulary.idshort.id_short_base` of the submodel's idShort.
+    #: A *field*, not a property as on :class:`Shape`: there is no verbatim idShort
+    #: on this node to derive it from, and it is what the node is looked up by.
+    id_short_base: str | None
+    semantic_id: str | None
+
+    @classmethod
+    def of(cls, submodel: dict) -> SubmodelGroup | None:
+        """The merged parent of one Submodel, or ``None`` when it cannot merge."""
+        base = id_short_base(_text(submodel.get("idShort")))
+        semantic = semantic_id_of(submodel)
+        if base is None and semantic is None:
+            return None
+        return cls(submodel_group_key(base, semantic), base, semantic)
+
+
 @dataclass
 class SubmodelWalk:
     """What one submodel contributes: shapes, roots and containment.
@@ -169,9 +231,13 @@ class SubmodelWalk:
     """
 
     uses: list[ShapeUse] = field(default_factory=list)
-    #: Shapes appearing directly under the Submodel. ``:CONTAINS`` has no node to
-    #: hang these off, so "what starts a submodel" is a count, not an edge.
+    #: Shapes appearing directly under the Submodel. Kept as a count *as well as* an
+    #: edge from :attr:`group`: it is what ``Shape.top_level`` and the ``:USES``
+    #: edge's ``top_level`` are computed from, and existing consumers read them.
     roots: Counter = field(default_factory=Counter)
+    #: The merged parent the top level hangs off, or ``None`` when this submodel has
+    #: neither an ``idShort`` nor a ``semanticId`` to merge on.
+    group: SubmodelGroup | None = None
     #: ``(parent_shape_key, child_shape_key) -> occurrences in this submodel``.
     contains: Counter = field(default_factory=Counter)
     elements: int = 0
@@ -229,6 +295,13 @@ class VocabularyRecords:
     """
 
     shapes: dict[str, ShapeRecord] = field(default_factory=dict)
+    #: ``submodel_group_key -> SubmodelGroup``. The merged containment parents, held
+    #: apart from :attr:`shapes` because they are written by their own statement:
+    #: a group has no verbatim ``idShort`` to derive ``id_short_norm`` from, and no
+    #: ``valueType`` or ``category``. They carry no counters of their own — the
+    #: support for a merged parent lives on its ``:CONTAINS`` edges, per vendor,
+    #: which is the same answer this design gives everywhere else.
+    submodel_groups: dict[str, SubmodelGroup] = field(default_factory=dict)
     semantic_ids: dict[str, SemanticIdRecord] = field(default_factory=dict)
     #: ``(vendor, shape_key) -> occurrences`` — the ``:USES`` edge payload.
     vendor_shapes: Counter = field(default_factory=Counter)
@@ -265,6 +338,7 @@ class VocabularyRecords:
                 self.shapes[key].absorb(rec)
             else:
                 self.shapes[key] = rec
+        self.submodel_groups.update(other.submodel_groups)
         for value, sem in other.semantic_ids.items():
             if value in self.semantic_ids:
                 self.semantic_ids[value].absorb(sem)
@@ -300,6 +374,11 @@ class VocabularyRecords:
         if vendor is not None:
             self.vendor_shapes[(vendor, shape.key)] += occurrences
 
+    def add_submodel_group(self, group: SubmodelGroup | None) -> None:
+        """Record a merged containment parent. Idempotent — the key is its identity."""
+        if group is not None:
+            self.submodel_groups.setdefault(group.key, group)
+
     def add_semantic_id(self, value: str, key_type: str | None, ref_type: str | None) -> None:
         rec = self.semantic_ids.get(value)
         if rec is None:
@@ -322,6 +401,7 @@ class VocabularyRecords:
             if use.shape.semantic_id:
                 self.add_semantic_id(use.shape.semantic_id, use.key_type, use.ref_type)
             self.add_supplementals(use)
+        self.add_submodel_group(walk.group)
         for key, count in walk.roots.items():
             self.vendor_roots[(vendor, key)] += count
         for pair, count in walk.contains.items():
@@ -434,8 +514,12 @@ def walk_submodel(submodel: dict) -> SubmodelWalk:
     but is **not** the parent of the top-level elements. Several vendors put a
     per-product token in the submodel ``idShort`` — SICK ships
     ``Nameplate_0226303791c8a2efe04ed3e83865b6b7`` — so rooting containment there
-    would give every product its own subtree and defeat the merge entirely. The
-    top level is a count on the shape instead (:attr:`SubmodelWalk.roots`).
+    would give every product its own subtree and defeat the merge entirely.
+
+    The parent is :class:`SubmodelGroup` instead: the same submodel keyed by
+    ``(id_short_base, semanticId)``, which is what survives the merge. The top
+    level stays a count as well (:attr:`SubmodelWalk.roots`), because that is what
+    ``Shape.top_level`` is computed from and what current consumers read.
     """
     walk = SubmodelWalk()
 
@@ -455,8 +539,12 @@ def walk_submodel(submodel: dict) -> SubmodelWalk:
         return shape
 
     record(submodel, "Submodel")
+    walk.group = SubmodelGroup.of(submodel)
     for element in _child_elements(submodel):
-        walk.roots[visit(element).key] += 1
+        child_shape = visit(element)
+        walk.roots[child_shape.key] += 1
+        if walk.group is not None:
+            walk.contains[(walk.group.key, child_shape.key)] += 1
     return walk
 
 

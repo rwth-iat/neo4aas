@@ -167,6 +167,7 @@ def command_import(args) -> int:
             concepts.update(row["id"] for row in concepts_from_eclass(eclass_result))
         report.nodes = {
             "Shape": len(records.shapes),
+            "SubmodelGroup": len(records.submodel_groups),
             "SemanticId": len(records.semantic_ids), "Concept": len(concepts),
             "Template": len(templates), "Vendor": len(records.vendors),
         }

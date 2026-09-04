@@ -30,7 +30,12 @@ KEY_CONSTRAINTS: tuple[tuple[str, str, str], ...] = (
 #: first, grouping a shape's variants is an equality on the second, and both are
 #: only useful if they are indexed — an unindexed grouping is a full label scan of
 #: the whole shape vocabulary.
+#: ``SubmodelGroup.id_short_base`` is the merged submodel parents' own lookup —
+#: "what does a Nameplate submodel directly contain" starts there — and a
+#: label-scoped index is what keeps it a seek rather than a scan of the whole shape
+#: vocabulary the ``:Shape`` index covers.
 LOOKUP_INDEXES: tuple[tuple[str, str, str], ...] = (
+    ("vocab_submodel_group_base", "SubmodelGroup", "id_short_base"),
     ("vocab_concept_id_base", "Concept", "id_base"),
     ("vocab_concept_coded_name", "Concept", "coded_name"),
     ("vocab_concept_kind", "Concept", "kind"),
@@ -51,8 +56,14 @@ TEXT_INDEXES: tuple[tuple[str, str, str], ...] = (
 
 #: Labels this importer owns. ``vocab clear`` removes these and nothing else, so a
 #: vocabulary graph can share a database with anything.
+#:
+#: ``SubmodelGroup`` is a *second* label on a ``:Shape`` node, not a node of its
+#: own, so it is listed **first**: ``clear`` counts each label before deleting it,
+#: and deleting ``:Shape`` first would report zero groups removed. For the same
+#: reason a group is counted twice by :meth:`VocabularyLoader.node_counts` — once
+#: as what it is, once as what it is written as.
 VOCABULARY_LABELS: tuple[str, ...] = (
-    "Shape", "SemanticId", "Concept", "Template", "Vendor",
+    "SubmodelGroup", "Shape", "SemanticId", "Concept", "Template", "Vendor",
 )
 
 #: Relationship types this importer owns, for reporting and for ``clear``.

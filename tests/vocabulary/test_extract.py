@@ -17,6 +17,7 @@ import pytest
 
 from neo4aas.vocabulary.extract import (
     Shape,
+    SubmodelGroup,
     VocabularyRecords,
     collect_files,
     extract_file,
@@ -24,6 +25,7 @@ from neo4aas.vocabulary.extract import (
     iter_environments,
     semantic_id_of,
     shape_key,
+    submodel_group_key,
     vendor_of,
     walk_submodel,
 )
@@ -98,7 +100,9 @@ def test_multi_language_property_value_is_not_a_child():
     submodel = {"modelType": "Submodel", "idShort": "N", "submodelElements": [mlp]}
     walk = walk_submodel(submodel)
     assert walk.elements == 1
-    assert not walk.contains
+    # The one pair is the submodel's merged parent reaching its top level; the
+    # LangStrings underneath contribute nothing.
+    assert list(walk.contains) == [(walk.group.key, walk.uses[1].shape.key)]
 
 
 def test_nested_containers_are_walked():
@@ -113,6 +117,7 @@ def test_nested_containers_are_walked():
         "Submodel", "Entity", "SubmodelElementCollection", "Property"]
     shapes = {use.shape.model_type: use.shape.key for use in walk.uses}
     assert walk.contains == {
+        (walk.group.key, shapes["Entity"]): 1,
         (shapes["Entity"], shapes["SubmodelElementCollection"]): 1,
         (shapes["SubmodelElementCollection"], shapes["Property"]): 1,
     }
@@ -126,24 +131,80 @@ def test_operation_variables_are_walked():
     assert walk_submodel(submodel).elements == 2
 
 
-def test_the_submodel_is_a_shape_but_never_a_containment_parent():
+def test_the_submodels_own_shape_is_never_a_containment_parent():
     """A layout must not carry a serial number.
 
     Several vendors put a per-product token in the submodel's idShort — SICK ships
-    ``Nameplate_0226…`` — so rooting containment at the submodel's shape would give
-    every product its own subtree and defeat the merge. The submodel's shape is
-    still recorded, because it declares the submodel's semanticId; the top level is
-    a count instead."""
+    ``Nameplate_0226…`` — so rooting containment at the submodel's *shape* would
+    give every product its own subtree and defeat the merge: 1 670 321 edges on
+    the t100k tier against ~2 195. The shape is still recorded, because it declares
+    the submodel's semanticId, and the top level is still a count."""
     a = {"modelType": "Submodel", "idShort": "Nameplate_0226303791c8",
          "submodelElements": [PROPERTY]}
     b = {"modelType": "Submodel", "idShort": "Nameplate_04d188107e6b",
          "submodelElements": [PROPERTY]}
     walk_a, walk_b = walk_submodel(a), walk_submodel(b)
     assert walk_a.roots == walk_b.roots
-    assert walk_a.contains == walk_b.contains == {}
     assert walk_a.uses[0].shape.model_type == "Submodel"
     assert walk_a.uses[0].shape.id_short == "Nameplate_0226303791c8"
-    assert walk_a.uses[0].shape.key not in {p for p, _ in walk_a.contains}
+    assert walk_a.uses[0].shape.key != walk_b.uses[0].shape.key
+    parents = {p for p, _ in walk_a.contains} | {p for p, _ in walk_b.contains}
+    assert not parents & {walk_a.uses[0].shape.key, walk_b.uses[0].shape.key}
+
+
+def test_the_top_level_is_parented_by_a_merged_group():
+    """Two products of the same submodel type give **one** parent and one edge."""
+    a = {"modelType": "Submodel", "idShort": "Nameplate_0226303791c8",
+         "submodelElements": [PROPERTY]}
+    b = {"modelType": "Submodel", "idShort": "Nameplate_04d188107e6b",
+         "submodelElements": [PROPERTY]}
+    walk_a, walk_b = walk_submodel(a), walk_submodel(b)
+    assert walk_a.group is not None
+    assert walk_a.group == walk_b.group
+    assert walk_a.group.id_short_base == "nameplate"
+    assert walk_a.contains == walk_b.contains == {
+        (walk_a.group.key, walk_a.uses[1].shape.key): 1}
+
+
+def test_a_group_key_is_not_a_shape_key():
+    """Two keys, two payloads. A reader holding one can always tell which it has."""
+    group = submodel_group_key("nameplate", "urn:sem")
+    assert group != shape_key("nameplate", "urn:sem", "Submodel", None)
+    assert group != shape_key(None, "urn:sem", "Submodel", None)
+    assert len(group) == 64
+
+
+def test_both_halves_of_the_group_key_are_load_bearing():
+    """``semanticId`` alone strands the submodels that declare none; ``id_short_base``
+    alone merges submodels that are genuinely different."""
+    sem_a = {"type": "ExternalReference",
+             "keys": [{"type": "GlobalReference", "value": "urn:tmpl-a"}]}
+    sem_b = {"type": "ExternalReference",
+             "keys": [{"type": "GlobalReference", "value": "urn:tmpl-b"}]}
+    same_name_other_template = (
+        SubmodelGroup.of({"idShort": "Nameplate", "semanticId": sem_a}),
+        SubmodelGroup.of({"idShort": "Nameplate", "semanticId": sem_b}),
+    )
+    assert same_name_other_template[0] != same_name_other_template[1]
+
+    # No semanticId at all: id_short_base still keys it, so its top level is not
+    # left parentless — 1 156 submodels on the t100k tier.
+    nameless_template = SubmodelGroup.of({"idShort": "Nameplate_0226303791c8"})
+    assert nameless_template is not None
+    assert nameless_template.id_short_base == "nameplate"
+    assert nameless_template.semantic_id is None
+
+    # No idShort either: nothing left to merge on, so the pre-existing behaviour
+    # stands — roots counted, no edge. The only case that cannot merge.
+    assert SubmodelGroup.of({"modelType": "Submodel"}) is None
+
+
+def test_a_submodel_that_cannot_merge_keeps_the_old_behaviour():
+    submodel = {"modelType": "Submodel", "submodelElements": [PROPERTY]}
+    walk = walk_submodel(submodel)
+    assert walk.group is None
+    assert walk.contains == {}
+    assert list(walk.roots) == [walk.uses[1].shape.key]
 
 
 # -- folding -------------------------------------------------------------------
@@ -163,9 +224,16 @@ def test_containment_records_both_supports():
     extract_environment(env, "v", records)
     extract_environment(env, "v", records)
 
-    (key, occurrences), = records.contains.items()
-    assert occurrences == 4                     # two children, two submodels
-    assert records.contains_submodels[key] == 2
+    keys = {rec.shape.id_short: key for key, rec in records.shapes.items()}
+    pair = ("v", keys["Docs"], keys["Doc"])
+    assert records.contains[pair] == 4           # two children, two submodels
+    assert records.contains_submodels[pair] == 2
+
+    # The merged parent's own edge is counted the same way: one top-level
+    # occurrence per submodel, two submodels.
+    group, = records.submodel_groups.values()
+    assert records.contains[("v", group.key, keys["Docs"])] == 2
+    assert records.contains_submodels[("v", group.key, keys["Docs"])] == 2
 
 
 def test_merge_is_associative_over_counters():
@@ -182,6 +250,7 @@ def test_merge_is_associative_over_counters():
     assert merged.shapes.keys() == both.shapes.keys()
     assert merged.vendor_shapes == both.vendor_shapes
     assert merged.contains == both.contains
+    assert merged.submodel_groups == both.submodel_groups
     assert sum(r.occurrences for r in merged.shapes.values()) == \
            sum(r.occurrences for r in both.shapes.values())
 

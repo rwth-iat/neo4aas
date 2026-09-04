@@ -35,6 +35,18 @@ Eight vendors means eight slots. It costs almost nothing, it makes the write
 idempotent, and it gives back the one thing the merged layout model otherwise
 loses: *which vendor* nests this shape under that one, and how often.
 
+The merged submodel parent
+--------------------------
+
+A submodel's top-level elements hang off a ``:Shape:SubmodelGroup`` node keyed by
+``submodel_group_key`` (:class:`~neo4aas.vocabulary.extract.SubmodelGroup`), not
+off the submodel's own per-product shape. It carries the ``:Shape`` label so that
+``:CONTAINS`` — and every constraint, index and traversal already written against
+``shape_key`` — needs no change, and the second label so that "the merged parents"
+is a label scan rather than a property filter. It carries **no** counters: support
+belongs on its edges, per vendor. The per-product Submodel shape is untouched and
+keeps its ``:DECLARES`` and ``:USES``.
+
 Loading disjoint shards of one vendor in separate runs needs
 ``mode="accumulate"``, which adds instead of replacing and is consequently **not**
 idempotent. Default is ``replace``.
@@ -145,6 +157,21 @@ SET s.id_short = row.id_short,
     s.model_type = row.model_type,
     s.value_type = row.value_type,
     s.category = coalesce(row.category, s.category)
+"""
+
+#: The merged containment parent. ``id_short`` and ``id_short_norm`` are deliberately
+#: **not** written: there is no single verbatim idShort behind this node, and the text
+#: indexes on those properties are the query-expansion entry point, which must keep
+#: matching what a vendor actually shipped. ``semantic_id`` is a plain property rather
+#: than a ``:DECLARES`` edge — the group is keyed by it, and resolution stays a
+#: statement about the per-product shapes.
+MERGE_SUBMODEL_GROUPS = """
+UNWIND $rows AS row
+MERGE (s:Shape {shape_key: row.shape_key})
+SET s:SubmodelGroup,
+    s.id_short_base = row.id_short_base,
+    s.semantic_id = row.semantic_id,
+    s.model_type = 'Submodel'
 """
 
 MERGE_SEMANTIC_IDS = """
@@ -352,6 +379,7 @@ class VocabularyLoader:
     def load_records(self, records: VocabularyRecords) -> None:
         """Write one extraction fold: shapes, semanticIds, containment, vendors."""
         self.load_shapes(records)
+        self.load_submodel_groups(records)
         self.load_semantic_ids(records)
         self.load_vendor_edges(records)
         self.load_containment(records)
@@ -367,6 +395,16 @@ class VocabularyLoader:
             for rec in records.shapes.values()
         ]
         self._write("Shape", MERGE_SHAPES, rows)
+
+    def load_submodel_groups(self, records: VocabularyRecords) -> None:
+        """The merged submodel parents. Must run before :meth:`load_containment`,
+        which ``MATCH``es both ends of a ``:CONTAINS`` edge by ``shape_key``."""
+        rows = [
+            {"shape_key": group.key, "id_short_base": group.id_short_base,
+             "semantic_id": group.semantic_id}
+            for group in records.submodel_groups.values()
+        ]
+        self._write("SubmodelGroup", MERGE_SUBMODEL_GROUPS, rows)
 
     def load_semantic_ids(self, records: VocabularyRecords) -> None:
         rows = [
@@ -405,6 +443,9 @@ class VocabularyLoader:
         the per-layout node the first version of this importer had — 78x fewer
         edges, at the cost of no longer being able to enumerate layouts. The
         per-vendor support arrays are what is left to reason with.
+
+        The top level of a submodel is in here too, parented by its
+        ``:SubmodelGroup`` — same edge type, same arrays, same rules.
         """
         contains = [
             {"vendor": vendor, "source": parent, "target": child,

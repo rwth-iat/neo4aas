@@ -63,7 +63,7 @@ RETURN count(n) AS total, sum(CASE WHEN hits > 0 THEN 1 ELSE 0 END) AS resolved
 #: tracks the product count instead of the schema. The graph is the only place this
 #: is visible corpus-wide, so the import reports it rather than hiding it in a tail.
 VOCABULARY_QUALITY_QUERY = """
-MATCH (s:Shape)
+MATCH (s:Shape) WHERE NOT s:SubmodelGroup
 RETURN count(s) AS shapes,
        sum(CASE WHEN coalesce(s.occurrences, 0) = 1 THEN 1 ELSE 0 END) AS singletons,
        sum(CASE WHEN s.id_short =~ '.*[0-9]{2,}.*' THEN 1 ELSE 0 END) AS numbered,

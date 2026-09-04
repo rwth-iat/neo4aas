@@ -23,6 +23,8 @@ Layout is **edges between shapes**, not a node per layout.
 ```
 (:Shape     {shape_key, id_short, id_short_norm, id_short_base,
              model_type, value_type, category, occurrences, top_level})
+(:Shape:SubmodelGroup                                      -- the merged submodel
+            {shape_key, id_short_base, semantic_id, model_type: 'Submodel'})
 (:SemanticId{value, base, key_types, ref_types})
 (:Concept   {id, id_base, coded_name, level, source, kind,
              preferred_name, definition, unit, data_type, deprecated})
@@ -106,8 +108,29 @@ ECLASS bumps the version on effectively every shared base between releases.
 **The Submodel's own shape is never a containment parent.** Several vendors put a
 per-product token in the submodel `idShort` — SICK ships
 `Nameplate_0226303791c8a2efe04ed3e83865b6b7` — so rooting containment there would give
-every *product* its own subtree and defeat the merge entirely. Top-level elements are
-counted instead, on `Shape.top_level` and `(:Vendor)-[:USES]->(:Shape).top_level`.
+every *product* its own subtree and defeat the merge entirely. Measured on 5 000
+stratified corpus files (23 717 submodels): 2 469 parents and 29 858 edges that way,
+against 33 and 922 the right way.
+
+**The top level hangs off a merged parent instead — `(:Shape:SubmodelGroup)`.** Keyed by
+`submodel_group_key(id_short_base, semanticId)`, which is what survives the merge, and
+written as a *second* node beside the per-product Submodel shape rather than in place of
+it: `shape_key` is a cross-repository seam (discaas2 computes the same SHA-256 over the
+same verbatim values) and moving it would orphan every node in every database already
+holding this vocabulary. The per-product shape keeps its `:DECLARES` and `:USES`; the
+group carries no counters at all, because a merged parent's support belongs on its edges,
+per vendor, like every other `:CONTAINS`.
+
+Both halves of the key are load-bearing. `semanticId` alone strands the submodels that
+declare none (1 156 at t100k) and leaves their top-level elements parentless — the bug
+this exists to fix. `id_short_base` alone merges submodels that are genuinely different:
+two vendors can both ship an `idShort` folding to `nameplate` while declaring different
+template `semanticId`s. Where *both* are missing there is nothing to merge on, and that
+submodel keeps the older behaviour — roots counted, no edge.
+
+Top-level elements are **still** counted as well, on `Shape.top_level` and
+`(:Vendor)-[:USES]->(:Shape).top_level`. That is what the `:USES` edge carries and what
+existing consumers read, so the edge is an addition to it, not a replacement.
 
 **Unresolved semanticIds stay in the graph** with no `:RESOLVES_TO`. Roughly a third of
 them resolve nowhere, and a vendor pointing at an identifier no dictionary defines is a
@@ -208,13 +231,17 @@ the verbatim one and pay that back without touching the key:
 |---|---|---|
 | `id_short` | `AAQ672-Connector__00__` | `Document01_BedienungsanleitungDE` |
 | `id_short_norm` | `aaq 672 connector 00` | `document 01 bedienungsanleitung de` |
-| `id_short_base` | `connector` | `document bedienungsanleitung` |
+| `id_short_base` | `connector` | `document 01 bedienungsanleitung` |
 
 `normalize_id_short()` is NFC + separator runs (including the en-dash — `DFM–CleanRoomClass` is
 real corpus data) + camelCase, acronym-then-word and letter↔digit splits + lowercase + a fold of
 non-ASCII letters (below).
-`id_short_base()` runs **on the norm**, never on the raw string, and strips enumeration,
-trailing language *tags* and a leading ECLASS coded name. Both are pure and public
+`id_short_base()` runs **on the norm**, never on the raw string, and strips *trailing*
+enumeration, trailing language *tags* and a leading ECLASS coded name — then the trailing
+pass runs once more, since removing the head can expose an enumeration that was interior.
+An enumeration in the middle of a name is left standing: `4IOL` in `CPX-AP-I-4IOL-M12` and
+the `01` in `Document01_Bedienungsanleitung` are indistinguishable by anything but position,
+so the tail is the only place a counter is safely identified. Both are pure and public
 (`neo4aas.vocabulary.idshort`), because **every comparison must normalise both sides**: a raw
 query term matched against a normalised property silently returns nothing, and a test that only
 feeds it normalised input never sees the bug.
