@@ -310,27 +310,36 @@ throwaway.
 `AASConstraintChecker` validates AAS data already loaded in Neo4j against the AAS specification constraints. It runs Cypher queries and returns structured `ConstraintViolation` records grouped in a `ConstraintReport`.
 
 ```python
+from neo4aas.core.client import AAS_NEO4J_MODEL_CONFIG, AASNeo4JClient
 from neo4aas.core.validation import AASConstraintChecker
 
-checker = AASConstraintChecker(
-    uri="bolt://localhost:7687",
-    user="neo4j",
-    password="12345678",
-)
+client = AASNeo4JClient("bolt://localhost:7687", "neo4j", "password", AAS_NEO4J_MODEL_CONFIG)
+checker = AASConstraintChecker(client, version="3.0")
 report = checker.check_all()
 print(report.summary())
 ```
+
+`version` is the metamodel version of the data: `"3.0"`, `"3.1"` or `"3.2"`. The checker then
+applies that version's rules, following the change notes of IDTA-01001 V3.2:
+
+| Version | Differences from V3.1 |
+|---|---|
+| 3.0 | AASd-002 forbids hyphens and allows one-character idShorts; AASd-014 also forbids asset ids on Entities that are not self-managed; AASd-090 and AASd-120 apply |
+| 3.2 | AASd-137 and AASd-138 apply; AASd-129 also accepts elements that are part of an `OperationVariable` |
+
+Without a version the checker applies the V3.1 rules, so pass the version your data uses.
 
 ### Implemented constraints
 
 | Constraint | Description |
 |---|---|
-| AASd-002 | `idShort` must match `[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+` |
+| AASd-002 | `idShort` must match `[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+` (V3.0: `[a-zA-Z][a-zA-Z0-9_]*`) |
 | AASd-005 | `revision` requires `version` in `AdministrativeInformation` |
-| AASd-014 | `SelfManagedEntity` must have `globalAssetId` or `specificAssetId` |
+| AASd-014 | `SelfManagedEntity` must have `globalAssetId` or `specificAssetId` (V3.0: other Entities must have neither) |
 | AASd-021 | Qualifier `type` must be unique within a `Qualifiable` |
 | AASd-022 | `idShort` must be unique within the parent namespace |
 | AASd-077 | Extension `name` must be unique within a parent |
+| AASd-090 | `DataElement` `category` must be `CONSTANT`, `PARAMETER` or `VARIABLE` (V3.0 only) |
 | AASd-107 | `SubmodelElementList` child `semanticId` must match `semanticIdListElement` |
 | AASd-108 | `SubmodelElementList` children must match `typeValueListElement` |
 | AASd-109 | `valueTypeListElement` required when `typeValueListElement` is `Property`/`Range` |
@@ -338,10 +347,14 @@ print(report.summary())
 | AASd-117 | Non-`Identifiable` `Referable`s not under `SubmodelElementList` must have `idShort` |
 | AASd-118 | `supplementalSemanticIds` requires a `semanticId` |
 | AASd-119 | `TemplateQualifier` requires element `kind = "Template"` |
-| AASd-121 – 129 | Reference key type and ordering constraints |
+| AASd-120 | `SubmodelElementList` children must not have an `idShort` (V3.0 only) |
+| AASd-121 – 128 | Reference key type and ordering constraints |
+| AASd-129 | Element with a `TemplateQualifier` must be part of a template `Submodel` (V3.2: or an `OperationVariable`) |
 | AASd-131 | `AssetInformation` must have `globalAssetId` or at least one `specificAssetId` |
 | AASd-133 | `SpecificAssetId.externalSubjectId` must be an `ExternalReference` |
 | AASd-134 | Operation variable `idShort`s must be unique across in/out/inout |
+| AASd-137 | `ExternalReference` keys must not have a type from `AasReferables` (V3.2 only) |
+| AASd-138 | `SubmodelElementList` in a template `Submodel` or `OperationVariable` has exactly one element (V3.2 only) |
 
 ---
 

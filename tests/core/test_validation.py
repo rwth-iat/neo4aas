@@ -81,6 +81,50 @@ def test_checker_raises_on_multiple_unknown_ids(aas_client):
         checker.check(["AASd-999", "AASd-000"])
 
 
+# The checker only touches the client when a check runs, so these need no database.
+
+def test_checker_rejects_unsupported_version():
+    with pytest.raises(ValueError, match="Unsupported metamodel version"):
+        AASConstraintChecker(None, version="3.3")
+
+
+_VERSION_ONLY = {"AASd-090", "AASd-120", "AASd-137", "AASd-138"}
+
+
+@pytest.mark.parametrize("version, own", [
+    (None, set()),  # unchanged default: the V3.1 rule set
+    ("3.0", {"AASd-090", "AASd-120"}),
+    ("3.1", set()),
+    ("3.2", {"AASd-137", "AASd-138"}),
+])
+def test_constraint_set_follows_version(version, own):
+    ids = set(AASConstraintChecker(None, version=version).constraint_ids)
+    assert len(ids) == 25 + len(own)
+    assert ids & _VERSION_ONLY == own
+
+
+@pytest.mark.parametrize("version, cid", [
+    (None, "AASd-120"),
+    ("3.1", "AASd-090"),
+    ("3.2", "AASd-120"),
+    ("3.0", "AASd-137"),
+    ("3.1", "AASd-138"),
+])
+def test_constraint_of_another_version_is_rejected(version, cid):
+    with pytest.raises(ValueError, match="do not apply"):
+        AASConstraintChecker(None, version=version).check([cid])
+
+
+@pytest.mark.parametrize("version, pattern", [
+    (None, IDSHORT_PATTERN),
+    ("3.0", IDSHORT_PATTERN_V30),
+    ("3.1", IDSHORT_PATTERN),
+    ("3.2", IDSHORT_PATTERN),
+])
+def test_idshort_pattern_follows_version(version, pattern):
+    assert AASConstraintChecker(None, version=version)._idshort_pattern() is pattern
+
+
 # ---------------------------------------------------------------------------
 # Integration test helpers
 # ---------------------------------------------------------------------------
@@ -240,6 +284,25 @@ def test_aasd014_violation_self_managed_no_asset_id(aas_client):
     report = _check(aas_client, env, ["AASd-014"])
     assert not report.is_compliant()
     assert report.violations[0].details["id_short"] == "MyEntity"
+
+
+@pytest.mark.integration
+def test_aasd014_no_violation_self_managed_with_specific_asset_id(aas_client):
+    env = {
+        "submodels": [{
+            "modelType": "Submodel",
+            "id": "urn:t:sm14c",
+            "idShort": "Sm14c",
+            "submodelElements": [{
+                "modelType": "Entity",
+                "idShort": "MyEntity",
+                "entityType": "SelfManagedEntity",
+                "specificAssetIds": [{"name": "serialNumber", "value": "1234"}],
+            }]
+        }]
+    }
+    report = _check(aas_client, env, ["AASd-014"])
+    assert report.is_compliant(), report.summary()
 
 
 @pytest.mark.integration
@@ -711,6 +774,45 @@ def test_aasd129_no_violation_template_qualifier_under_template_submodel(aas_cli
     assert report.is_compliant()
 
 
+def _template_qualified(id_short: str) -> dict:
+    return {
+        "modelType": "Property",
+        "idShort": id_short,
+        "valueType": "xs:string",
+        "qualifiers": [{"kind": "TemplateQualifier", "type": "TQ", "valueType": "xs:string"}],
+    }
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("container", [
+    {
+        "modelType": "Operation",
+        "idShort": "Op",
+        "inputVariables": [{"value": _template_qualified("InArg")}],
+    },
+    {
+        "modelType": "AnnotatedRelationshipElement",
+        "idShort": "Rel",
+        "first": {"type": "ExternalReference",
+                  "keys": [{"type": "GlobalReference", "value": "urn:t:a"}]},
+        "second": {"type": "ExternalReference",
+                   "keys": [{"type": "GlobalReference", "value": "urn:t:b"}]},
+        "annotations": [_template_qualified("Note")],
+    },
+])
+def test_aasd129_no_violation_nested_in_template_submodel(aas_client, container):
+    # Operation variables and annotations are part of the template too.
+    env = {"submodels": [{
+        "modelType": "Submodel",
+        "id": "urn:t:sm129nested",
+        "idShort": "Sm129nested",
+        "kind": "Template",
+        "submodelElements": [container],
+    }]}
+    report = _check(aas_client, env, ["AASd-129"])
+    assert report.is_compliant(), report.summary()
+
+
 # ---------------------------------------------------------------------------
 # AASd-131 — AssetInformation must have globalAssetId or specificAssetIds
 # ---------------------------------------------------------------------------
@@ -811,3 +913,197 @@ def test_aasd134_no_violation_unique_variable_id_shorts(aas_client):
     }
     report = _check(aas_client, env, ["AASd-134"])
     assert report.is_compliant()
+
+
+# ---------------------------------------------------------------------------
+# Metamodel version
+# ---------------------------------------------------------------------------
+
+def _check_version(client, env: dict, constraint_ids: list[str], version) -> ConstraintReport:
+    client.upload_json(env)
+    return AASConstraintChecker(client, version=version).check(constraint_ids)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("version, expected", [("3.0", 27), ("3.1", 25), ("3.2", 27)])
+def test_valid_environment_has_no_violations_per_version(aas_client, version, expected):
+    aas_client.upload_json(_VALID_ENV)
+    report = AASConstraintChecker(aas_client, version=version).check_all()
+    assert report.is_compliant(), f"Expected no violations, got:\n{report.summary()}"
+    assert len(report.checked_constraints) == expected
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("id_short, version, compliant", [
+    ("Max-Flow", "3.0", False),  # V3.0 forbids the hyphen
+    ("Max-Flow", "3.1", True),
+    ("X", "3.0", True),          # V3.1/V3.2 require two characters
+    ("X", "3.2", False),
+])
+def test_aasd002_pattern_depends_on_version(aas_client, id_short, version, compliant):
+    env = {"submodels": [{"modelType": "Submodel", "id": "urn:t:v002", "idShort": id_short}]}
+    report = _check_version(aas_client, env, ["AASd-002"], version)
+    assert report.is_compliant() is compliant
+
+
+def _submodel_with(element: dict) -> dict:
+    return {"submodels": [{
+        "modelType": "Submodel",
+        "id": "urn:t:v30",
+        "idShort": "SmV30",
+        "submodelElements": [element],
+    }]}
+
+
+@pytest.mark.integration
+def test_aasd090_violation_unknown_category(aas_client):
+    env = _submodel_with({
+        "modelType": "Property",
+        "idShort": "Temp",
+        "category": "MEASUREMENT",
+        "valueType": "xs:double",
+    })
+    report = _check_version(aas_client, env, ["AASd-090"], "3.0")
+    assert not report.is_compliant()
+    assert report.violations[0].details["category"] == "MEASUREMENT"
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("category", ["CONSTANT", "PARAMETER", "VARIABLE"])
+def test_aasd090_no_violation_allowed_category(aas_client, category):
+    env = _submodel_with({
+        "modelType": "Property",
+        "idShort": "Temp",
+        "category": category,
+        "valueType": "xs:double",
+    })
+    report = _check_version(aas_client, env, ["AASd-090"], "3.0")
+    assert report.is_compliant()
+
+
+@pytest.mark.integration
+def test_aasd120_violation_list_child_with_id_short(aas_client):
+    env = _submodel_with({
+        "modelType": "SubmodelElementList",
+        "idShort": "Readings",
+        "typeValueListElement": "Property",
+        "valueTypeListElement": "xs:int",
+        "value": [{"modelType": "Property", "idShort": "First", "valueType": "xs:int"}],
+    })
+    report = _check_version(aas_client, env, ["AASd-120"], "3.0")
+    assert not report.is_compliant()
+    assert report.violations[0].details["id_short"] == "First"
+    assert report.violations[0].details["list_id_short"] == "Readings"
+
+
+@pytest.mark.integration
+def test_aasd120_no_violation_list_child_without_id_short(aas_client):
+    env = _submodel_with({
+        "modelType": "SubmodelElementList",
+        "idShort": "Readings",
+        "typeValueListElement": "Property",
+        "valueTypeListElement": "xs:int",
+        "value": [{"modelType": "Property", "valueType": "xs:int"}],
+    })
+    report = _check_version(aas_client, env, ["AASd-120"], "3.0")
+    assert report.is_compliant()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("version, compliant", [("3.0", False), ("3.1", True), ("3.2", True)])
+def test_aasd014_co_managed_with_asset_id_depends_on_version(aas_client, version, compliant):
+    env = _submodel_with({
+        "modelType": "Entity",
+        "idShort": "Part",
+        "entityType": "CoManagedEntity",
+        "globalAssetId": "urn:t:asset:part",
+    })
+    report = _check_version(aas_client, env, ["AASd-014"], version)
+    assert report.is_compliant() is compliant
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("version, compliant", [("3.1", False), ("3.2", True)])
+def test_aasd129_operation_variable_exception_in_v32(aas_client, version, compliant):
+    env = {"submodels": [{
+        "modelType": "Submodel",
+        "id": "urn:t:sm129op",
+        "idShort": "Sm129op",
+        "kind": "Instance",
+        "submodelElements": [{
+            "modelType": "Operation",
+            "idShort": "Op",
+            "inputVariables": [{"value": _template_qualified("InArg")}],
+        }],
+    }]}
+    report = _check_version(aas_client, env, ["AASd-129"], version)
+    assert report.is_compliant() is compliant
+
+
+def _external_ref(*key_types: str) -> dict:
+    return {
+        "type": "ExternalReference",
+        "keys": [{"type": t, "value": f"urn:t:{i}"} for i, t in enumerate(key_types)],
+    }
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("key_types, compliant", [
+    (("GlobalReference",), True),
+    (("GlobalReference", "FragmentReference"), True),
+    (("GlobalReference", "Property"), False),
+    (("GlobalReference", "Submodel", "FragmentReference"), False),
+])
+def test_aasd137_external_reference_key_types(aas_client, key_types, compliant):
+    env = _submodel_with({
+        "modelType": "ReferenceElement",
+        "idShort": "Link",
+        "value": _external_ref(*key_types),
+    })
+    report = _check_version(aas_client, env, ["AASd-137"], "3.2")
+    assert report.is_compliant() is compliant, report.summary()
+
+
+def _list_of(n: int) -> dict:
+    return {
+        "modelType": "SubmodelElementList",
+        "idShort": "Readings",
+        "typeValueListElement": "Property",
+        "valueTypeListElement": "xs:int",
+        "value": [{"modelType": "Property", "valueType": "xs:int"} for _ in range(n)],
+    }
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("kind, n, compliant", [
+    ("Template", 1, True),
+    ("Template", 2, False),
+    ("Template", 0, False),
+    ("Instance", 2, True),  # outside templates and OperationVariables, any size is fine
+])
+def test_aasd138_list_size_in_template(aas_client, kind, n, compliant):
+    env = {"submodels": [{
+        "modelType": "Submodel",
+        "id": "urn:t:sm138",
+        "idShort": "Sm138",
+        "kind": kind,
+        "submodelElements": [{
+            "modelType": "SubmodelElementCollection",
+            "idShort": "Group",
+            "value": [_list_of(n)],
+        }],
+    }]}
+    report = _check_version(aas_client, env, ["AASd-138"], "3.2")
+    assert report.is_compliant() is compliant, report.summary()
+
+
+@pytest.mark.integration
+def test_aasd138_violation_list_in_operation_variable(aas_client):
+    env = _submodel_with({
+        "modelType": "Operation",
+        "idShort": "Op",
+        "outputVariables": [{"value": _list_of(2)}],
+    })
+    report = _check_version(aas_client, env, ["AASd-138"], "3.2")
+    assert not report.is_compliant()
+    assert report.violations[0].details["element_count"] == 2

@@ -5,10 +5,12 @@ Implemented constraints
 -----------------------
 AASd-002  idShort format regex
 AASd-005  revision requires version in AdministrativeInformation
-AASd-014  SelfManagedEntity must have globalAssetId or specificAssetId
+AASd-014  SelfManagedEntity must have globalAssetId or specificAssetId (V3.0: and no other
+          Entity may have either)
 AASd-021  Qualifier type uniqueness per Qualifiable
 AASd-022  idShort uniqueness within parent namespace
 AASd-077  Extension name uniqueness within parent
+AASd-090  DataElement category must be CONSTANT, PARAMETER or VARIABLE (V3.0 only)
 AASd-107  SubmodelElementList child semanticId must match semanticIdListElement
 AASd-108  SubmodelElementList children must match typeValueListElement
 AASd-109  valueTypeListElement required and consistent when typeValueListElement is Property/Range
@@ -16,6 +18,7 @@ AASd-114  All SubmodelElementList children with semanticId must share the same o
 AASd-117  Non-Identifiable Referables not under SubmodelElementList must have idShort
 AASd-118  supplementalSemanticIds requires semanticId
 AASd-119  TemplateQualifier requires element kind = "Template"
+AASd-120  SubmodelElementList children must not have an idShort (V3.0 only)
 AASd-121  Reference first key type must be in GloballyIdentifiables
 AASd-122  ExternalReference first key type must be GlobalReference
 AASd-123  ModelReference first key type must be in AasIdentifiables
@@ -24,10 +27,26 @@ AASd-125  ModelReference following keys must be in FragmentKeys
 AASd-126  FragmentReference must only appear as the last key in a ModelReference
 AASd-127  FragmentReference key must be preceded by File or Blob
 AASd-128  Key value after SubmodelElementList key must be a numeric string
-AASd-129  SubmodelElement with TemplateQualifier must be under a Template Submodel
+AASd-129  SubmodelElement with TemplateQualifier must be under a Template Submodel (V3.2: or
+          an OperationVariable)
 AASd-131  AssetInformation must have globalAssetId or at least one specificAssetId
 AASd-133  SpecificAssetId/externalSubjectId must be an ExternalReference
 AASd-134  Operation variable idShorts must be unique across input/output/inoutput
+AASd-137  ExternalReference keys must not be of a type in AasReferables (V3.2 only)
+AASd-138  SubmodelElementList in a Template Submodel or OperationVariable has exactly one
+          element (V3.2 only)
+
+Metamodel versions
+------------------
+The checker takes an optional ``version`` ("3.0", "3.1" or "3.2") and applies that version's
+rules, following the change notes of IDTA-01001 V3.2. Without a version it applies V3.1.
+
+- V3.0 -> V3.1 relaxed: AASd-002 allows hyphens (but requires two characters), AASd-014 no
+  longer forbids asset ids on non-self-managed Entities, AASd-090 and AASd-120 were removed.
+- V3.1 -> V3.2 added AASd-137 and AASd-138, and AASd-129 also accepts elements that are part
+  of an OperationVariable.
+- V3.1 accidentally worded AASd-021 against Qualifier/valueType; V3.1.2 corrected it back to
+  Qualifier/type, which is what all versions check here.
 
 Skipped constraints (require external resolution or are informational)
 -----------------------------------------------------------------------
@@ -64,11 +83,10 @@ from neo4aas.core.base import BaseNeo4JClient
 #              starting with a letter, not ending with a hyphen"
 #             -> ^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+$
 #
-# The checker validates against the *spec* and follows the current version (V3.2), which
-# the AASQL support in this repository also targets. basyx-python-sdk implements V3.0 and
-# rejects a hyphen on read-back, so data that is AASd-002-compliant here can still fail
-# reconstruction through the SDK — that is what IdShortFixer (fixers.py) repairs, using
-# IDSHORT_PATTERN_V30 as its target.
+# The checker applies the pattern of the version it is given, and the V3.1/V3.2 pattern when
+# none is given. basyx-python-sdk implements V3.0 and rejects a hyphen on read-back, so data
+# that is AASd-002-compliant under V3.1/V3.2 can still fail reconstruction through the SDK —
+# that is what IdShortFixer (fixers.py) repairs, using IDSHORT_PATTERN_V30 as its target.
 IDSHORT_PATTERN = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+$')
 IDSHORT_PATTERN_V30 = re.compile(r'^[a-zA-Z][a-zA-Z0-9_]*$')
 
@@ -96,6 +114,41 @@ FRAGMENT_KEYS: frozenset[str] = frozenset({
 
 # Inline Cypher list literal built once from FRAGMENT_KEYS
 _FRAGMENT_KEYS_CYPHER = "[" + ", ".join(f'"{k}"' for k in sorted(FRAGMENT_KEYS)) + "]"
+
+# An Operation holds its elements through OperationVariables, whose `value` is the element,
+# so the variable edges belong here too.
+_CONTAINMENT_EDGES = (
+    "submodelElements|value|statements|annotations"
+    "|inputVariables|outputVariables|inoutputVariables"
+)
+
+# Path patterns that end in the element a check is about, completed with `(node)`. An
+# Operation contains elements only through its OperationVariables, so every element below an
+# Operation is part of an OperationVariable.
+_IN_TEMPLATE_SUBMODEL = f'(:Submodel {{kind: "Template"}})-[:{_CONTAINMENT_EDGES}*1..]->'
+_IN_OPERATION_VARIABLE = f"(:Operation)-[:{_CONTAINMENT_EDGES}*1..]->"
+
+# AASd-090: allowed DataElement categories (V3.0)
+DATA_ELEMENT_CATEGORIES: frozenset[str] = frozenset({"CONSTANT", "PARAMETER", "VARIABLE"})
+
+# AASd-137: KeyTypes that name a Referable of the AAS model (AasIdentifiables,
+# AasSubmodelElements and the abstract Referable)
+AAS_REFERABLES: frozenset[str] = (
+    (FRAGMENT_KEYS - {"FragmentReference"})
+    | {"AssetAdministrationShell", "ConceptDescription", "Identifiable", "Referable", "Submodel"}
+)
+
+SUPPORTED_VERSIONS: tuple[str, ...] = ("3.0", "3.1", "3.2")
+
+DEFAULT_VERSION = "3.1"
+
+# Constraints that exist only in some versions; every other constraint exists in all of them
+_CONSTRAINT_VERSIONS: dict[str, frozenset[str]] = {
+    "AASd-090": frozenset({"3.0"}),
+    "AASd-120": frozenset({"3.0"}),
+    "AASd-137": frozenset({"3.2"}),
+    "AASd-138": frozenset({"3.2"}),
+}
 
 
 # ---------------------------------------------------------------------------
@@ -144,6 +197,7 @@ _CHECKER_METHODS: dict[str, str] = {
     "AASd-021": "_check_aasd021",
     "AASd-022": "_check_aasd022",
     "AASd-077": "_check_aasd077",
+    "AASd-090": "_check_aasd090",
     "AASd-107": "_check_aasd107",
     "AASd-108": "_check_aasd108",
     "AASd-109": "_check_aasd109",
@@ -151,6 +205,7 @@ _CHECKER_METHODS: dict[str, str] = {
     "AASd-117": "_check_aasd117",
     "AASd-118": "_check_aasd118",
     "AASd-119": "_check_aasd119",
+    "AASd-120": "_check_aasd120",
     "AASd-121": "_check_aasd121",
     "AASd-122": "_check_aasd122",
     "AASd-123": "_check_aasd123",
@@ -163,6 +218,8 @@ _CHECKER_METHODS: dict[str, str] = {
     "AASd-131": "_check_aasd131",
     "AASd-133": "_check_aasd133",
     "AASd-134": "_check_aasd134",
+    "AASd-137": "_check_aasd137",
+    "AASd-138": "_check_aasd138",
 }
 
 
@@ -180,21 +237,55 @@ class AASConstraintChecker:
         print(report.summary())
     """
 
-    def __init__(self, client: BaseNeo4JClient):
+    def __init__(self, client: BaseNeo4JClient, version: str | None = None):
+        """
+        :param version: metamodel version of the data, one of ``SUPPORTED_VERSIONS``; selects
+            the rule set (see the module docstring). ``None`` applies ``DEFAULT_VERSION``.
+        """
+        if version is not None and version not in SUPPORTED_VERSIONS:
+            raise ValueError(
+                f"Unsupported metamodel version {version!r}; "
+                f"expected one of {list(SUPPORTED_VERSIONS)} or None"
+            )
         self._client = client
+        self._version = version
+        self._rules = version or DEFAULT_VERSION
+
+    @property
+    def version(self) -> str | None:
+        return self._version
+
+    @property
+    def constraint_ids(self) -> list[str]:
+        """IDs of the constraints that apply to the configured version, in check order."""
+        return [
+            cid for cid in _CHECKER_METHODS
+            if self._rules in _CONSTRAINT_VERSIONS.get(cid, SUPPORTED_VERSIONS)
+        ]
 
     def check_all(self) -> ConstraintReport:
-        """Run all implemented constraints and return a combined report."""
-        return self.check(list(_CHECKER_METHODS.keys()))
+        """Run all constraints that apply to the configured version."""
+        return self.check(self.constraint_ids)
 
     def check(self, constraint_ids: list[str]) -> ConstraintReport:
         """Run only the specified constraints.
 
-        Raises ValueError for unknown constraint IDs.
+        Raises ValueError for unknown constraint IDs and for constraints that do not apply
+        to the configured version.
         """
         unknown = set(constraint_ids) - set(_CHECKER_METHODS)
         if unknown:
             raise ValueError(f"Unknown constraint IDs: {sorted(unknown)}")
+        not_applicable = set(constraint_ids) - set(self.constraint_ids)
+        if not_applicable:
+            exists_in = "; ".join(
+                f"{cid} exists only in V{'/'.join(sorted(_CONSTRAINT_VERSIONS[cid]))}"
+                for cid in sorted(not_applicable)
+            )
+            raise ValueError(
+                f"Constraint IDs {sorted(not_applicable)} do not apply to V{self._rules}: "
+                f"{exists_in}"
+            )
         report = ConstraintReport()
         for cid in constraint_ids:
             method = getattr(self, _CHECKER_METHODS[cid])
@@ -218,17 +309,22 @@ class AASConstraintChecker:
     # AASd-002 — idShort format
     # ------------------------------------------------------------------
 
+    def _idshort_pattern(self) -> re.Pattern:
+        """The AASd-002 pattern of the configured version."""
+        return IDSHORT_PATTERN_V30 if self._rules == "3.0" else IDSHORT_PATTERN
+
     def _check_aasd002(self) -> list[ConstraintViolation]:
-        """idShort of Referables must match ^[a-zA-Z][a-zA-Z0-9_-]*[a-zA-Z0-9_]+$."""
+        """idShort of Referables must match the AASd-002 pattern of the configured version."""
         query = """
         MATCH (n:Referable)
         WHERE n.idShort IS NOT NULL
         RETURN elementId(n) AS node_id, labels(n) AS node_labels, n.idShort AS id_short
         """
+        pattern = self._idshort_pattern()
         violations = []
         for r in self._run(query):
             id_short = r["id_short"]
-            if not IDSHORT_PATTERN.match(id_short):
+            if not pattern.match(id_short):
                 violations.append(self._v(
                     "AASd-002",
                     f"idShort {id_short!r} does not match the required pattern",
@@ -268,14 +364,17 @@ class AASConstraintChecker:
     # ------------------------------------------------------------------
 
     def _check_aasd014(self) -> list[ConstraintViolation]:
-        """Entity with entityType=SelfManagedEntity must have globalAssetId or specificAssetId."""
+        """Entity with entityType=SelfManagedEntity must have globalAssetId or specificAssetId.
+
+        V3.0 adds "Otherwise, they do not exist": any other Entity must have neither.
+        """
         query = """
         MATCH (e:Entity {entityType: "SelfManagedEntity"})
         WHERE e.globalAssetId IS NULL
-          AND NOT EXISTS { MATCH (e)-[:specificAssetId]->() }
+          AND NOT EXISTS { MATCH (e)-[:specificAssetIds]->() }
         RETURN elementId(e) AS node_id, labels(e) AS node_labels, e.idShort AS id_short
         """
-        return [
+        violations = [
             self._v(
                 "AASd-014",
                 "SelfManagedEntity has neither globalAssetId nor specificAssetId",
@@ -285,6 +384,28 @@ class AASConstraintChecker:
             )
             for r in self._run(query)
         ]
+        if self._rules != "3.0":
+            return violations
+
+        query = """
+        MATCH (e:Entity)
+        WHERE e.entityType IS NOT NULL AND e.entityType <> "SelfManagedEntity"
+          AND (e.globalAssetId IS NOT NULL OR EXISTS { MATCH (e)-[:specificAssetIds]->() })
+        RETURN elementId(e) AS node_id, labels(e) AS node_labels, e.idShort AS id_short,
+               e.entityType AS entity_type
+        """
+        violations.extend(
+            self._v(
+                "AASd-014",
+                f"{r['entity_type']} has a globalAssetId or specificAssetId",
+                node_id=r["node_id"],
+                node_labels=list(r["node_labels"]),
+                id_short=r["id_short"],
+                entity_type=r["entity_type"],
+            )
+            for r in self._run(query)
+        )
+        return violations
 
     # ------------------------------------------------------------------
     # AASd-021 — Qualifier type uniqueness per Qualifiable
@@ -385,6 +506,30 @@ class AASConstraintChecker:
                 ext_ids=list(r["ext_ids"]),
             )
             for r in self._run(query)
+        ]
+
+    # ------------------------------------------------------------------
+    # AASd-090 — DataElement category (V3.0 only)
+    # ------------------------------------------------------------------
+
+    def _check_aasd090(self) -> list[ConstraintViolation]:
+        """category of a DataElement, if set, must be CONSTANT, PARAMETER or VARIABLE."""
+        query = """
+        MATCH (n:DataElement)
+        WHERE n.category IS NOT NULL AND NOT n.category IN $allowed
+        RETURN elementId(n) AS node_id, labels(n) AS node_labels,
+               n.idShort AS id_short, n.category AS category
+        """
+        return [
+            self._v(
+                "AASd-090",
+                f"DataElement category {r['category']!r} is not CONSTANT, PARAMETER or VARIABLE",
+                node_id=r["node_id"],
+                node_labels=list(r["node_labels"]),
+                id_short=r["id_short"],
+                category=r["category"],
+            )
+            for r in self._run(query, {"allowed": sorted(DATA_ELEMENT_CATEGORIES)})
         ]
 
     # ------------------------------------------------------------------
@@ -590,6 +735,32 @@ class AASConstraintChecker:
                 node_labels=list(r["node_labels"]),
                 id_short=r["id_short"],
                 actual_kind=r["actual_kind"],
+            )
+            for r in self._run(query)
+        ]
+
+    # ------------------------------------------------------------------
+    # AASd-120 — SubmodelElementList children have no idShort (V3.0 only)
+    # ------------------------------------------------------------------
+
+    def _check_aasd120(self) -> list[ConstraintViolation]:
+        """First-level children of a SubmodelElementList must not have an idShort."""
+        query = """
+        MATCH (sml:SubmodelElementList)-[:value]->(child)
+        WHERE child.idShort IS NOT NULL
+        RETURN elementId(child) AS node_id, labels(child) AS node_labels,
+               child.idShort AS id_short, elementId(sml) AS list_node_id,
+               sml.idShort AS list_id_short
+        """
+        return [
+            self._v(
+                "AASd-120",
+                f"SubmodelElementList child has idShort {r['id_short']!r}",
+                node_id=r["node_id"],
+                node_labels=list(r["node_labels"]),
+                id_short=r["id_short"],
+                list_node_id=r["list_node_id"],
+                list_id_short=r["list_id_short"],
             )
             for r in self._run(query)
         ]
@@ -806,20 +977,25 @@ class AASConstraintChecker:
     def _check_aasd129(self) -> list[ConstraintViolation]:
         """SubmodelElements with a TemplateQualifier must be part of a Template Submodel.
 
-        Note: uses [:submodelElements|value|statements*1..] path — may be slow on very large graphs.
+        V3.2 also accepts an element that is part of an OperationVariable.
+
+        Note: walks a variable-length containment path — may be slow on very large graphs.
         """
-        query = """
-        MATCH (sme:SubmodelElement)-[:qualifiers]->(q:Qualifier {kind: "TemplateQualifier"})
-        WHERE NOT EXISTS {
-            MATCH (sm:Submodel {kind: "Template"})-[:submodelElements|value|statements*1..]->(sme)
-        }
+        allowed = [_IN_TEMPLATE_SUBMODEL]
+        if self._rules == "3.2":
+            allowed.append(_IN_OPERATION_VARIABLE)
+        where = " AND ".join(f"NOT EXISTS {{ MATCH {path}(sme) }}" for path in allowed)
+        query = f"""
+        MATCH (sme:SubmodelElement)-[:qualifiers]->(q:Qualifier {{kind: "TemplateQualifier"}})
+        WHERE {where}
         RETURN DISTINCT elementId(sme) AS node_id, labels(sme) AS node_labels,
                sme.idShort AS id_short
         """
+        place = "a Template Submodel" + (" or an OperationVariable" if len(allowed) > 1 else "")
         return [
             self._v(
                 "AASd-129",
-                "SubmodelElement has TemplateQualifier but is not under a Template Submodel",
+                f"SubmodelElement has TemplateQualifier but is not under {place}",
                 node_id=r["node_id"],
                 node_labels=list(r["node_labels"]),
                 id_short=r["id_short"],
@@ -892,6 +1068,60 @@ class AASConstraintChecker:
                 op_id_short=r["op_id_short"],
                 duplicate_id_short=r["duplicate_id_short"],
                 sme_ids=list(r["sme_ids"]),
+            )
+            for r in self._run(query)
+        ]
+
+    # ------------------------------------------------------------------
+    # AASd-137 — no AasReferables key in an ExternalReference (V3.2 only)
+    # ------------------------------------------------------------------
+
+    def _check_aasd137(self) -> list[ConstraintViolation]:
+        """No key of an ExternalReference may have a type in AasReferables."""
+        query = """
+        MATCH (ref:Reference {type: "ExternalReference"})
+        WITH ref, [t IN ref.keys_type WHERE t IN $referables] AS bad_types
+        WHERE size(bad_types) > 0
+        RETURN elementId(ref) AS node_id, bad_types, ref.keys_value AS key_values
+        """
+        return [
+            self._v(
+                "AASd-137",
+                f"ExternalReference has key type(s) {list(r['bad_types'])} from AasReferables",
+                node_id=r["node_id"],
+                key_types=list(r["bad_types"]),
+                key_values=list(r["key_values"]),
+            )
+            for r in self._run(query, {"referables": sorted(AAS_REFERABLES)})
+        ]
+
+    # ------------------------------------------------------------------
+    # AASd-138 — one element per SubmodelElementList in a template or
+    # OperationVariable (V3.2 only)
+    # ------------------------------------------------------------------
+
+    def _check_aasd138(self) -> list[ConstraintViolation]:
+        """A SubmodelElementList in a Template Submodel or an OperationVariable has exactly
+        one element.
+
+        Note: walks a variable-length containment path — may be slow on very large graphs.
+        """
+        query = f"""
+        MATCH (sml:SubmodelElementList)
+        WHERE EXISTS {{ MATCH {_IN_TEMPLATE_SUBMODEL}(sml) }}
+           OR EXISTS {{ MATCH {_IN_OPERATION_VARIABLE}(sml) }}
+        WITH sml, COUNT {{ (sml)-[:value]->() }} AS element_count
+        WHERE element_count <> 1
+        RETURN elementId(sml) AS node_id, sml.idShort AS id_short, element_count
+        """
+        return [
+            self._v(
+                "AASd-138",
+                f"SubmodelElementList in a template or OperationVariable has "
+                f"{r['element_count']} elements (must have exactly one)",
+                node_id=r["node_id"],
+                id_short=r["id_short"],
+                element_count=r["element_count"],
             )
             for r in self._run(query)
         ]
