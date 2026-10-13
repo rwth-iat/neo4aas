@@ -42,6 +42,14 @@ class Neo4jModelConfig:
     # `deduplicated_object_types`.
     deduplicated_by_id: Iterable[str] = ()
 
+    # Whether the `id` of every `deduplicated_by_id` label is unique in the database. True
+    # creates a uniqueness constraint, as the AAS spec requires one object per id. False
+    # creates a plain index instead, for applications that store several objects under one
+    # id on purpose (e.g. to keep and report id collisions found in a corpus); merging by id
+    # on import is unchanged. Switching to False does not drop a constraint that already
+    # exists in the database.
+    enforce_unique_ids: bool = True
+
 EMPTY_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
     default_optimization_clauses=[],
     deduplicated_object_types=[],
@@ -112,13 +120,22 @@ class BaseNeo4JClient:
 
         Beyond the static clauses, a `hash` index is created for every deduplicated type
         so the backing index always matches `deduplicated_object_types` (nodes of those
-        types are MERGEd on `hash` during import).
+        types are MERGEd on `hash` during import), and an `id` constraint or index for every
+        `deduplicated_by_id` label, depending on `enforce_unique_ids`.
         """
         clauses = list(self.model_config.default_optimization_clauses)
         clauses += [
             f"CREATE INDEX IF NOT EXISTS FOR (n:{label}) ON (n.hash)"
             for label in self.model_config.deduplicated_object_types
         ]
+        for label in self.model_config.deduplicated_by_id:
+            name = f"{label.lower()}_id"
+            if self.model_config.enforce_unique_ids:
+                clauses.append(
+                    f"CREATE CONSTRAINT {name} IF NOT EXISTS FOR (n:{label}) REQUIRE n.id IS UNIQUE"
+                )
+            else:
+                clauses.append(f"CREATE INDEX {name} IF NOT EXISTS FOR (n:{label}) ON (n.id)")
         for clause in clauses:
             try:
                 self.execute_clause(clause, single=True)
