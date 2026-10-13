@@ -233,7 +233,7 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         if not ids or self.driver is None:
             return set()
         found = set()
-        with self.driver.session() as session:
+        with self.session() as session:
             for label in self.model_config.deduplicated_by_id:
                 query = f"UNWIND $ids AS id MATCH (n:`{label}` {{id: id}}) RETURN DISTINCT n.id AS id"
                 found.update(record["id"] for record in session.run(query, ids=list(ids)))
@@ -408,7 +408,7 @@ class JsonToNeo4jImporter(BaseNeo4JClient):
         # compatibility and no longer chunks the write — a batch is one transaction, sized
         # by the caller's file/environment batch.
         write_start_time = time.time()
-        with self.driver.session() as session:
+        with self.session() as session:
             relationship_count = self._write_graph(session, grouped_nodes, relationships,
                                                    exist_uid_to_internal_id)
         write_time = time.time() - write_start_time
