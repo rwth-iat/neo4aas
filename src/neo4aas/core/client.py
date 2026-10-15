@@ -506,7 +506,7 @@ class AASNeo4JClient(XmlToNeo4jImporter, JsonFromNeo4jExporter):
         """
         clause, found_node, params = self._find_node_clause(parent_id, id_short_path)
         clause += f"RETURN collect(DISTINCT elementId({found_node})) AS node_ids"
-        with self.driver.session() as session:
+        with self.session() as session:
             result = session.run(clause, **params).single()
         node_ids = result["node_ids"] if result else []
         if not node_ids:

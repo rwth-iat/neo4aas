@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List, Iterable, Dict, Optional
 
 import neo4j
-from neo4j import Driver
+from neo4j import Driver, Session
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +60,11 @@ class BaseNeo4JClient:
     model_config: Neo4jModelConfig
 
     def __init__(self, uri: str, user: str , password: Optional[str] = None, model_config: Neo4jModelConfig = None,
-                 fix_on_import: bool = False, auto_optimize: bool = True):
+                 fix_on_import: bool = False, auto_optimize: bool = True, database: Optional[str] = None):
         self.driver = neo4j.GraphDatabase.driver(uri, auth=(user, password)) if uri else None
+        # None means the server's default database. Naming one lets several graphs share a
+        # server (Neo4j Enterprise, or Community with a multi-database plugin).
+        self.database = database
         self.model_config = model_config or EMPTY_NEO4J_MODEL_CONFIG
         # Opt-in: when True, registered fixers (fixers.py) repair imported AAS data
         # (e.g. BCP 47 language tags) before it is stored. Off by default.
@@ -73,9 +76,13 @@ class BaseNeo4JClient:
         if self.driver is not None and auto_optimize:
             self.optimize_database()
 
+    def session(self, **kwargs) -> Session:
+        """Open a driver session on this client's database."""
+        return self.driver.session(database=self.database, **kwargs)
+
     def execute_clause(self, clause: CypherClause, single: bool = False, params: dict | None = None):
         """Execute the generated Cypher clauses in the Neo4j database. After execution, the clauses are cleared."""
-        with self.driver.session() as session:
+        with self.session() as session:
             if single:
                 result = session.run(clause, **(params or {})).single()
             else:
@@ -139,7 +146,7 @@ class BaseNeo4JClient:
         transaction, so a node batch alone does not bound the transaction size. Deleting
         relationships in batches first bounds every transaction by ``batch_size``.
         """
-        with self.driver.session() as session:
+        with self.session() as session:
             while True:
                 deleted = session.run(
                     "MATCH ()-[r]->() WITH r LIMIT $batch_size DELETE r RETURN count(r) AS n",
@@ -184,7 +191,7 @@ class BaseNeo4JClient:
                 tx.run(f"DROP CONSTRAINT `{name}`")
                 print(f"Dropped constraint: {name}")
 
-        with self.driver.session() as session:
+        with self.session() as session:
             session.execute_write(drop_all_indexes_and_constraints)
 
     def save_clauses_to_file(self, file_name: str, clauses: CypherClause):

@@ -149,6 +149,6 @@ def cypher_read(client, cypher: str) -> Dict[str, Any]:
         raise ValueError("Only read-only Cypher is permitted (no writes).")
     if client.driver is None:
         raise ValueError("No Neo4j driver configured.")
-    with client.driver.session(default_access_mode="READ") as session:
+    with client.session(default_access_mode="READ") as session:
         rows = session.execute_read(lambda tx: [r.data() for r in tx.run(cypher)])
     return {"count": len(rows), "rows": rows}
