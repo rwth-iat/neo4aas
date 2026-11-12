@@ -37,6 +37,7 @@ LIST_CONTAINER_TAGS: frozenset[str] = frozenset({
     "inoutputVariables",
     "isCaseOf",             # ConceptDescription.isCaseOf list of Reference
     "refersTo",             # Extension.refersTo list of ModelReference
+    "preferredNameQuantity",  # DataSpecificationUom (V3.2)
     # NOTE: "value" is handled separately below — it is a list only when all
     # children are typed AAS elements (SubmodelElementList.value), and a plain
     # dict otherwise (ReferenceElement.value contains a Reference, not an SME list).
@@ -49,6 +50,30 @@ LANG_STRING_TAGS: frozenset[str] = frozenset({
     "langStringPreferredNameTypeIec61360",
     "langStringShortNameTypeIec61360",
     "langStringDefinitionTypeIec61360",
+    "langStringUom",                # DataSpecificationUom (V3.2)
+    "langStringDefinitionTypeUom",  # DataSpecificationUom (V3.2)
+})
+
+# Elements whose JSON value is an object: written empty (<administration/>), they are {}.
+# A leaf of any other tag is a string, kept even when empty.
+_OBJECT_TAGS: frozenset[str] = frozenset({
+    "administration",
+    "assetInformation",
+    "dataSpecification",
+    "dataSpecificationContent",
+    "defaultThumbnail",
+    "derivedFrom",
+    "externalSubjectId",
+    "first",
+    "levelType",
+    "messageBroker",
+    "observed",
+    "referredSemanticId",
+    "second",
+    "semanticId",
+    "unitId",
+    "valueId",
+    "valueList",
 })
 
 # XML camelCase element tag → AAS modelType (PascalCase string injected as "modelType" key).
@@ -71,6 +96,7 @@ XML_TAG_TO_MODEL_TYPE: dict[str, str] = {
     "referenceElement": "ReferenceElement",
     "basicEventElement": "BasicEventElement",
     "dataSpecificationIec61360": "DataSpecificationIec61360",
+    "dataSpecificationUom": "DataSpecificationUom",
 }
 
 # Tags whose children are xs:boolean-typed in the AAS spec and must be converted
@@ -105,20 +131,25 @@ def _strip_ns(tag: str) -> str:
 def _element_to_value(element: ET.Element) -> Any:
     """Recursively convert an XML element to its AAS JSON-equivalent Python value.
 
-    Returns None for empty complex elements (e.g. <administration/>) so callers
-    can omit them. Empty string leaf values are preserved as "".
+    Nothing the XML states is dropped, so that a document gives the same dict from
+    XML as from JSON: an empty element becomes "", {}, [] or a dict holding only its
+    modelType, as its JSON form would be, and text keeps its surrounding whitespace
+    (xs:string preserves it).
     """
     tag = _strip_ns(element.tag)
     children = list(element)
-    text = element.text.strip() if element.text and element.text.strip() else ""
 
     # --- Leaf element (no children) ---
     if not children:
+        if tag in XML_TAG_TO_MODEL_TYPE:
+            return {"modelType": XML_TAG_TO_MODEL_TYPE[tag]}
+        if tag in LIST_CONTAINER_TAGS:
+            return []
+        if tag in _OBJECT_TAGS:
+            return {}
         if tag in _BOOLEAN_LEAF_PROPS:
-            return text == "true"
-        # Empty string leaves are preserved as ""; callers that want to omit them
-        # should normalise with a filter that removes empty strings.
-        return text  # may be ""
+            return (element.text or "").strip() == "true"
+        return element.text or ""
 
     # --- LevelType: children are xs:boolean — convert "true"/"false" → bool ---
     if tag in _BOOLEAN_OBJECT_TAGS:
@@ -126,16 +157,12 @@ def _element_to_value(element: ET.Element) -> Any:
 
     # --- LangString: {"language": "...", "text": "..."} ---
     if tag in LANG_STRING_TAGS:
-        return {_strip_ns(c.tag): (c.text or "").strip() for c in children}
+        return {_strip_ns(c.tag): c.text or "" for c in children}
 
     # --- List container: children form a list ---
     if tag in LIST_CONTAINER_TAGS:
-        items = []
-        for child in children:
-            val = _element_to_value(child)
-            if val is not None and val != "":
-                items.append(val)
-        return items
+        # List items are objects, so an empty item is {}.
+        return [_element_to_value(child) or {} for child in children]
 
     # --- value: context-sensitive handling ---
     # SubmodelElementList.value  → list of typed SME children (all in XML_TAG_TO_MODEL_TYPE)
@@ -160,10 +187,7 @@ def _element_to_value(element: ET.Element) -> Any:
         result["modelType"] = XML_TAG_TO_MODEL_TYPE[tag]
 
     for child in children:
-        child_tag = _strip_ns(child.tag)
-        val = _element_to_value(child)
-        if val is not None and val != "":
-            result[child_tag] = val
+        result[_strip_ns(child.tag)] = _element_to_value(child)
 
     # Post-process: unwrap 1-element list → scalar for known parent/key pairs.
     # Handles operationVariable.value (list of one typed SME → scalar SME dict).
@@ -171,7 +195,7 @@ def _element_to_value(element: ET.Element) -> Any:
     if unwrap_key and isinstance(result.get(unwrap_key), list) and len(result[unwrap_key]) == 1:
         result[unwrap_key] = result[unwrap_key][0]
 
-    return result if result else None
+    return result
 
 
 def xml_to_aas_json(source: str | bytes) -> dict:
@@ -197,8 +221,5 @@ def xml_to_aas_json(source: str | bytes) -> dict:
 
     result: dict[str, Any] = {}
     for child in root:
-        tag = _strip_ns(child.tag)
-        val = _element_to_value(child)
-        if val is not None and val != "":
-            result[tag] = val
+        result[_strip_ns(child.tag)] = _element_to_value(child)
     return result

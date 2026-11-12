@@ -131,16 +131,17 @@ def test_get_submodels_by_type_matches_get_identifiable(aas_client: AASNeo4JClie
     ids=lambda p: f"{p.parent.name}/{p.stem}",
 )
 def test_xml_to_json_matches_expected(xml_file: Path, json_file: Path):
-    """xml_to_aas_json() output must match the canonical JSON representation.
+    """xml_to_aas_json() output must equal the canonical JSON representation.
 
-    Loads an AAS XML file and its JSON counterpart from the test data, normalises
-    both with _normalize(), and asserts equality. No Neo4j required.
+    Compared without _normalize(): an empty value or object the XML states must not
+    get lost, or one document would differ between its XML and JSON form. No Neo4j
+    required.
     """
     from_xml = xml_to_aas_json(str(xml_file))
     with open(json_file, encoding="utf-8") as f:
         from_json = json.load(f)
 
-    assert _normalize(from_xml) == _normalize(from_json), (
+    assert from_xml == from_json, (
         f"xml_to_aas_json({xml_file.name}) does not match {json_file.name}"
     )
 

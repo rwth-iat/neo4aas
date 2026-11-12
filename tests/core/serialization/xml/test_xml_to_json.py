@@ -41,3 +41,49 @@ def test_parses_prefixed_ns_31():
     assert [s["id"] for s in d["assetAdministrationShells"]] == ["urn:shell/31"]
     assert d["assetAdministrationShells"][0]["modelType"] == "AssetAdministrationShell"
     assert [s["id"] for s in d["submodels"]] == ["urn:sm/31"]
+
+
+def _submodel(elements: str) -> dict:
+    xml = (
+        '<environment xmlns="https://admin-shell.io/aas/3/0"><submodels><submodel>'
+        f"<id>urn:sm</id>{elements}</submodel></submodels></environment>"
+    )
+    return xml_to_aas_json(xml.encode())["submodels"][0]
+
+
+def test_keeps_empty_values_and_objects():
+    """Empty elements become what their JSON form holds, not nothing."""
+    sm = _submodel(
+        "<administration/><submodelElements>"
+        "<property><idShort>p</idShort><valueType>xs:string</valueType><value/></property>"
+        "<submodelElementList><idShort>l</idShort><typeValueListElement>Entity"
+        "</typeValueListElement><value><entity/></value></submodelElementList>"
+        "</submodelElements>"
+    )
+    assert sm["administration"] == {}
+    assert sm["submodelElements"][0]["value"] == ""
+    assert sm["submodelElements"][1]["value"] == [{"modelType": "Entity"}]
+
+
+def test_keeps_surrounding_whitespace_of_values():
+    sm = _submodel("<idShort>s</idShort><category> PARAMETER </category>")
+    assert sm["id"] == "urn:sm"
+    assert sm["category"] == " PARAMETER "
+
+
+def test_converts_data_specification_uom():
+    sm = _submodel(
+        "<embeddedDataSpecifications><embeddedDataSpecification><dataSpecification>"
+        "<type>ExternalReference</type><keys><key><type>GlobalReference</type>"
+        "<value>urn:ds</value></key></keys></dataSpecification><dataSpecificationContent>"
+        "<dataSpecificationUom><preferredName><langStringUom><language>en</language>"
+        "<text>metre</text></langStringUom></preferredName><symbol>m</symbol>"
+        "</dataSpecificationUom></dataSpecificationContent></embeddedDataSpecification>"
+        "</embeddedDataSpecifications>"
+    )
+    content = sm["embeddedDataSpecifications"][0]["dataSpecificationContent"]
+    assert content == {
+        "modelType": "DataSpecificationUom",
+        "preferredName": [{"language": "en", "text": "metre"}],
+        "symbol": "m",
+    }
