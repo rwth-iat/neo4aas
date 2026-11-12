@@ -57,9 +57,8 @@ AAS_NEO4J_MODEL_CONFIG = Neo4jModelConfig(
     virtual_relationships=("references", "HAS_PROPERTY", "HAS_UNIT"),
 
     default_optimization_clauses=[
-        # Uniqueness constraint enforces a single node per Identifiable id (per the AAS spec)
-        # and provides the backing index for id lookups in one rule.
-        "CREATE CONSTRAINT identifiable_id IF NOT EXISTS FOR (r:Identifiable) REQUIRE r.id IS UNIQUE;",
+        # The Identifiable `id` constraint (or index) is derived from `deduplicated_by_id`
+        # and `enforce_unique_ids` in optimize_database().
         "CREATE INDEX referable_idshort IF NOT EXISTS FOR (r:Referable) ON (r.idShort);",
         "CREATE INDEX rel_list_index IF NOT EXISTS FOR () - [r:value]-() ON (r.list_index);",
         # Indexed lookup of "references targeting id X" for incremental resolution.
