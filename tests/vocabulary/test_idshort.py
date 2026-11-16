@@ -36,7 +36,8 @@ GOLDEN: tuple[tuple[str, str, str | None], ...] = (
     ("AAQ672-Connector__00__", "aaq 672 connector 00", "connector"),
     ("ContactInformation01", "contact information 01", "contact information"),
     ("Document01_BedienungsanleitungDE",
-     "document 01 bedienungsanleitung de", "document bedienungsanleitung"),
+     "document 01 bedienungsanleitung de", "document 01 bedienungsanleitung"),
+    ("CPX-AP-I-4IOL-M12", "cpx ap i 4 iol m 12", SAME),
     ("Handbücher", "handbuecher", SAME),
     ("Backpressureresistantversion", "backpressureresistantversion", SAME),
     ("Coding_head1_", "coding head 1", "coding head"),
@@ -143,22 +144,42 @@ def test_symbols_are_left_verbatim(raw, expected):
 def test_a_real_corpus_document_name_keeps_its_german_word():
     """The language *word* is identity, the language *tag* is not — after folding."""
     assert normalize_id_short("Document01_HandbücherDE") == "document 01 handbuecher de"
-    assert id_short_base("Document01_HandbücherDE") == "document handbuecher"
+    assert id_short_base("Document01_HandbücherDE") == "document 01 handbuecher"
 
 
 # -- digits: which are identity, which are enumeration --------------------------
 
 
 def test_an_enumeration_bases_the_same_whether_it_is_zero_padded_or_not():
-    """``Document05`` and ``Document29`` are one name counted twice.
+    """``Document7`` and ``Document07`` are one name, whatever the padding.
 
     A rule that stripped only zero-padded numbers based them differently, which
-    defeats the grouping the property exists for. Both strings are real Festo
-    idShorts, and the defect was found by reading an import report.
+    defeats the grouping the property exists for.
     """
-    assert id_short_base("Document05_HandbücherDE") == "document handbuecher"
-    assert id_short_base("Document29_HandbücherDE") == "document handbuecher"
     assert id_short_base("Document7") == id_short_base("Document07") == "document"
+
+
+def test_an_enumeration_that_is_not_at_the_tail_is_kept():
+    """The stated cost of the tail-only rule, pinned so that changing it is deliberate.
+
+    ``Document05_HandbuecherDE`` and ``Document29_HandbuecherDE`` are one document type
+    counted twice, and the tail-only rule does not join them: the ``05`` is followed by
+    a word, and nothing at that position distinguishes it from the ``4`` in Festo's
+    ``CPX-AP-I-4IOL-M12``, which is identity. Both strings are real Festo idShorts.
+    """
+    assert id_short_base("Document05_HandbücherDE") == "document 05 handbuecher"
+    assert id_short_base("Document29_HandbücherDE") == "document 29 handbuecher"
+    assert id_short_base("CPX-AP-I-4IOL-M12") == "cpx ap i 4 iol m 12"
+
+
+def test_the_tail_is_stripped_again_after_a_leading_coded_name_goes():
+    """``aaq 680 additional information 02``: both ends are variant, neither is the name.
+
+    The head strip runs after the tail strip, so a name whose enumeration only becomes
+    trailing once the coded name is gone needs the tail pass to run a second time.
+    """
+    assert id_short_base("AAQ680-AdditionalInformation02") == "additional information"
+    assert id_short_base("AAQ672-Connector__00__") == "connector"
 
 
 @pytest.mark.parametrize("raw,expected_base", [

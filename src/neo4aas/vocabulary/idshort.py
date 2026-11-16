@@ -44,9 +44,18 @@ Two decisions worth stating
 ---------------------------
 
 **The language *word* is identity; the language *tag* is not.**
-``Document01_BedienungsanleitungDE`` bases to ``document bedienungsanleitung``. A
+``Document01_BedienungsanleitungDE`` bases to ``document 01 bedienungsanleitung``. A
 *Bedienungsanleitung* is a different document type from a *Manual*, not a translation
 of one, so the German word stays and only the trailing ``de`` tag goes.
+
+**Enumeration is stripped from the tail only.** ``Document07`` -> ``document``,
+``AAQ672-Connector__00__`` -> ``connector``, but ``Document01_Bedienungsanleitung``
+keeps its ``01`` — position is the only evidence separating a counter from identity,
+and stripping digits *anywhere* also strips the ``4`` out of Festo's
+``CPX-AP-I-4IOL-M12``. The cost is named rather than hidden: ``Document05_HandbücherDE``
+and ``Document29_HandbücherDE`` are one document type counted twice and no longer group,
+which the interior rule this replaced did catch. A tail strip after the leading coded
+name is removed is what keeps ``AAQ680-AdditionalInformation02`` grouping.
 
 **An all-lowercase run is left alone.** ``Backpressureresistantversion`` has no
 recoverable boundary. A dictionary-based compound splitter would mis-cut German, so
@@ -257,6 +266,28 @@ def _digit_is_significant(tokens: list[str], i: int) -> bool:
     return i > 0 and tokens[i - 1] in DIGIT_SIGNIFICANT_PREFIXES
 
 
+def _strip_suffixes(tokens: list[str]) -> None:
+    """Strip trailing enumeration and language tags, in place, until nothing changes.
+
+    Only the **tail** is touched. An enumeration in the middle of a name is left
+    standing: it is as likely to be identity (``4IOL``, ``61987``) as a counter, and
+    the position is the only evidence available to tell them apart.
+    """
+    changed = True
+    while changed and tokens:
+        changed = False
+        last = len(tokens) - 1
+        if _INTEGER.fullmatch(tokens[last]) and not _digit_is_significant(tokens, last):
+            tokens.pop()
+            changed = True
+        elif last > 0 and tokens[last] in LANGUAGE_REGIONS and tokens[last - 1] in LANGUAGE_TAGS:
+            del tokens[last - 1:]                      # a BCP 47 pair: "de de", "en us"
+            changed = True
+        elif tokens[last] in LANGUAGE_TAGS and last > 0:
+            tokens.pop()
+            changed = True
+
+
 @lru_cache(maxsize=200_000)
 def id_short_base(value: str | None) -> str | None:
     """The identity of an ``idShort`` once its variant suffixes are gone.
@@ -273,31 +304,11 @@ def id_short_base(value: str | None) -> str | None:
         return None
     tokens = [t for t in norm.split() if not _OPAQUE.fullmatch(t)]
 
-    changed = True
-    while changed and tokens:                          # 1. enumeration, 2. language
-        changed = False
-        last = len(tokens) - 1
-        if _INTEGER.fullmatch(tokens[last]) and not _digit_is_significant(tokens, last):
-            tokens.pop()
-            changed = True
-        elif last > 0 and tokens[last] in LANGUAGE_REGIONS and tokens[last - 1] in LANGUAGE_TAGS:
-            del tokens[last - 1:]                      # a BCP 47 pair: "de de", "en us"
-            changed = True
-        elif tokens[last] in LANGUAGE_TAGS and last > 0:
-            tokens.pop()
-            changed = True
+    _strip_suffixes(tokens)                            # 1. enumeration, 2. language
 
     if (len(tokens) > 2 and _ECLASS_LETTERS.fullmatch(tokens[0])   # 3. leading coded name
             and _ECLASS_DIGITS.fullmatch(tokens[1])):
         del tokens[:2]
-
-    # 1. (cont.) an enumeration anywhere, not only at the end: `Document05_HandbuecherDE`
-    # and `Document29_HandbuecherDE` are one name counted twice, and a rule that only
-    # caught the zero-padded ones based them differently — which is precisely the
-    # grouping this property exists to provide. Found by reading a Festo import, not by
-    # a test. The leading coded name is stripped *before* this, or `aaq 672 connector`
-    # would lose its number and no longer match the two-token head rule.
-    tokens = [t for i, t in enumerate(tokens)
-              if not (_INTEGER.fullmatch(t) and not _digit_is_significant(tokens, i))]
+        _strip_suffixes(tokens)      # the head may have hidden a trailing enumeration
 
     return " ".join(tokens) or norm                                # 4. never empty
